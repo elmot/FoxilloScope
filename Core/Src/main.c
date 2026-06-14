@@ -127,15 +127,10 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   BSP_COM_SelectLogPort(COM1);
 
-  while (1)
-  {
+  run_oscilloscope();
 
-    /* USER CODE END WHILE */
-    printf("Hello World!\n\r");
-    HAL_Delay(500);
-
-    /* USER CODE BEGIN 3 */
-  }
+  /* USER CODE END WHILE */
+  /* USER CODE BEGIN 3 */
   /* USER CODE END 3 */
 }
 
