@@ -266,16 +266,27 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
   */
 void HAL_DAC_MspInit(DAC_HandleTypeDef* hdac)
 {
-  if(hdac->Instance==DAC3)
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  if(hdac->Instance==DAC2)
   {
-    /* USER CODE BEGIN DAC3_MspInit 0 */
+    /* USER CODE BEGIN DAC2_MspInit 0 */
 
-    /* USER CODE END DAC3_MspInit 0 */
+    /* USER CODE END DAC2_MspInit 0 */
     /* Peripheral clock enable */
-    __HAL_RCC_DAC3_CLK_ENABLE();
-    /* USER CODE BEGIN DAC3_MspInit 1 */
+    __HAL_RCC_DAC2_CLK_ENABLE();
 
-    /* USER CODE END DAC3_MspInit 1 */
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    /**DAC2 GPIO Configuration
+    PA6     ------> DAC2_OUT1
+    */
+    GPIO_InitStruct.Pin = GPIO_PIN_6;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    /* USER CODE BEGIN DAC2_MspInit 1 */
+
+    /* USER CODE END DAC2_MspInit 1 */
 
   }
 
@@ -289,16 +300,22 @@ void HAL_DAC_MspInit(DAC_HandleTypeDef* hdac)
   */
 void HAL_DAC_MspDeInit(DAC_HandleTypeDef* hdac)
 {
-  if(hdac->Instance==DAC3)
+  if(hdac->Instance==DAC2)
   {
-    /* USER CODE BEGIN DAC3_MspDeInit 0 */
+    /* USER CODE BEGIN DAC2_MspDeInit 0 */
 
-    /* USER CODE END DAC3_MspDeInit 0 */
+    /* USER CODE END DAC2_MspDeInit 0 */
     /* Peripheral clock disable */
-    __HAL_RCC_DAC3_CLK_DISABLE();
-    /* USER CODE BEGIN DAC3_MspDeInit 1 */
+    __HAL_RCC_DAC2_CLK_DISABLE();
 
-    /* USER CODE END DAC3_MspDeInit 1 */
+    /**DAC2 GPIO Configuration
+    PA6     ------> DAC2_OUT1
+    */
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_6);
+
+    /* USER CODE BEGIN DAC2_MspDeInit 1 */
+
+    /* USER CODE END DAC2_MspDeInit 1 */
   }
 
 }
@@ -357,6 +374,51 @@ void HAL_OPAMP_MspDeInit(OPAMP_HandleTypeDef* hopamp)
     /* USER CODE BEGIN OPAMP1_MspDeInit 1 */
 
     /* USER CODE END OPAMP1_MspDeInit 1 */
+  }
+
+}
+
+/**
+  * @brief TIM_Base MSP Initialization
+  * This function configures the hardware resources used in this example
+  * @param htim_base: TIM_Base handle pointer
+  * @retval None
+  */
+void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* htim_base)
+{
+  if(htim_base->Instance==TIM2)
+  {
+    /* USER CODE BEGIN TIM2_MspInit 0 */
+
+    /* USER CODE END TIM2_MspInit 0 */
+    /* Peripheral clock enable */
+    __HAL_RCC_TIM2_CLK_ENABLE();
+    /* USER CODE BEGIN TIM2_MspInit 1 */
+
+    /* USER CODE END TIM2_MspInit 1 */
+
+  }
+
+}
+
+/**
+  * @brief TIM_Base MSP De-Initialization
+  * This function freeze the hardware resources used in this example
+  * @param htim_base: TIM_Base handle pointer
+  * @retval None
+  */
+void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* htim_base)
+{
+  if(htim_base->Instance==TIM2)
+  {
+    /* USER CODE BEGIN TIM2_MspDeInit 0 */
+
+    /* USER CODE END TIM2_MspDeInit 0 */
+    /* Peripheral clock disable */
+    __HAL_RCC_TIM2_CLK_DISABLE();
+    /* USER CODE BEGIN TIM2_MspDeInit 1 */
+
+    /* USER CODE END TIM2_MspDeInit 1 */
   }
 
 }

@@ -46,9 +46,11 @@ ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc3;
 ADC_HandleTypeDef hadc4;
 
-DAC_HandleTypeDef hdac3;
+DAC_HandleTypeDef hdac2;
 
 OPAMP_HandleTypeDef hopamp1;
+
+TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
 
@@ -60,8 +62,9 @@ static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_ADC3_Init(void);
 static void MX_ADC4_Init(void);
-static void MX_DAC3_Init(void);
 static void MX_OPAMP1_Init(void);
+static void MX_TIM2_Init(void);
+static void MX_DAC2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -103,8 +106,9 @@ int main(void)
   MX_ADC1_Init();
   MX_ADC3_Init();
   MX_ADC4_Init();
-  MX_DAC3_Init();
   MX_OPAMP1_Init();
+  MX_TIM2_Init();
+  MX_DAC2_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -127,10 +131,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   BSP_COM_SelectLogPort(COM1);
 
+  HAL_DAC_Start(&hdac2, DAC_CHANNEL_1);
+  HAL_TIM_Base_Start(&htim2);
   run_oscilloscope();
 
-  /* USER CODE END WHILE */
-  /* USER CODE BEGIN 3 */
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
   /* USER CODE END 3 */
 }
 
@@ -375,27 +382,27 @@ static void MX_ADC4_Init(void)
 }
 
 /**
-  * @brief DAC3 Initialization Function
+  * @brief DAC2 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_DAC3_Init(void)
+static void MX_DAC2_Init(void)
 {
 
-  /* USER CODE BEGIN DAC3_Init 0 */
+  /* USER CODE BEGIN DAC2_Init 0 */
 
-  /* USER CODE END DAC3_Init 0 */
+  /* USER CODE END DAC2_Init 0 */
 
   DAC_ChannelConfTypeDef sConfig = {0};
 
-  /* USER CODE BEGIN DAC3_Init 1 */
+  /* USER CODE BEGIN DAC2_Init 1 */
 
-  /* USER CODE END DAC3_Init 1 */
+  /* USER CODE END DAC2_Init 1 */
 
   /** DAC Initialization
   */
-  hdac3.Instance = DAC3;
-  if (HAL_DAC_Init(&hdac3) != HAL_OK)
+  hdac2.Instance = DAC2;
+  if (HAL_DAC_Init(&hdac2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -406,18 +413,25 @@ static void MX_DAC3_Init(void)
   sConfig.DAC_DMADoubleDataMode = DISABLE;
   sConfig.DAC_SignedFormat = DISABLE;
   sConfig.DAC_SampleAndHold = DAC_SAMPLEANDHOLD_DISABLE;
-  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
+  sConfig.DAC_Trigger = DAC_TRIGGER_T2_TRGO;
   sConfig.DAC_Trigger2 = DAC_TRIGGER_NONE;
-  sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_DISABLE;
-  sConfig.DAC_ConnectOnChipPeripheral = DAC_CHIPCONNECT_INTERNAL;
+  sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
+  sConfig.DAC_ConnectOnChipPeripheral = DAC_CHIPCONNECT_BOTH;
   sConfig.DAC_UserTrimming = DAC_TRIMMING_FACTORY;
-  if (HAL_DAC_ConfigChannel(&hdac3, &sConfig, DAC_CHANNEL_1) != HAL_OK)
+  if (HAL_DAC_ConfigChannel(&hdac2, &sConfig, DAC_CHANNEL_1) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN DAC3_Init 2 */
 
-  /* USER CODE END DAC3_Init 2 */
+  /** Configure Triangle wave generation on DAC OUT1
+  */
+  if (HAL_DACEx_TriangleWaveGenerate(&hdac2, DAC_CHANNEL_1, DAC_TRIANGLEAMPLITUDE_1023) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN DAC2_Init 2 */
+
+  /* USER CODE END DAC2_Init 2 */
 
 }
 
@@ -452,6 +466,51 @@ static void MX_OPAMP1_Init(void)
   /* USER CODE BEGIN OPAMP1_Init 2 */
 
   /* USER CODE END OPAMP1_Init 2 */
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 9;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 9;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
 
 }
 
