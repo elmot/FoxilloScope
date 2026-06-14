@@ -8,9 +8,12 @@
   </component>
   <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
   <component name="CidrRootsConfiguration">
+    <sourceRoots>
+      <file path="$PROJECT_DIR$/py" />
+    </sourceRoots>
     <excludeRoots>
       <file path="$PROJECT_DIR$/build" />
     </excludeRoots>
   </component>
-  <component name="WestSettings"><![CDATA[{}]]></component>
+  <component name="WestSettings">{}</component>
 </project>

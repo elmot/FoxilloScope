@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oscilloscope</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { background: #111; color: #0f0; font: 14px monospace; display: flex; flex-direction: column; }
+  #topbar { display: flex; align-items: center; gap: 1em; padding: 6px 12px; background: #1a1a1a; flex-shrink: 0; }
+  #topbar button { background: #333; color: #0f0; border: 1px solid #0f0; padding: 4px 14px; cursor: pointer; border-radius: 3px; font: inherit; }
+  #topbar button:hover { background: #0f0; color: #000; }
+  #info { display: flex; gap: 2em; }
+  #canvaswrap { flex: 1; position: relative; margin: 6px 10px; }
+  #canvaswrap canvas { position: absolute; left: 0; top: 0; width: 100% !important; height: 100% !important; background: #000; display: block; }
+  #footer { text-align: center; padding: 4px; flex-shrink: 0; }
+  #status { color: #888; }
+  .label { color: #888; }
+  .val { color: #0f0; }
+</style>
+</head>
+<body>
+<div id="topbar">
+  <button id="refreshBtn">⟳ refresh</button>
+  <div id="info">
+    <span><span class="label">freq</span> <span class="val" id="freq">—</span></span>
+    <span><span class="label">gain</span> <span class="val" id="gain">—</span></span>
+    <span><span class="label">shift</span> <span class="val" id="shift">—</span></span>
+    <span><span class="label">samples</span> <span class="val" id="count">—</span></span>
+  </div>
+</div>
+<div id="canvaswrap"><canvas id="scope" width="1200" height="600"></canvas></div>
+<div id="footer"><span id="status">connecting...</span></div>
+
+<script>
+const canvas = document.getElementById("scope");
+const ctx = canvas.getContext("2d");
+let ws = null;
+
+function plot(data) {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  if (!data || data.length < 2) return;
+
+  // grid
+  ctx.strokeStyle = "#222";
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+  // centre line
+  ctx.strokeStyle = "#333";
+  ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(W, H/2); ctx.stroke();
+
+  // waveform
+  const len = data.length;
+  const step = W / len;
+  const mid = H / 2;
+  const scale = H / 4096;
+
+  ctx.strokeStyle = "#0f0";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i < len; i++) {
+    const x = i * step;
+    const y = mid - (data[i] - 2048) * scale;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  ctx.fillStyle = "#f00";
+  ctx.fillRect(0, mid - 2, 6, 4);
+}
+
+function connect() {
+  if (ws) { ws.close(); ws = null; }
+  ws = new WebSocket(`ws://${location.host}/ws`);
+  ws.onopen = () => document.getElementById("status").textContent = "connected";
+  ws.onclose = () => document.getElementById("status").textContent = "disconnected";
+  ws.onerror = () => document.getElementById("status").textContent = "error";
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.error) {
+      document.getElementById("status").textContent = "error: " + msg.error;
+      return;
+    }
+    document.getElementById("freq").textContent = msg.sampling_freq ?? "—";
+    document.getElementById("gain").textContent = msg.gain_a ?? "—";
+    document.getElementById("shift").textContent = msg.shift_a ?? "—";
+    document.getElementById("count").textContent = msg.data_a?.length ?? "—";
+    document.getElementById("status").textContent = "streaming";
+    plot(msg.data_a);
+  };
+}
+
+document.getElementById("refreshBtn").onclick = connect;
+connect();
+</script>
+</body>
+</html>
