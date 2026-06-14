@@ -22,7 +22,7 @@
 </head>
 <body>
 <div id="topbar">
-  <button id="refreshBtn">⟳ refresh</button>
+  <button id="refreshBtn">Reload</button>
   <div id="info">
     <span><span class="label">freq</span> <span class="val" id="freq">—</span></span>
     <span><span class="label">gain</span> <span class="val" id="gain">—</span></span>
@@ -73,6 +73,31 @@ function plot(data) {
   ctx.fillRect(0, mid - 2, 6, 4);
 }
 
+function decode(input) {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  let results = [];
+
+  for (let i = 0; i < input.length; i += 2) {
+    const char1 = input[i];
+    const char2 = input[i + 1];
+
+    if (!char1 || !char2) break; // Handle odd lengths
+
+    const val1 = alphabet.indexOf(char1);
+    const val2 = alphabet.indexOf(char2);
+
+    if (val1 !== -1 && val2 !== -1) {
+      // Shift the first 6-bit value left by 6 bits and add the second
+      // This effectively combines two 6-bit chars into one 12-bit int
+      const combined = (val1 << 6) | val2;
+      results.push(combined);
+    }
+  }
+
+  return results;
+}
+
+
 function connect() {
   if (ws) { ws.close(); ws = null; }
   ws = new WebSocket(`ws://${location.host}/ws`);
@@ -85,16 +110,19 @@ function connect() {
       document.getElementById("status").textContent = "error: " + msg.error;
       return;
     }
+    let samples = decode(msg.data_a)
     document.getElementById("freq").textContent = msg.sampling_freq ?? "—";
     document.getElementById("gain").textContent = msg.gain_a ?? "—";
     document.getElementById("shift").textContent = msg.shift_a ?? "—";
-    document.getElementById("count").textContent = msg.data_a?.length ?? "—";
+    document.getElementById("count").textContent = samples.length ?? "—";
     document.getElementById("status").textContent = "streaming";
-    plot(msg.data_a);
+    plot(samples);
   };
 }
 
-document.getElementById("refreshBtn").onclick = connect;
+document.getElementById("refreshBtn").onclick = function () {
+  window.location.reload()
+};
 connect();
 </script>
 </body>

@@ -1,21 +1,10 @@
 import asyncio
-import base64
 import sys
 import serial
 import aiohttp
 from aiohttp import web
 
 WS_CLIENTS: set[web.WebSocketResponse] = set()
-
-
-def decode_12bit_b64(b64: str) -> list[int]:
-    raw = base64.b64decode(b64)
-    out = []
-    for i in range(0, len(raw) - 2, 3):
-        out.append((raw[i] << 4) | (raw[i + 1] >> 4))
-        out.append(((raw[i + 1] & 0x0F) << 8) | raw[i + 2])
-    return out
-
 
 async def serial_reader(port: str, baud: int):
     loop = asyncio.get_event_loop()
@@ -32,28 +21,27 @@ async def serial_reader(port: str, baud: int):
             if line == "[start]":
                 in_block = True
                 buf.clear()
+            elif line == "[stop]":
+                payload = {
+                    "sampling_freq": int(buf.get("sampling.freq", 0)),
+                    "shift_a": int(buf.get("shift.a", 0)),
+                    "gain_a": int(buf.get("gain.a", 1)),
+                    "data_a": buf.get("data.a", ""),
+                }
+                for ws in WS_CLIENTS.copy():
+                    try:
+                        await ws.send_json(payload)
+                    except ConnectionResetError:
+                        WS_CLIENTS.discard(ws)
+                in_block = False
+                buf.clear()
             elif in_block:
                 if "=" not in line:
                     continue
                 k, v = line.split("=", 1)
-                k = k.strip().replace(".", "_")
+                k = k.strip()
                 v = v.strip()
                 buf[k] = v
-                if k == "data_a":
-                    samples = decode_12bit_b64(v)
-                    payload = {
-                        "sampling_freq": int(buf.get("sampling_freq", 0)),
-                        "shift_a": int(buf.get("shift_a", 0)),
-                        "gain_a": int(buf.get("gain_a", 1)),
-                        "data_a": samples,
-                    }
-                    for ws in WS_CLIENTS.copy():
-                        try:
-                            await ws.send_json(payload)
-                        except ConnectionResetError:
-                            WS_CLIENTS.discard(ws)
-                    in_block = False
-                    buf.clear()
     except serial.SerialException as e:
         for ws in WS_CLIENTS.copy():
             try:

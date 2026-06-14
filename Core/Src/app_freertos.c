@@ -74,13 +74,21 @@ const osThreadAttr_t TransmitTask_attributes = {
   .cb_size = sizeof(TransmitTaskControlBlock),
   .priority = (osPriority_t) osPriorityLow,
 };
-/* Definitions for transmit_buffer_ready */
-osSemaphoreId_t transmit_buffer_readyHandle;
-osStaticSemaphoreDef_t transmit_buffer_readyControlBlock;
-const osSemaphoreAttr_t transmit_buffer_ready_attributes = {
-  .name = "transmit_buffer_ready",
-  .cb_mem = &transmit_buffer_readyControlBlock,
-  .cb_size = sizeof(transmit_buffer_readyControlBlock),
+/* Definitions for transmitBufferBusy */
+osSemaphoreId_t transmitBufferBusyHandle;
+osStaticSemaphoreDef_t transmitBufferBusyControlBlock;
+const osSemaphoreAttr_t transmitBufferBusy_attributes = {
+  .name = "transmitBufferBusy",
+  .cb_mem = &transmitBufferBusyControlBlock,
+  .cb_size = sizeof(transmitBufferBusyControlBlock),
+};
+/* Definitions for readyToTransmit */
+osSemaphoreId_t readyToTransmitHandle;
+osStaticSemaphoreDef_t transmitReadyControlBlock;
+const osSemaphoreAttr_t readyToTransmit_attributes = {
+  .name = "readyToTransmit",
+  .cb_mem = &transmitReadyControlBlock,
+  .cb_size = sizeof(transmitReadyControlBlock),
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -89,8 +97,8 @@ void initialize_test_signal(void);
 
 /* USER CODE END FunctionPrototypes */
 
-void StartDefaultTask(void *argument);
-void StartTransmitTask(void *argument);
+void startDefaultTask(void *argument);
+extern void startTransmitTask(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -126,8 +134,11 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_MUTEX */
 
   /* Create the semaphores(s) */
-  /* creation of transmit_buffer_ready */
-  transmit_buffer_readyHandle = osSemaphoreNew(1, 1, &transmit_buffer_ready_attributes);
+  /* creation of transmitBufferBusy */
+  transmitBufferBusyHandle = osSemaphoreNew(1, 1, &transmitBufferBusy_attributes);
+
+  /* creation of readyToTransmit */
+  readyToTransmitHandle = osSemaphoreNew(1, 0, &readyToTransmit_attributes);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
@@ -143,10 +154,10 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  defaultTaskHandle = osThreadNew(startDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of TransmitTask */
-  TransmitTaskHandle = osThreadNew(StartTransmitTask, NULL, &TransmitTask_attributes);
+  TransmitTaskHandle = osThreadNew(startTransmitTask, NULL, &TransmitTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -158,50 +169,22 @@ void MX_FREERTOS_Init(void) {
 
 }
 
-/* USER CODE BEGIN Header_StartDefaultTask */
+/* USER CODE BEGIN Header_startDefaultTask */
 /**
   * @brief  Function implementing the defaultTask thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
+/* USER CODE END Header_startDefaultTask */
+void startDefaultTask(void *argument)
 {
-  /* USER CODE BEGIN StartDefaultTask */
-  /* Infinite loop */
-  BSP_COM_SelectLogPort(COM1);
-
-  initialize_test_signal();
-
+  /* USER CODE BEGIN startDefaultTask */
   run_oscilloscope();
-  /* USER CODE END StartDefaultTask */
-}
-
-/* USER CODE BEGIN Header_StartTransmitTask */
-/**
-* @brief Function implementing the TransmitTask thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartTransmitTask */
-void StartTransmitTask(void *argument)
-{
-  /* USER CODE BEGIN StartTransmitTask */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END StartTransmitTask */
+  /* USER CODE END startDefaultTask */
 }
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-void initialize_test_signal(void)
-{
-  HAL_DAC_Start(&hdac2, DAC_CHANNEL_1);
-  HAL_TIM_Base_Start(&htim2);
-}
 
 /* USER CODE END Application */
 

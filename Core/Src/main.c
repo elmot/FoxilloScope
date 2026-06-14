@@ -128,9 +128,6 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
-  run_oscilloscope();
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
