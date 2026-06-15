@@ -90,6 +90,14 @@ const osSemaphoreAttr_t readyToTransmit_attributes = {
   .cb_mem = &transmitReadyControlBlock,
   .cb_size = sizeof(transmitReadyControlBlock),
 };
+/* Definitions for keyFrameComes */
+osSemaphoreId_t keyFrameComesHandle;
+osStaticSemaphoreDef_t myBinarySem03ControlBlock;
+const osSemaphoreAttr_t keyFrameComes_attributes = {
+  .name = "keyFrameComes",
+  .cb_mem = &myBinarySem03ControlBlock,
+  .cb_size = sizeof(myBinarySem03ControlBlock),
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -139,6 +147,9 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of readyToTransmit */
   readyToTransmitHandle = osSemaphoreNew(1, 0, &readyToTransmit_attributes);
+
+  /* creation of keyFrameComes */
+  keyFrameComesHandle = osSemaphoreNew(1, 0, &keyFrameComes_attributes);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */

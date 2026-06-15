@@ -7,6 +7,8 @@
 #include "span"
 #include "oscilloscope.hpp"
 
+#include "opamp.h"
+
 using namespace std;
 
 alignas(uint32_t) static array<uint16_t, data_frame_size * 2> adcBuffer{};
@@ -29,8 +31,11 @@ void initialize_test_signal() //todo remove  together with hdac2 triangle wave g
     initialize_test_signal();
 
     HAL_DMA_RegisterCallback(&hdma_memtomem_dma1_channel2, HAL_DMA_XFER_CPLT_CB_ID, dmaMemToMemCallback);
-    HAL_ADC_Start_DMA(&hadc2, reinterpret_cast<uint32_t*>(adcBuffer.data()), adcBuffer.size());
+    HAL_ADC_Start_DMA(&hadc3, reinterpret_cast<uint32_t*>(adcBuffer.data()), adcBuffer.size());
     HAL_TIM_Base_Start(&htim3);
+    HAL_OPAMP_Start(&hopamp3);
+    HAL_DAC_Start(&hdac1, DAC1_CHANNEL_1);
+    HAL_DAC_SetValue(&hdac1, DAC1_CHANNEL_1,DAC_ALIGN_8B_R, 24);
 
     while (true)
     {
