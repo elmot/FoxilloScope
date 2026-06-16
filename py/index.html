@@ -61,11 +61,19 @@ function sendParameter(parametersStr) {
   }
 }
 
+const debounce = (callback) => {
+  let timeoutId = null;
+  return (...args) => {
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(() => {
+      callback(...args);
+    }, 20);
+  };
+}
+
 const vbiasInput = document.getElementById("vbias");
 
-vbiasInput.onchange = () => {
-  sendParameter(`vbias.a=${vbiasInput.value}`);
-};
+vbiasInput.oninput = debounce(()=>{sendParameter(`vbias.a=${vbiasInput.value}`)});
 
 function plot(data) {
   const W = canvas.width, H = canvas.height;
