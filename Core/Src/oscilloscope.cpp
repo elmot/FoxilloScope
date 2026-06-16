@@ -30,10 +30,11 @@ void initialize_test_signal() //todo remove together with tim2 & hdac2 wave gene
     BSP_COM_SelectLogPort(COM1);
 
     initialize_test_signal();
-
+    HAL_ADCEx_Calibration_Start(&hadc3, ADC_SINGLE_ENDED);
+    HAL_ADCEx_Calibration_Start(&hadc4, ADC_SINGLE_ENDED);
     HAL_DMA_RegisterCallback(&hdma_memtomem_dma1_channel2, HAL_DMA_XFER_CPLT_CB_ID, dmaMemToMemCallback);
-    HAL_ADC_Start_DMA(&hadc3, reinterpret_cast<uint32_t*>(adcBuffer.data()), adcBuffer.size());
-    HAL_TIM_Base_Start(&htim3);
+    HAL_ADC_Start(&hadc4);
+    HAL_ADCEx_MultiModeStart_DMA(&hadc3, reinterpret_cast<uint32_t*>(adcBuffer.data()), adcBuffer.size() / 2);
     HAL_OPAMP_Start(&hopamp3);
     HAL_DAC_Start(&hdac1, DAC1_CHANNEL_1);
     HAL_DAC_SetValue(&hdac1, DAC1_CHANNEL_1,DAC_ALIGN_12B_R, 1020);
