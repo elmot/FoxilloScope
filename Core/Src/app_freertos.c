@@ -31,6 +31,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 typedef StaticTask_t osStaticThreadDef_t;
+typedef StaticQueue_t osStaticMessageQDef_t;
 typedef StaticSemaphore_t osStaticSemaphoreDef_t;
 /* USER CODE BEGIN PTD */
 
@@ -73,6 +74,17 @@ const osThreadAttr_t TransmitTask_attributes = {
   .cb_mem = &TransmitTaskControlBlock,
   .cb_size = sizeof(TransmitTaskControlBlock),
   .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for cmdRxQueue */
+osMessageQueueId_t cmdRxQueueHandle;
+uint8_t cmdRxQueueBuffer[ 128 * sizeof( uint8_t ) ];
+osStaticMessageQDef_t cmdRxQueueControlBlock;
+const osMessageQueueAttr_t cmdRxQueue_attributes = {
+  .name = "cmdRxQueue",
+  .cb_mem = &cmdRxQueueControlBlock,
+  .cb_size = sizeof(cmdRxQueueControlBlock),
+  .mq_mem = &cmdRxQueueBuffer,
+  .mq_size = sizeof(cmdRxQueueBuffer)
 };
 /* Definitions for transmitBufferBusy */
 osSemaphoreId_t transmitBufferBusyHandle;
@@ -158,6 +170,10 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
+
+  /* Create the queue(s) */
+  /* creation of cmdRxQueue */
+  cmdRxQueueHandle = osMessageQueueNew (128, sizeof(uint8_t), &cmdRxQueue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */

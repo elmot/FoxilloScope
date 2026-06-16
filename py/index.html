@@ -12,8 +12,19 @@
   #topbar button { background: #333; color: #0f0; border: 1px solid #0f0; padding: 4px 14px; cursor: pointer; border-radius: 3px; font: inherit; }
   #topbar button:hover { background: #0f0; color: #000; }
   #info { display: flex; gap: 2em; }
-  #canvaswrap { flex: 1; position: relative; margin: 6px 10px; }
-  #canvaswrap canvas { position: absolute; left: 0; top: 0; width: 100% !important; height: 100% !important; background: #000; display: block; }
+  #canvaswrap { flex: 1; position: relative; margin: 6px 10px; display: flex; }
+  #vbias-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 10px; }
+
+  #vbias-container input {
+    flex: 1;
+    background: #222;
+    color: #0f0;
+    border: 1px solid #0f0;
+    padding: 5px;
+    font: inherit;
+    writing-mode: sideways-lr
+  }
+  #canvaswrap canvas { position: relative; flex: 1; left: 0; top: 0; width: 100% !important; height: 100% !important; background: #000; display: block; }
   #footer { text-align: center; padding: 4px; flex-shrink: 0; }
   #status { color: #888; }
   .label { color: #888; }
@@ -30,13 +41,31 @@
     <span><span class="label">samples</span> <span class="val" id="count">—</span></span>
   </div>
 </div>
-<div id="canvaswrap"><canvas id="scope" width="1200" height="600"></canvas></div>
+<div id="canvaswrap">
+  <div id="vbias-container">
+    <span class="label">vbias</span>
+    <input type="range" id="vbias" value="0" min="-1000000" max="1000000" step="1000">
+  </div>
+  <canvas id="scope" width="1200" height="600"></canvas>
+</div>
 <div id="footer"><span id="status">connecting...</span></div>
 
 <script>
 const canvas = document.getElementById("scope");
 const ctx = canvas.getContext("2d");
 let ws = null;
+
+function sendParameter(parametersStr) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(parametersStr);
+  }
+}
+
+const vbiasInput = document.getElementById("vbias");
+
+vbiasInput.onchange = () => {
+  sendParameter(`vbias.a=${vbiasInput.value}`);
+};
 
 function plot(data) {
   const W = canvas.width, H = canvas.height;

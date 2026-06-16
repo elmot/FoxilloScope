@@ -5,7 +5,7 @@
 
 using namespace std;
 
- array<uint16_t, data_frame_size> transmitBuffer{};
+array<uint16_t, data_frame_size> transmitBuffer{};
 
 static constexpr char BASE64_CHARS[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -56,14 +56,44 @@ data.a=)";
 
 extern "C" int _write(const int file, const unsigned char* ptr, const int len) // NOLINT(*-reserved-identifier)
 {
-    (void) file;
-    HAL_UART_Transmit_DMA(&hlpuart1, ptr,len);
+    (void)file;
+    HAL_UART_Transmit_DMA(&hlpuart1, ptr, len);
     osSemaphoreAcquire(dataUartTakenHandle, osWaitForever);
     return len;
 }
 
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart)
 {
-    (void) huart;
+    (void)huart;
     osSemaphoreRelease(dataUartTakenHandle);
+}
+// STDIN redirection
+extern osMessageQueueId_t cmdRxQueueHandle;
+
+static uint8_t rxByte;
+
+void startUartInput()
+{
+    HAL_UART_Receive_IT(&hlpuart1, &rxByte, 1);
+}
+
+extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    osMessageQueuePut(cmdRxQueueHandle, &rxByte,0,0);
+    startUartInput();
+}
+
+extern "C" ssize_t _read(const int file, char* ptr, const size_t len) // NOLINT(*-reserved-identifier)
+{
+    (void)file;
+    size_t counter = 1;
+    osMessageQueueGet(cmdRxQueueHandle, ptr, 0,osWaitForever);
+    while (len > counter)
+    {
+        auto code = osMessageQueueGet(cmdRxQueueHandle, &ptr[counter], 0,0);
+        if (code != osOK) break;
+        counter++;
+    }
+    return counter;
 }

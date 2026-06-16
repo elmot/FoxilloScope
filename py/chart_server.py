@@ -6,14 +6,15 @@ from aiohttp import web
 
 WS_CLIENTS: set[web.WebSocketResponse] = set()
 
-async def serial_reader(port: str, baud: int):
+global serial_port
+
+async def serial_reader():
     loop = asyncio.get_event_loop()
-    ser = serial.Serial(port, baud, timeout=0.01)
     buf: dict[str, str] = {}
     in_block = False
     try:
         while True:
-            raw = await loop.run_in_executor(None, ser.readline)
+            raw = await loop.run_in_executor(None, serial_port.readline)
             if not raw:
                 await asyncio.sleep(0.001)
                 continue
@@ -49,8 +50,8 @@ async def serial_reader(port: str, baud: int):
             except ConnectionResetError:
                 WS_CLIENTS.discard(ws)
     finally:
-        if ser.is_open:
-            ser.close()
+        if serial_port.is_open:
+            serial_port.close()
 
 
 async def ws_handler(request: web.Request) -> web.WebSocketResponse:
@@ -59,7 +60,10 @@ async def ws_handler(request: web.Request) -> web.WebSocketResponse:
     WS_CLIENTS.add(ws)
     try:
         async for msg in ws:
-            if msg.type == aiohttp.WSMsgType.ERROR:
+            if msg.type == aiohttp.WSMsgType.TEXT:
+                user_request = msg.data + "\n"
+                serial_port.write(user_request.encode("ascii"))
+            elif msg.type == aiohttp.WSMsgType.ERROR:
                 break
     finally:
         WS_CLIENTS.discard(ws)
@@ -69,17 +73,17 @@ async def ws_handler(request: web.Request) -> web.WebSocketResponse:
 async def index_handler(request: web.Request) -> web.FileResponse:
     return web.FileResponse("index.html")
 
-
 def main():
+    global serial_port
     port = sys.argv[1] if len(sys.argv) > 1 else "COM4"
     baud = int(sys.argv[2]) if len(sys.argv) > 2 else 460800
-
+    serial_port = serial.Serial(port, baud, timeout=0.01)
     app = web.Application()
     app.router.add_get("/", index_handler)
     app.router.add_get("/ws", ws_handler)
 
     async def on_startup(app):
-        app["serial_task"] = asyncio.create_task(serial_reader(port, baud))
+        app["serial_task"] = asyncio.create_task(serial_reader())
 
     async def on_shutdown(app):
         app["serial_task"].cancel()
