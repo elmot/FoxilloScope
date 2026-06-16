@@ -60,8 +60,6 @@ extern COMP_HandleTypeDef hcomp1;
 extern DMA_HandleTypeDef hdma_dac2_ch1;
 extern DAC_HandleTypeDef hdac2;
 extern DMA_HandleTypeDef hdma_memtomem_dma1_channel2;
-extern DMA_HandleTypeDef hdma_lpuart1_tx;
-extern UART_HandleTypeDef hlpuart1;
 extern TIM_HandleTypeDef htim7;
 
 /* USER CODE BEGIN EV */
@@ -214,9 +212,9 @@ void DMA1_Channel3_IRQHandler(void)
 void DMA1_Channel4_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel4_IRQn 0 */
-
+  extern void lpuart1TransferComplete();
+  lpuart1TransferComplete();
   /* USER CODE END DMA1_Channel4_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_lpuart1_tx);
   /* USER CODE BEGIN DMA1_Channel4_IRQn 1 */
 
   /* USER CODE END DMA1_Channel4_IRQn 1 */
@@ -257,9 +255,20 @@ void COMP1_2_3_IRQHandler(void)
 void LPUART1_IRQHandler(void)
 {
   /* USER CODE BEGIN LPUART1_IRQn 0 */
+  // Check if RXNE flag is set AND if RXNE interrupt is enabled
+  if (LL_LPUART_IsActiveFlag_RXNE(LPUART1) && LL_LPUART_IsEnabledIT_RXNE(LPUART1))
+  {
+    extern void lpuart1ReadByte(uint8_t);
+    lpuart1ReadByte(LL_LPUART_ReceiveData8(LPUART1));
+  }
 
+  // Optional but recommended: Handle Error Flags (Overrun, Noise, Framing)
+  // If an Overrun error (ORE) occurs, it can freeze the RXNE interrupt until cleared!
+  if (LL_LPUART_IsActiveFlag_ORE(LPUART1))
+  {
+    LL_LPUART_ClearFlag_ORE(LPUART1); // Clear overrun flag
+  }
   /* USER CODE END LPUART1_IRQn 0 */
-  HAL_UART_IRQHandler(&hlpuart1);
   /* USER CODE BEGIN LPUART1_IRQn 1 */
 
   /* USER CODE END LPUART1_IRQn 1 */

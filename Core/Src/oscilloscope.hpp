@@ -26,6 +26,9 @@ extern osSemaphoreId_t notReadyToTransmitHandle;
 
 extern std::array<uint16_t, data_frame_size> transmitBuffer;
 
+extern osMessageQueueId_t cmdRxQueueHandle;
+
+
 void startUartInput();
 
 #endif //G4_OSCILLOSCOPE_B_OSCILLOSCOPE_H

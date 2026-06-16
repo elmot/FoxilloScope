@@ -56,7 +56,16 @@ static void executeIncomingCommand()
 {
     static char cmdBuffer[121];
     cmdBuffer[0] = 0;
-    fgets(cmdBuffer, sizeof(cmdBuffer),stdin);
+    for (size_t i = 0; true; i = (i + 1) % sizeof(cmdBuffer))
+    {
+        osMessageQueueGet(cmdRxQueueHandle, &cmdBuffer[i], 0,osWaitForever);
+        if (cmdBuffer[i] == '\n' || cmdBuffer[i] == '\r')
+        {
+            cmdBuffer[i] = 0;
+            break;
+        }
+    }
+
     char* ptr = cmdBuffer;
     skipWhiteSpace(ptr);
     bool updated = false;

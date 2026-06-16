@@ -9,7 +9,7 @@ array<uint16_t, data_frame_size> transmitBuffer{};
 
 static constexpr char BASE64_CHARS[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-extern osSemaphoreId_t dataUartTakenHandle;
+void writeUart(const string_view& str);
 
 extern "C" [[noreturn]] void startTransmitTask([[maybe_unused]] void* argument)
 {
@@ -43,9 +43,9 @@ sampling.freq=100
 shift.a=0
 gain.a=1
 data.a=)";
-        fputs(dataHeader, stdout);
-        puts(dataBuffer.data());
-        puts("[stop]");
+        writeUart(dataHeader);
+        writeUart(dataBuffer.data());
+        writeUart("\n[stop]\n");
         osSemaphoreRelease(transmitBufferBusyHandle);
     }
 }
@@ -54,46 +54,64 @@ data.a=)";
  *
  */
 
-extern "C" int _write(const int file, const unsigned char* ptr, const int len) // NOLINT(*-reserved-identifier)
+volatile static osThreadId_t transmittingTaskHandle = nullptr;
+constexpr uint32_t UART_TX_BUSY = 0x1;
+void writeUart(const string_view& str)
 {
-    (void)file;
-    HAL_UART_Transmit_DMA(&hlpuart1, ptr, len);
-    osSemaphoreAcquire(dataUartTakenHandle, osWaitForever);
-    return len;
+        transmittingTaskHandle = osThreadGetId();
+        // Disable the DMA channel to allow configuration
+        LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_4); // Use your specific DMA and Channel/Stream
+
+        // Clear any prior transfer complete or error flags
+        LL_DMA_ClearFlag_TC4(DMA1);
+        LL_DMA_ClearFlag_TE4(DMA1);
+
+        LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_4, reinterpret_cast<uint32_t>(str.data()));
+        LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_4, str.size());
+
+        LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_4, reinterpret_cast<uint32_t>(&LPUART1->TDR));
+
+        // Clear any pending notifications before starting the hardware
+        osThreadFlagsClear(UART_TX_BUSY);
+        // Enable the DMA Channel
+        LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_4);
+        LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_4);
+        LL_LPUART_EnableDMAReq_TX(LPUART1);
+
+        // Wait for the specific thread flag to be set by the ISR
+        // This is immune to the race condition because even if the flag is set 1 microsecond
+        // BEFORE this line executes, osThreadFlagsWait reads the already-set flag and moves on.
+        osThreadFlagsWait(0x01, osFlagsWaitAny, osWaitForever);
 }
 
-
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart)
+extern "C" void lpuart1TransferComplete()
 {
-    (void)huart;
-    osSemaphoreRelease(dataUartTakenHandle);
-}
-// STDIN redirection
-extern osMessageQueueId_t cmdRxQueueHandle;
+    if (LL_DMA_IsActiveFlag_TC4(DMA1))
+    {
+        // Clear the DMA interrupt flag
+        LL_DMA_ClearFlag_TC4(DMA1);
 
-static uint8_t rxByte;
+        // Disable the UART DMA TX Request bit
+        LL_LPUART_DisableDMAReq_TX(LPUART1);
+
+        // Disable the DMA Channel (required before re-configuring NDTR for the next block)
+        LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_4);
+
+        if (transmittingTaskHandle != nullptr)
+        {
+            // Signal the waiting task directly
+            osThreadFlagsSet(transmittingTaskHandle, UART_TX_BUSY);
+        }
+    }
+}
+
 
 void startUartInput()
 {
-    HAL_UART_Receive_IT(&hlpuart1, &rxByte, 1);
+    LL_LPUART_EnableIT_RXNE(LPUART1);
 }
 
-extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+extern "C" void lpuart1ReadByte(const uint8_t rxByte)
 {
-    osMessageQueuePut(cmdRxQueueHandle, &rxByte,0,0);
-    startUartInput();
-}
-
-extern "C" ssize_t _read(const int file, char* ptr, const size_t len) // NOLINT(*-reserved-identifier)
-{
-    (void)file;
-    size_t counter = 1;
-    osMessageQueueGet(cmdRxQueueHandle, ptr, 0,osWaitForever);
-    while (len > counter)
-    {
-        auto code = osMessageQueueGet(cmdRxQueueHandle, &ptr[counter], 0,0);
-        if (code != osOK) break;
-        counter++;
-    }
-    return counter;
+    osMessageQueuePut(cmdRxQueueHandle, &rxByte, 0, 0);
 }

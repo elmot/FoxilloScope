@@ -102,14 +102,6 @@ const osSemaphoreAttr_t notReadyToTransmit_attributes = {
   .cb_mem = &transmitReadyControlBlock,
   .cb_size = sizeof(transmitReadyControlBlock),
 };
-/* Definitions for dataUartTaken */
-osSemaphoreId_t dataUartTakenHandle;
-osStaticSemaphoreDef_t myBinarySem03ControlBlock;
-const osSemaphoreAttr_t dataUartTaken_attributes = {
-  .name = "dataUartTaken",
-  .cb_mem = &myBinarySem03ControlBlock,
-  .cb_size = sizeof(myBinarySem03ControlBlock),
-};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -159,9 +151,6 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of notReadyToTransmit */
   notReadyToTransmitHandle = osSemaphoreNew(1, 0, &notReadyToTransmit_attributes);
-
-  /* creation of dataUartTaken */
-  dataUartTakenHandle = osSemaphoreNew(1, 1, &dataUartTaken_attributes);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
