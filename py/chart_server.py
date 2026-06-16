@@ -72,7 +72,7 @@ async def index_handler(request: web.Request) -> web.FileResponse:
 
 def main():
     port = sys.argv[1] if len(sys.argv) > 1 else "COM4"
-    baud = int(sys.argv[2]) if len(sys.argv) > 2 else 115200
+    baud = int(sys.argv[2]) if len(sys.argv) > 2 else 460800
 
     app = web.Application()
     app.router.add_get("/", index_handler)

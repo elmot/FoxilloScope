@@ -1,5 +1,7 @@
+#include "cmsis_os.h"
 #include "oscilloscope.hpp"
 #include "string"
+#include "usart.h"
 
 using namespace std;
 
@@ -7,14 +9,16 @@ using namespace std;
 
 static constexpr char BASE64_CHARS[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
+extern osSemaphoreId_t dataUartTakenHandle;
+
 extern "C" [[noreturn]] void startTransmitTask([[maybe_unused]] void* argument)
 {
     static array<char, data_frame_size * 2 + 1> dataBuffer;
 
     while (true)
     {
-        osSemaphoreAcquire(readyToTransmitHandle, osWaitForever/*todo add fail detection*/);
-        BSP_LED_Toggle(LED_GREEN);
+        osSemaphoreAcquire(notReadyToTransmitHandle, osWaitForever);
+        HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
         auto textPtr = dataBuffer.begin();
         for (auto val : transmitBuffer)
         {
@@ -44,4 +48,22 @@ data.a=)";
         puts("[stop]");
         osSemaphoreRelease(transmitBufferBusyHandle);
     }
+}
+
+/**  STDOUT substitution
+ *
+ */
+
+extern "C" int _write(const int file, const unsigned char* ptr, const int len) // NOLINT(*-reserved-identifier)
+{
+    (void) file;
+    HAL_UART_Transmit_DMA(&hlpuart1, ptr,len);
+    osSemaphoreAcquire(dataUartTakenHandle, osWaitForever);
+    return len;
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    (void) huart;
+    osSemaphoreRelease(dataUartTakenHandle);
 }

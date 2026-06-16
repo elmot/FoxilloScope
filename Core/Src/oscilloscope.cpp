@@ -27,8 +27,6 @@ void initialize_test_signal() //todo remove together with tim2 & hdac2 wave gene
 
 [[noreturn]] void run_oscilloscope()
 {
-    BSP_COM_SelectLogPort(COM1);
-
     initialize_test_signal();
     HAL_ADCEx_Calibration_Start(&hadc3, ADC_SINGLE_ENDED);
     HAL_ADCEx_Calibration_Start(&hadc4, ADC_SINGLE_ENDED);
@@ -70,6 +68,6 @@ extern "C" void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
 
 void dmaMemToMemCallback(DMA_HandleTypeDef* dma_handle_type_def)
 {
-    osSemaphoreRelease(readyToTransmitHandle);
+    osSemaphoreRelease(notReadyToTransmitHandle);
 }
 

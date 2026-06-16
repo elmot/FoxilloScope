@@ -12,7 +12,7 @@
 constexpr size_t data_frame_size = 200;
 
 extern osSemaphoreId_t transmitBufferBusyHandle;
-extern osSemaphoreId_t readyToTransmitHandle;
+extern osSemaphoreId_t notReadyToTransmitHandle;
 
 extern std::array<uint16_t, data_frame_size> transmitBuffer;
 

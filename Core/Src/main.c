@@ -23,6 +23,7 @@
 #include "comp.h"
 #include "dac.h"
 #include "dma.h"
+#include "usart.h"
 #include "opamp.h"
 #include "tim.h"
 #include "gpio.h"
@@ -48,8 +49,6 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-
-COM_InitTypeDef BspCOMInit;
 
 /* USER CODE BEGIN PV */
 
@@ -104,6 +103,7 @@ int main(void)
   MX_OPAMP3_Init();
   MX_DAC1_Init();
   MX_ADC4_Init();
+  MX_LPUART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -111,20 +111,6 @@ int main(void)
   /* Init scheduler */
   osKernelInitialize();  /* Call init function for freertos objects (in cmsis_os2.c) */
   MX_FREERTOS_Init();
-
-  /* Initialize led */
-  BSP_LED_Init(LED_GREEN);
-
-  /* Initialize COM1 port (115200, 8 bits (7-bit data + 1 stop bit), no parity */
-  BspCOMInit.BaudRate   = 115200;
-  BspCOMInit.WordLength = COM_WORDLENGTH_8B;
-  BspCOMInit.StopBits   = COM_STOPBITS_1;
-  BspCOMInit.Parity     = COM_PARITY_NONE;
-  BspCOMInit.HwFlowCtl  = COM_HWCONTROL_NONE;
-  if (BSP_COM_Init(COM1, &BspCOMInit) != BSP_ERROR_NONE)
-  {
-    Error_Handler();
-  }
 
   /* Start scheduler */
   osKernelStart();
@@ -219,6 +205,7 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
+  // ReSharper disable once CppDFAEndlessLoop
   while (1)
   {
   }
