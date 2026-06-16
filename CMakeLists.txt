@@ -49,6 +49,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         # Add user sources here
         Core/Src/oscilloscope.cpp
         Core/Src/transmit.cpp
+        Core/Src/data.c # todo remove
 )
 
 # Add include paths

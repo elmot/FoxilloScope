@@ -18,9 +18,10 @@ constexpr auto adc2ndHalf = span(adcBuffer).last<data_frame_size>();
 
 void dmaMemToMemCallback(DMA_HandleTypeDef* dma_handle_type_def);
 
-void initialize_test_signal() //todo remove  together with hdac2 triangle wave generation
+void initialize_test_signal() //todo remove together with tim2 & hdac2 wave generation
 {
-    HAL_DAC_Start(&hdac2, DAC_CHANNEL_1);
+    extern const unsigned short fake_signal [];
+    HAL_DAC_Start_DMA(&hdac2, DAC_CHANNEL_1, reinterpret_cast<const uint32_t*>(fake_signal), 140, DAC_ALIGN_12B_R);
     HAL_TIM_Base_Start(&htim2);
 }
 
@@ -35,7 +36,7 @@ void initialize_test_signal() //todo remove  together with hdac2 triangle wave g
     HAL_TIM_Base_Start(&htim3);
     HAL_OPAMP_Start(&hopamp3);
     HAL_DAC_Start(&hdac1, DAC1_CHANNEL_1);
-    HAL_DAC_SetValue(&hdac1, DAC1_CHANNEL_1,DAC_ALIGN_8B_R, 24);
+    HAL_DAC_SetValue(&hdac1, DAC1_CHANNEL_1,DAC_ALIGN_12B_R, 1020);
 
     while (true)
     {
