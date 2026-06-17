@@ -32,13 +32,13 @@ extern "C" {
 
 /* USER CODE END Includes */
 
-extern COMP_HandleTypeDef hcomp1;
+extern COMP_HandleTypeDef hcomp5;
 
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
-void MX_COMP1_Init(void);
+void MX_COMP5_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 

@@ -5,7 +5,7 @@
 
 using namespace std;
 
-array<uint16_t, data_frame_size> transmitBuffer{};
+transmitBuffer_t transmitBuffer{};
 
 static constexpr char BASE64_CHARS[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -17,10 +17,9 @@ extern "C" [[noreturn]] void startTransmitTask([[maybe_unused]] void* argument)
 
     while (true)
     {
-        osSemaphoreAcquire(notReadyToTransmitHandle, osWaitForever);
-        HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+        osThreadFlagsWait(THREAD_FLAG_READY_TO_TRANSMIT, osFlagsWaitAny, osWaitForever);
         auto textPtr = dataBuffer.begin();
-        for (auto val : transmitBuffer)
+        for (auto val : transmitBuffer.samples)
         {
             val &= 0x0FFF;
 
@@ -45,6 +44,10 @@ gain.a=1
 data.a=)";
         writeUart(dataHeader);
         writeUart(dataBuffer.data());
+        if (transmitBuffer.keyFrame)
+        {
+            writeUart("\nkeyframe=1");
+        }
         writeUart("\n[stop]\n");
         osSemaphoreRelease(transmitBufferBusyHandle);
     }

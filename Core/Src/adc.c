@@ -53,11 +53,11 @@ void MX_ADC3_Init(void)
   hadc3.Init.ScanConvMode = ADC_SCAN_DISABLE;
   hadc3.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc3.Init.LowPowerAutoWait = DISABLE;
-  hadc3.Init.ContinuousConvMode = ENABLE;
+  hadc3.Init.ContinuousConvMode = DISABLE;
   hadc3.Init.NbrOfConversion = 1;
   hadc3.Init.DiscontinuousConvMode = DISABLE;
-  hadc3.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-  hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc3.Init.ExternalTrigConv = ADC_EXTERNALTRIG_T3_TRGO;
+  hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
   hadc3.Init.DMAContinuousRequests = ENABLE;
   hadc3.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
   hadc3.Init.OversamplingMode = DISABLE;
@@ -117,7 +117,7 @@ void MX_ADC4_Init(void)
   hadc4.Init.ScanConvMode = ADC_SCAN_DISABLE;
   hadc4.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc4.Init.LowPowerAutoWait = DISABLE;
-  hadc4.Init.ContinuousConvMode = ENABLE;
+  hadc4.Init.ContinuousConvMode = DISABLE;
   hadc4.Init.NbrOfConversion = 1;
   hadc4.Init.DiscontinuousConvMode = DISABLE;
   hadc4.Init.DMAContinuousRequests = DISABLE;

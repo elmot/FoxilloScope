@@ -63,17 +63,29 @@ const osThreadAttr_t defaultTask_attributes = {
   .cb_size = sizeof(defaultTaskControlBlock),
   .priority = (osPriority_t) osPriorityNormal,
 };
-/* Definitions for TransmitTask */
-osThreadId_t TransmitTaskHandle;
-uint32_t TransmitTaskBuffer[ 128 ];
-osStaticThreadDef_t TransmitTaskControlBlock;
-const osThreadAttr_t TransmitTask_attributes = {
-  .name = "TransmitTask",
-  .stack_mem = &TransmitTaskBuffer[0],
-  .stack_size = sizeof(TransmitTaskBuffer),
-  .cb_mem = &TransmitTaskControlBlock,
-  .cb_size = sizeof(TransmitTaskControlBlock),
+/* Definitions for transmitTask */
+osThreadId_t transmitTaskHandle;
+uint32_t transmitTaskBuffer[ 128 ];
+osStaticThreadDef_t transmitTaskControlBlock;
+const osThreadAttr_t transmitTask_attributes = {
+  .name = "transmitTask",
+  .stack_mem = &transmitTaskBuffer[0],
+  .stack_size = sizeof(transmitTaskBuffer),
+  .cb_mem = &transmitTaskControlBlock,
+  .cb_size = sizeof(transmitTaskControlBlock),
   .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for keyFrameTask */
+osThreadId_t keyFrameTaskHandle;
+uint32_t keyFrameTaskBuffer[ 200 ];
+osStaticThreadDef_t keyFrameTaskControlBlock;
+const osThreadAttr_t keyFrameTask_attributes = {
+  .name = "keyFrameTask",
+  .stack_mem = &keyFrameTaskBuffer[0],
+  .stack_size = sizeof(keyFrameTaskBuffer),
+  .cb_mem = &keyFrameTaskControlBlock,
+  .cb_size = sizeof(keyFrameTaskControlBlock),
+  .priority = (osPriority_t) osPriorityHigh,
 };
 /* Definitions for cmdRxQueue */
 osMessageQueueId_t cmdRxQueueHandle;
@@ -94,14 +106,6 @@ const osSemaphoreAttr_t transmitBufferBusy_attributes = {
   .cb_mem = &transmitBufferBusyControlBlock,
   .cb_size = sizeof(transmitBufferBusyControlBlock),
 };
-/* Definitions for notReadyToTransmit */
-osSemaphoreId_t notReadyToTransmitHandle;
-osStaticSemaphoreDef_t transmitReadyControlBlock;
-const osSemaphoreAttr_t notReadyToTransmit_attributes = {
-  .name = "notReadyToTransmit",
-  .cb_mem = &transmitReadyControlBlock,
-  .cb_size = sizeof(transmitReadyControlBlock),
-};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -111,6 +115,7 @@ void initialize_test_signal(void);
 
 void startDefaultTask(void *argument);
 extern void startTransmitTask(void *argument);
+extern void keyFramesProcessing(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -149,9 +154,6 @@ void MX_FREERTOS_Init(void) {
   /* creation of transmitBufferBusy */
   transmitBufferBusyHandle = osSemaphoreNew(1, 1, &transmitBufferBusy_attributes);
 
-  /* creation of notReadyToTransmit */
-  notReadyToTransmitHandle = osSemaphoreNew(1, 0, &notReadyToTransmit_attributes);
-
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
@@ -172,8 +174,11 @@ void MX_FREERTOS_Init(void) {
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(startDefaultTask, NULL, &defaultTask_attributes);
 
-  /* creation of TransmitTask */
-  TransmitTaskHandle = osThreadNew(startTransmitTask, NULL, &TransmitTask_attributes);
+  /* creation of transmitTask */
+  transmitTaskHandle = osThreadNew(startTransmitTask, NULL, &transmitTask_attributes);
+
+  /* creation of keyFrameTask */
+  keyFrameTaskHandle = osThreadNew(keyFramesProcessing, NULL, &keyFrameTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */

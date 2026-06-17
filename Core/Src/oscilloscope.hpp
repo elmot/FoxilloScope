@@ -13,18 +13,26 @@
 struct Command
 {
     std::string_view name;
-    bool requiresRestart;
+    bool requiresRestart{false};
     mutable long long value;
     void (*useNewValue)(long long value);
     long long (*adjustValue)(long long value) = [](const long long value) { return value; };
 };
 
+constexpr uint32_t THREAD_FLAG_READY_TO_TRANSMIT = 0x20;
+constexpr uint32_t THREAD_FLAG_KEY_FRAME_DETECTED = 0x20;
+
 constexpr size_t data_frame_size = 200;
 
 extern osSemaphoreId_t transmitBufferBusyHandle;
-extern osSemaphoreId_t notReadyToTransmitHandle;
 
-extern std::array<uint16_t, data_frame_size> transmitBuffer;
+struct transmitBuffer_t
+{
+    std::array<uint16_t, data_frame_size> samples;
+    bool keyFrame;
+};
+
+extern transmitBuffer_t transmitBuffer;
 
 extern osMessageQueueId_t cmdRxQueueHandle;
 
