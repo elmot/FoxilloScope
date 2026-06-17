@@ -15,21 +15,21 @@
   #canvaswrap { flex: 1; position: relative; margin: 6px 10px; display: flex; }
   #vbias-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 10px; }
 
-  #vbias-container input {
-    flex: 1;
-    background: #222;
-    color: #0f0;
-    border: 1px solid #0f0;
-    padding: 5px;
-    font: inherit;
-    writing-mode: sideways-lr
-  }
+    #vbias-container input {
+      flex: 1;
+      background: #222;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 5px;
+      font: inherit;
+      writing-mode: sideways-lr
+    }
   #canvaswrap canvas { position: relative; flex: 1; left: 0; top: 0; width: 100% !important; height: 100% !important; background: #000; display: block; }
   #footer { text-align: center; padding: 4px; flex-shrink: 0; }
   #status { color: #888; }
   .label { color: #888; }
   .val { color: #0f0; }
-</style>
+  </style>
 </head>
 <body>
 <div id="topbar">
@@ -51,116 +51,131 @@
 <div id="footer"><span id="status">connecting...</span></div>
 
 <script>
-const canvas = document.getElementById("scope");
-const ctx = canvas.getContext("2d");
-let ws = null;
+  const canvas = document.getElementById("scope");
+  const ctx = canvas.getContext("2d");
+  let ws = null;
 
-function sendParameter(parametersStr) {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(parametersStr);
+  function sendParameter(parametersStr) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(parametersStr);
+    }
   }
-}
 
-const debounce = (callback) => {
-  let timeoutId = null;
-  return (...args) => {
-    window.clearTimeout(timeoutId);
-    timeoutId = window.setTimeout(() => {
-      callback(...args);
-    }, 20);
-  };
-}
+  const debounce = (callback) => {
+    let timeoutId = null;
+    return (...args) => {
+      window.clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => {
+        callback(...args);
+      }, 20);
+    };
+  }
 
-const vbiasInput = document.getElementById("vbias");
+  const vbiasInput = document.getElementById("vbias");
 
 vbiasInput.oninput = debounce(()=>{sendParameter(`vbias.a=${vbiasInput.value}`)});
 
 function plot(data) {
-  const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
-  if (!data || data.length < 2) return;
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    if (!data || data.length < 2) return;
 
-  // grid
-  ctx.strokeStyle = "#222";
-  ctx.lineWidth = 1;
+    // grid
+    ctx.strokeStyle = "#222";
+    ctx.lineWidth = 1;
   for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
   for (let y = 0; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
-  // centre line
-  ctx.strokeStyle = "#333";
+    // centre line
+    ctx.strokeStyle = "#333";
   ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(W, H/2); ctx.stroke();
 
-  // waveform
-  const len = data.length;
-  const step = W / len;
-  const mid = H / 2;
-  const scale = H / 4096;
+    // waveform
+    const len = data.length;
+    const step = W / len;
+    const mid = H / 2;
+    const scale = H / 4096;
 
   ctx.strokeStyle = "#0f0";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  for (let i = 0; i < len; i++) {
-    const x = i * step;
-    const y = mid - (data[i] - 2048) * scale;
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  }
-  ctx.stroke();
-
-  ctx.fillStyle = "#f00";
-  ctx.fillRect(0, mid - 2, 6, 4);
-}
-
-function decode(input) {
-  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  let results = [];
-
-  for (let i = 0; i < input.length; i += 2) {
-    const char1 = input[i];
-    const char2 = input[i + 1];
-
-    if (!char1 || !char2) break; // Handle odd lengths
-
-    const val1 = alphabet.indexOf(char1);
-    const val2 = alphabet.indexOf(char2);
-
-    if (val1 !== -1 && val2 !== -1) {
-      // Shift the first 6-bit value left by 6 bits and add the second
-      // This effectively combines two 6-bit chars into one 12-bit int
-      const combined = (val1 << 6) | val2;
-      results.push(combined);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i < len; i++) {
+      const x = i * step;
+      const y = mid - (data[i] - 2048) * scale;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     }
+    ctx.stroke();
+
+    ctx.fillStyle = "#f00";
+    ctx.fillRect(0, mid - 2, 6, 4);
   }
 
-  return results;
-}
+  function decode(input) {
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let results = [];
+
+    for (let i = 0; i < input.length; i += 2) {
+      const char1 = input[i];
+      const char2 = input[i + 1];
+
+      if (!char1 || !char2) break; // Handle odd lengths
+
+      const val1 = alphabet.indexOf(char1);
+      const val2 = alphabet.indexOf(char2);
+
+      if (val1 !== -1 && val2 !== -1) {
+        // Shift the first 6-bit value left by 6 bits and add the second
+        // This effectively combines two 6-bit chars into one 12-bit int
+        const combined = (val1 << 6) | val2;
+        results.push(combined);
+      }
+    }
+
+    return results;
+  }
 
 
-function connect() {
+  function connect() {
   if (ws) { ws.close(); ws = null; }
-  ws = new WebSocket(`ws://${location.host}/ws`);
-  ws.onopen = () => document.getElementById("status").textContent = "connected";
-  ws.onclose = () => document.getElementById("status").textContent = "disconnected";
-  ws.onerror = () => document.getElementById("status").textContent = "error";
-  ws.onmessage = (e) => {
-    const msg = JSON.parse(e.data);
-    if (msg.error) {
-      document.getElementById("status").textContent = "error: " + msg.error;
-      return;
-    }
-    let samples = decode(msg.data_a)
-    document.getElementById("freq").textContent = msg.sampling_freq ?? "—";
-    document.getElementById("gain").textContent = msg.gain_a ?? "—";
-    document.getElementById("shift").textContent = msg.shift_a ?? "—";
-    document.getElementById("count").textContent = samples.length ?? "—";
-    document.getElementById("status").textContent = "streaming";
-    plot(samples);
-  };
-}
+    ws = new WebSocket(`ws://${location.host}/ws`);
+    ws.onopen = () => document.getElementById("status").textContent = "connected";
+    ws.onclose = () => document.getElementById("status").textContent = "disconnected";
+    ws.onerror = () => document.getElementById("status").textContent = "error";
 
-document.getElementById("refreshBtn").onclick = function () {
-  window.location.reload()
-};
-connect();
+    ws.onmessage = (e) => {
+      const payloadText = e.data;
+      if (payloadText.startsWith("error: ")) {
+        document.getElementById("status").textContent = "error: " + payloadText.substring(7);
+        return;
+      }
+
+      const lines = payloadText.split("\n");
+      let buf = {};
+
+      for (let rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) continue;
+        const eqIdx = line.indexOf("=");
+        if (eqIdx !== -1) {
+          const k = line.substring(0, eqIdx).trim();
+          buf[k] = line.substring(eqIdx + 1).trim();
+        }
+        let samples = decode(buf["data.a"] || "");
+        let keyframe = buf["keyframe"] === "1"
+        document.getElementById("freq").textContent = buf["sampling.freq"] || "-";
+        document.getElementById("gain").textContent = buf["gain.a"] || "-";
+        document.getElementById("shift").textContent = buf["shift.a"] || "-";
+        document.getElementById("count").textContent = "" + samples.length;
+        document.getElementById("status").textContent = "streaming";
+        plot(samples);
+      }
+    };
+  }
+
+  document.getElementById("refreshBtn").onclick = function () {
+    window.location.reload()
+  };
+  connect();
 </script>
 </body>
 </html>

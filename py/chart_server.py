@@ -10,7 +10,7 @@ global serial_port
 
 async def serial_reader():
     loop = asyncio.get_event_loop()
-    buf: dict[str, str] = {}
+    buf: list[str] = []
     in_block = False
     try:
         while True:
@@ -21,32 +21,21 @@ async def serial_reader():
             line = raw.decode("utf-8", errors="replace").strip()
             if line == "[start]":
                 in_block = True
-                buf.clear()
-            elif line == "[stop]":
-                payload = {
-                    "sampling_freq": int(buf.get("sampling.freq", 0)),
-                    "shift_a": int(buf.get("shift.a", 0)),
-                    "gain_a": int(buf.get("gain.a", 1)),
-                    "data_a": buf.get("data.a", ""),
-                }
+                buf = []
+            elif line == "[stop]" and in_block:
+                block_text = "\n".join(buf)
                 for ws in WS_CLIENTS.copy():
                     try:
-                        await ws.send_json(payload)
+                        await ws.send_str(block_text)
                     except ConnectionResetError:
                         WS_CLIENTS.discard(ws)
                 in_block = False
-                buf.clear()
             elif in_block:
-                if "=" not in line:
-                    continue
-                k, v = line.split("=", 1)
-                k = k.strip()
-                v = v.strip()
-                buf[k] = v
+                buf.append(line)
     except serial.SerialException as e:
         for ws in WS_CLIENTS.copy():
             try:
-                await ws.send_json({"error": str(e)})
+                await ws.send_str(f"error: {e}")
             except ConnectionResetError:
                 WS_CLIENTS.discard(ws)
     finally:
