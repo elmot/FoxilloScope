@@ -1,290 +1,388 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Oscilloscope</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Oscilloscope</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            margin: 0;
+            display: flex;
+        }
 
-    body {
-      background: #111;
-      color: #0f0;
-      font: 14px monospace;
-      display: flex;
-      flex-direction: column;
-    }
+        body {
+            margin: 0;
+            background: #111;
+            color: #0f0;
+            font: 14px monospace;
+            display: flex;
+            flex-direction: column;
+        }
 
-    #topbar {
-      display: flex;
-      align-items: center;
-      gap: 1em;
-      padding: 6px 12px;
-      background: #1a1a1a;
-      flex-shrink: 0;
-    }
+        #topbar {
+            display: flex;
+            align-items: center;
+            gap: 1em;
+            padding: 6px 12px;
+            background: #1a1a1a;
+            flex-shrink: 0;
+        }
 
-    #topbar button {
-      background: #333;
-      color: #0f0;
-      border: 1px solid #0f0;
-      padding: 4px 14px;
-      cursor: pointer;
-      border-radius: 3px;
-      font: inherit;
-    }
+        #topbar button {
+            background: #333;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 4px 14px;
+            cursor: pointer;
+            border-radius: 3px;
+            font: inherit;
+        }
 
-    #topbar button:hover {
-      background: #0f0;
-      color: #000;
-    }
+        #topbar button:hover {
+            background: #0f0;
+            color: #000;
+        }
 
-    #info {
-      display: flex;
-      gap: 2em;
-    }
+        #info {
+            display: flex;
+            gap: 2em;
+        }
 
-    #canvas-wrap {
-      flex: 1;
-      position: relative;
-      margin: 6px 10px;
-      display: flex;
-    }
+        #canvas-wrap {
+            overflow: auto;
+            min-width: 0px;
+            min-height: 0px;
+            display: flex;
+            flex: 1;
+        }
 
-    .v-control-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 0 10px;
-    }
+        #canvas-wrap canvas {
+            min-width: 0px;
+            min-height: 0px;
+            max-width: 100%;
+            max-height: 100%;
+            width: 100%;
+            height: 100%;
+            flex: 1 1 0%;
+            margin-right: 0.5vw;
+        }
 
-    .v-control-container input {
-      flex: 1;
-      background: #222;
-      color: #0f0;
-      border: 1px solid #0f0;
-      padding: 5px;
-      font: inherit;
-      writing-mode: sideways-lr
-    }
+        .v-control-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0 10px;
+        }
 
-    #canvas-wrap canvas {
-      position: relative;
-      flex: 1;
-      left: 0;
-      top: 0;
-      width: 100% !important;
-      height: 100% !important;
-      background: #000;
-      display: block;
-    }
+        .v-control-container input {
+            flex: 1;
+            background: #222;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 5px;
+            font: inherit;
+            writing-mode: sideways-lr
+        }
 
-    #footer {
-      text-align: center;
-      padding: 4px;
-      flex-shrink: 0;
-    }
+        #footer {
+            text-align: center;
+            padding: 4px;
+            flex-shrink: 0;
+        }
 
-    #status {
-      color: #888;
-    }
+        #status {
+            color: #888;
+        }
 
-    .label {
-      color: #888;
-      text-wrap: nowrap
-    }
+        .label {
+            color: #888;
+            text-wrap: nowrap
+        }
 
-    .val {
-      color: #0f0;
-    }
-  </style>
+        .val {
+            color: #0f0;
+        }
+
+        #bottom-controls {
+            display: flex;
+            justify-content: center;
+            padding: 10px;
+            background: #1a1a1a;
+            gap: 1em;
+            flex-shrink: 0;
+        }
+
+        .res-control {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .res-control button {
+            background: #333;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 4px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            font: inherit;
+        }
+
+        .res-control button:hover {
+            background: #0f0;
+            color: #000;
+        }
+
+        .res-control .res-val {
+            min-width: 80px;
+            text-align: center;
+            color: #0f0;
+            font-weight: bold;
+            background: #222;
+            border: 1px solid #0f0;
+            font: inherit;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
 <div id="topbar">
-  <button id="refreshBtn">Reload</button>
-  <div id="info">
-    <span><span class="label">freq</span> <span class="val" id="freq">—</span></span>
-    <span><span class="label">gain</span> <span class="val" id="gain">—</span></span>
-    <span><span class="label">shift</span> <span class="val" id="shift">—</span></span>
-  </div>
+    <button id="refreshBtn">Reload</button>
+    <div id="info">
+        <span><span class="label">freq</span> <span class="val" id="freq">—</span></span>
+        <span><span class="label">gain</span> <span class="val" id="gain">—</span></span>
+        <span><span class="label">shift</span> <span class="val" id="shift">—</span></span>
+    </div>
 </div>
 <div id="canvas-wrap">
-  <div class="v-control-container">
-    <span class="label"><label for="vbias.a">Bias A</label></span>
-    <input type="range" id="vbias.a" value="0" min="-1000000" max="1000000" step="1000">
-  </div>
-  <div class="v-control-container">
-      <span class="label"><label for="trg_level">TRG lvl</label></span>
-    <input type="range" id="trg_level" value="0" min="-1000000" max="1000000" step="1000">
-  </div>
-  <canvas id="scope" width="1200" height="600"></canvas>
+    <div class="v-control-container">
+        <span class="label"><label for="vbias.a">Bias A</label></span>
+        <input type="range" id="vbias.a" value="0" min="-1000000" max="1000000" step="1000">
+    </div>
+    <div class="v-control-container">
+        <span class="label"><label for="trg_level">TRG lvl</label></span>
+        <input type="range" id="trg_level" value="0" min="-1000000" max="1000000" step="1000">
+    </div>
+    <canvas id="scope" width="1200" height="600"></canvas>
+</div>
+<div id="bottom-controls">
+    <div class="res-control">
+        <button>&lt;</button>
+        <select id="resInput" class="res-val">
+            <option value="1000">1&micro;s</option>
+            <option value="2000">2&micro;s</option>
+            <option value="5000">5&micro;s</option>
+            <option value="10000">10&micro;s</option>
+            <option value="20000">20&micro;s</option>
+            <option value="50000">50&micro;s</option>
+            <option value="100000">100&micro;s</option>
+            <option value="200000">200&micro;s</option>
+            <option value="500000" selected="selected">500&micro;s</option>
+            <option value="1000000">1ms</option>
+            <option value="2000000">2ms</option>
+            <option value="5000000">5ms</option>
+            <option value="10000000">10ms</option>
+            <option value="20000000">20ms</option>
+            <option value="50000000">50ms</option>
+            <option value="100000000">100ms</option>
+            <option value="200000000">200ms</option>
+            <option value="500000000">500ms</option>
+        </select>
+        <button>&gt;</button>
+    </div>
 </div>
 <div id="footer"><span id="status">connecting...</span></div>
 
 <script>
-  const canvas = document.getElementById("scope");
-  const ctx = canvas.getContext("2d");
-  let ws = null;
-
-  function sendParameter(parametersStr) {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(parametersStr);
-    }
-  }
-
-  const debounce = (callback) => {
-    let timeoutId = null;
-    return (...args) => {
-      window.clearTimeout(timeoutId);
-      timeoutId = window.setTimeout(() => {
-        callback(...args);
-      }, 20);
+    const parameters = {
+        "h_grid_steps": 10
     };
-  }
+    const canvas = document.getElementById("scope");
+    const ctx = canvas.getContext("2d");
+    let ws = null;
 
-  const vbiasInput_a = document.getElementById("vbias.a");
-
-  vbiasInput_a.oninput = debounce(() => {
-    sendParameter(`vbias.a=${vbiasInput_a.value}`)
-  });
-
-  const trg_level = document.getElementById("trg_level");
-
-  trg_level.oninput = debounce(() => {
-    sendParameter(`trg_level=${trg_level.value}`)
-  });
-
-  function plot(frame, keyFrame) {
-      const W = canvas.width, H = canvas.height;
-      ctx.clearRect(0, 0, W, H);
-      // grid
-      ctx.strokeStyle = "#222";
-      ctx.lineWidth = 1;
-      for (let x = 0; x < W; x += 60) {
-          ctx.beginPath();
-          ctx.moveTo(x, 0);
-          ctx.lineTo(x, H);
-          ctx.stroke();
-      }
-      for (let y = 0; y < H; y += 60) {
-          ctx.beginPath();
-          ctx.moveTo(0, y);
-          ctx.lineTo(W, y);
-          ctx.stroke();
-      }
-
-      // centre line
-      ctx.strokeStyle = "#333";
-      ctx.beginPath();
-      ctx.moveTo(0, H / 2);
-      ctx.lineTo(W, H / 2);
-      ctx.stroke();
-
-
-      const mid = H / 2;
-      const scale = H / 4096;
-      for (const [data, color] of [[frame, "#0F0"], [keyFrame, "#AA0"]] ) {
-          if (!data || data.length < 2) continue;
-          // waveform
-          const len = data.length;
-          const step = W / len;
-
-          ctx.strokeStyle = color;
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          for (let i = 0; i < len; i++) {
-              const x = i * step;
-              const y = mid - (data[i] - 2048) * scale;
-              i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-          }
-          ctx.stroke();
-      }
-      ctx.fillStyle = "#f00";
-      ctx.fillRect(0, mid - 2, 6, 4);
-  }
-
-  function decode(input) {
-    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    let results = [];
-
-    for (let i = 0; i < input.length; i += 2) {
-      const char1 = input[i];
-      const char2 = input[i + 1];
-
-      if (!char1 || !char2) break; // Handle odd lengths
-
-      const val1 = alphabet.indexOf(char1);
-      const val2 = alphabet.indexOf(char2);
-
-      if (val1 !== -1 && val2 !== -1) {
-        // Shift the first 6-bit value left by 6 bits and add the second
-        // This effectively combines two 6-bit chars into one 12-bit int
-        const combined = (val1 << 6) | val2;
-        results.push(combined);
-      }
+    function sendParameter(parametersStr) {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(parametersStr);
+        }
     }
 
-    return results;
-  }
-
-let keyFrame
-  function connect() {
-    if (ws) {
-      ws.close();
-      ws = null;
+    const debounce = (callback) => {
+        let timeoutId = null;
+        return (...args) => {
+            window.clearTimeout(timeoutId);
+            timeoutId = window.setTimeout(() => {
+                callback(...args);
+            }, 20);
+        };
     }
-    ws = new WebSocket(`ws://${location.host}/ws`);
-    ws.onopen = () => document.getElementById("status").textContent = "connected";
-    ws.onclose = () => document.getElementById("status").textContent = "disconnected";
-    ws.onerror = () => document.getElementById("status").textContent = "error";
 
-    ws.onmessage = (e) => {
-      const payloadText = e.data;
-      if (payloadText.startsWith("error: ")) {
-        document.getElementById("status").textContent = "error: " + payloadText.substring(7);
-        return;
-      }
+    const vbiasInput_a = document.getElementById("vbias.a");
 
-      const lines = payloadText.split("\n");
-      let buf = {};
+    vbiasInput_a.oninput = debounce(() => {
+        sendParameter(`vbias.a=${vbiasInput_a.value}`)
+    });
 
-      for (let rawLine of lines) {
-        const line = rawLine.trim();
-        if (!line) continue;
-        const eqIdx = line.indexOf("=");
-        if (eqIdx !== -1) {
-          const k = line.substring(0, eqIdx).trim();
-          buf[k] = line.substring(eqIdx + 1).trim();
-        }
-        let samples = decode(buf["data.a"] || "");
-        if (buf["keyframe"] === "1") {
-          keyFrame = samples
-          samples = null
-        }
-        document.getElementById("freq").textContent = buf["sampling.freq"] || "-";
-        document.getElementById("gain").textContent = buf["shift.a"] || "-";
-        document.getElementById("shift").textContent = buf["gain.a"] || "-";
-        document.getElementById("status").textContent = "streaming";
-        plot(samples, keyFrame);
-      }
+    const trg_level = document.getElementById("trg_level");
+
+    trg_level.oninput = debounce(() => {
+        sendParameter(`trg_level=${trg_level.value}`)
+    });
+
+    const resInput = document.getElementById("resInput");
+
+    resInput.updateRes = (idx) => {
+        const opt = resInput.options[idx];
+        resInput.value = opt.value;
+        sendParameter(`sampling.ns=${opt.value / 4 }`);
     };
-  }
 
-  document.getElementById("refreshBtn").onclick = function () {
-    window.location.reload()
-  };
-  connect();
+    resInput.parentElement.getElementsByTagName("button")[0].onclick = () => {
+        resInput.updateRes(Math.max(0, resInput.selectedIndex - 1));
+    };
+
+    resInput.parentElement.getElementsByTagName("button")[1].onclick = () => {
+        resInput.updateRes(Math.min(resInput.options.length - 1, resInput.selectedIndex + 1));
+    };
+    resInput.onchange = () => {
+        resInput.updateRes(resInput.selectedIndex)
+    }
+
+    function plot(frame, keyFrame) {
+        if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+        }
+        const W = canvas.width, H = canvas.height;
+        ctx.clearRect(0, 0, W, H);
+        // grid
+        ctx.strokeStyle = "#222";
+        ctx.lineWidth = 1;
+        for (let x = 0; x < W; x += W / parameters.h_grid_steps) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, H);
+            ctx.stroke();
+        }
+        for (let y = 0; y < H; y += 60) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(W, y);
+            ctx.stroke();
+        }
+
+        // centre line
+        ctx.strokeStyle = "#333";
+        ctx.beginPath();
+        ctx.moveTo(0, H / 2);
+        ctx.lineTo(W, H / 2);
+        ctx.stroke();
+
+
+        const mid = H / 2;
+        const scale = H / 4096;
+        for (const [data, color] of [[frame, "#0F0"], [keyFrame, "#AA0"]]) {
+            if (!data || data.length < 2) continue;
+            // waveform
+            const len = data.length;
+            const step = W / len;
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let i = 0; i < len; i++) {
+                const x = i * step;
+                const y = mid - (data[i] - 2048) * scale;
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+        ctx.fillStyle = "#f00";
+        ctx.fillRect(0, mid - 2, 6, 4);
+    }
+
+    function decode(input) {
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        let results = [];
+
+        for (let i = 0; i < input.length; i += 2) {
+            const char1 = input[i];
+            const char2 = input[i + 1];
+
+            if (!char1 || !char2) break; // Handle odd lengths
+
+            const val1 = alphabet.indexOf(char1);
+            const val2 = alphabet.indexOf(char2);
+
+            if (val1 !== -1 && val2 !== -1) {
+                // Shift the first 6-bit value left by 6 bits and add the second
+                // This effectively combines two 6-bit chars into one 12-bit int
+                const combined = (val1 << 6) | val2;
+                results.push(combined);
+            }
+        }
+
+        return results;
+    }
+
+    let keyFrame
+
+    function connect() {
+        if (ws) {
+            ws.close();
+            ws = null;
+        }
+        ws = new WebSocket(`ws://${location.host}/ws`);
+        ws.onopen = () => document.getElementById("status").textContent = "connected";
+        ws.onclose = () => document.getElementById("status").textContent = "disconnected";
+        ws.onerror = () => document.getElementById("status").textContent = "error";
+
+        ws.onmessage = (e) => {
+            const payloadText = e.data;
+            if (payloadText.startsWith("error: ")) {
+                document.getElementById("status").textContent = "error: " + payloadText.substring(7);
+                return;
+            }
+
+            const lines = payloadText.split("\n");
+            let buf = {};
+
+            for (let rawLine of lines) {
+                const line = rawLine.trim();
+                if (!line) continue;
+                const eqIdx = line.indexOf("=");
+                if (eqIdx !== -1) {
+                    const k = line.substring(0, eqIdx).trim();
+                    buf[k] = line.substring(eqIdx + 1).trim();
+                }
+                let samples = decode(buf["data.a"] || "");
+                if (buf["keyframe"] === "1") {
+                    keyFrame = samples
+                    samples = null
+                }
+                document.getElementById("freq").textContent = buf["sampling.freq"] || "-";
+                document.getElementById("gain").textContent = buf["shift.a"] || "-";
+                document.getElementById("shift").textContent = buf["gain.a"] || "-";
+                document.getElementById("status").textContent = "streaming";
+                plot(samples, keyFrame);
+            }
+        };
+    }
+
+    document.getElementById("refreshBtn").onclick = function () {
+        window.location.reload()
+    };
+    connect();
 </script>
 </body>
 </html>
