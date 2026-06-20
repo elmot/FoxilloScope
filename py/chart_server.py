@@ -3,6 +3,7 @@ import sys
 import serial
 import aiohttp
 from aiohttp import web
+from typing import Union
 
 WS_CLIENTS: set[web.WebSocketResponse] = set()
 
@@ -10,8 +11,7 @@ global serial_port
 
 async def serial_reader():
     loop = asyncio.get_event_loop()
-    buf: list[str] = []
-    in_block = False
+    buf: Union[list[str],None] = None
     try:
         while True:
             raw = await loop.run_in_executor(None, serial_port.readline)
@@ -19,18 +19,16 @@ async def serial_reader():
                 await asyncio.sleep(0.001)
                 continue
             line = raw.decode("utf-8", errors="replace").strip()
-            if line == "[start]":
-                in_block = True
+            if line == "[frame]":
+                if buf is not None:
+                    block_text = "\n".join(buf)
+                    for ws in WS_CLIENTS.copy():
+                        try:
+                            await ws.send_str(block_text)
+                        except ConnectionResetError:
+                            WS_CLIENTS.discard(ws)
                 buf = []
-            elif line == "[stop]" and in_block:
-                block_text = "\n".join(buf)
-                for ws in WS_CLIENTS.copy():
-                    try:
-                        await ws.send_str(block_text)
-                    except ConnectionResetError:
-                        WS_CLIENTS.discard(ws)
-                in_block = False
-            elif in_block:
+            elif buf is not None:
                 buf.append(line)
     except serial.SerialException as e:
         for ws in WS_CLIENTS.copy():
@@ -65,7 +63,7 @@ async def index_handler(request: web.Request) -> web.FileResponse:
 def main():
     global serial_port
     port = sys.argv[1] if len(sys.argv) > 1 else "COM4"
-    baud = int(sys.argv[2]) if len(sys.argv) > 2 else 460800
+    baud = int(sys.argv[2]) if len(sys.argv) > 2 else 115200
     serial_port = serial.Serial(port, baud, timeout=0.01)
     app = web.Application()
     app.router.add_get("/", index_handler)

@@ -37,7 +37,7 @@ extern "C" [[noreturn]] void startTransmitTask([[maybe_unused]] void* argument)
         }
         *textPtr = 0;
         constexpr auto dataHeader = R"(
-[start]
+[frame]
 sampling.freq=100
 shift.a=0
 gain.a=1
@@ -48,7 +48,7 @@ data.a=)";
         {
             writeUart("\nkeyframe=1");
         }
-        writeUart("\n[stop]\n");
+        writeUart("\n");
         osSemaphoreRelease(transmitBufferBusyHandle);
     }
 }
