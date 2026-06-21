@@ -122,13 +122,13 @@
             flex-shrink: 0;
         }
 
-        .res-control {
+        .switch-control {
             display: flex;
             align-items: center;
             gap: 5px;
         }
 
-        .res-control button {
+        .switch-control button {
             background: #333;
             color: #0f0;
             border: 1px solid #0f0;
@@ -138,12 +138,12 @@
             font: inherit;
         }
 
-        .res-control button:hover {
+        .switch-control button:hover {
             background: #0f0;
             color: #000;
         }
 
-        .res-control .res-val {
+        .switch-control select {
             min-width: 80px;
             text-align: center;
             color: #0f0;
@@ -152,6 +152,40 @@
             border: 1px solid #0f0;
             font: inherit;
             cursor: pointer;
+        }
+
+        .trg-type-container {
+            display: flex;
+            gap: 2px;
+            margin-top: 8px;
+            background: #222;
+            border: 1px solid #0f0;
+            border-radius: 3px;
+            padding: 2px;
+        }
+
+        .trg-btn {
+            background: transparent;
+            color: #0f0;
+            border: none;
+            cursor: pointer;
+            font: inherit;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 2px;
+            line-height: 1;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .trg-btn:hover {
+            background: #222;
+            color: #fff;
+        }
+
+        .trg-btn.active {
+            background: #0f0;
+            color: #000;
         }
     </style>
 </head>
@@ -170,15 +204,32 @@
         <input type="range" id="vbias.a" value="0" min="-1000000" max="1000000" step="1000">
     </div>
     <div class="v-control-container">
-        <span class="label"><label for="trg_level">TRG lvl</label></span>
-        <input type="range" id="trg_level" value="0" min="-1000000" max="1000000" step="1000">
+        <span class="label"><label for="trg.level">TRG lvl</label></span>
+        <input type="range" id="trg.level" value="0" min="-1000000" max="1000000" step="1000">
+        <div class="trg-type-container">
+            <button class="trg-btn active" data-val="0" title="None">∅</button>
+            <button class="trg-btn" data-val="1" title="Rising">↗</button>
+            <button class="trg-btn" data-val="-1" title="Falling">↘</button>
+        </div>
     </div>
     <canvas id="scope" width="1200" height="600"></canvas>
 </div>
 <div id="bottom-controls">
-    <div class="res-control">
+    <div class="switch-control">
         <button>&lt;</button>
-        <select id="resInput" class="res-val">
+        <select id="gain.a">
+            <option value="2">x2</option>
+            <option value="4">x4</option>
+            <option value="8">x8</option>
+            <option value="16">x16</option>
+            <option value="32">x32</option>
+            <option value="64">x64</option>
+        </select>
+        <button>&gt;</button>
+    </div>
+    <div class="switch-control">
+        <button>&lt;</button>
+        <select id="resInput">
             <option value="500">0.5&micro;s</option>
             <option value="1000">1&micro;s</option>
             <option value="2000">2&micro;s</option>
@@ -228,36 +279,48 @@
         };
     }
 
+    function setupSwitch(id, action) {
+        const input = document.getElementById(id);
+        input.updateRes = (idx) => {
+            const opt = input.options[idx];
+            input.value = opt.value;
+            action(opt.value)
+        };
+
+        input.parentElement.getElementsByTagName("button")[0].onclick = () => {
+            input.updateRes(Math.max(0, input.selectedIndex - 1));
+        };
+        input.parentElement.getElementsByTagName("button")[1].onclick = () => {
+            input.updateRes(Math.min(input.options.length - 1, input.selectedIndex + 1));
+        };
+        input.onchange = () => {
+            input.updateRes(input.selectedIndex)
+        }
+    }
+
     const vbiasInput_a = document.getElementById("vbias.a");
 
     vbiasInput_a.oninput = debounce(() => {
         sendParameter(`vbias.a=${vbiasInput_a.value}`)
     });
 
-    const trg_level = document.getElementById("trg_level");
+    const trg_level = document.getElementById("trg.level");
 
     trg_level.oninput = debounce(() => {
-        sendParameter(`trg_level=${trg_level.value}`)
+        sendParameter(`trg.level=${trg_level.value}`)
     });
 
-    const resInput = document.getElementById("resInput");
+    const trgBtns = document.querySelectorAll(".trg-btn");
+    trgBtns.forEach(btn => {
+        btn.onclick = () => {
+            trgBtns.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            sendParameter(`trg.type=${btn.dataset.val}`);
+        };
+    });
 
-    resInput.updateRes = (idx) => {
-        const opt = resInput.options[idx];
-        resInput.value = opt.value;
-        sendParameter(`sampling.ns=${opt.value / 4 }`);
-    };
-
-    resInput.parentElement.getElementsByTagName("button")[0].onclick = () => {
-        resInput.updateRes(Math.max(0, resInput.selectedIndex - 1));
-    };
-
-    resInput.parentElement.getElementsByTagName("button")[1].onclick = () => {
-        resInput.updateRes(Math.min(resInput.options.length - 1, resInput.selectedIndex + 1));
-    };
-    resInput.onchange = () => {
-        resInput.updateRes(resInput.selectedIndex)
-    }
+    setupSwitch("resInput", (value) => {sendParameter(`sampling.ns=${value / 4 }`)});
+    setupSwitch("gain.a", (value) => {sendParameter(`gain.a=${value}`)});
 
     function plot(frame, keyFrame) {
         if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
