@@ -15,12 +15,12 @@ struct Command
     std::string_view name;
     bool requiresRestart{false};
     mutable long long value;
-    void (*useNewValue)(long long value);
+    void (*useNewValue)(long long value) = [](long long value){};
     long long (*adjustValue)(long long value) = [](const long long value) { return value; };
 };
 
 constexpr uint32_t THREAD_FLAG_READY_TO_TRANSMIT = 0x20;
-constexpr uint32_t THREAD_FLAG_KEY_FRAME_DETECTED = 0x20;
+constexpr uint32_t THREAD_FLAG_KEY_FRAME_DETECTED = 0x40;
 
 constexpr size_t data_frame_size = 200;
 
@@ -38,5 +38,10 @@ extern osMessageQueueId_t cmdRxQueueHandle;
 
 
 void startUartInput();
+
+extern "C" void adcCalibration();
+extern "C" void startMainAdc(bool interleaveSampling, uint16_t* buffer, size_t bufferLength);
+extern "C" size_t adcSamplesLeft();
+
 
 #endif //G4_OSCILLOSCOPE_B_OSCILLOSCOPE_H

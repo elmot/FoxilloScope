@@ -1,4 +1,3 @@
-#include "adc.h"
 #include "tim.h"
 #include "dma.h"
 #include "dac.h"
@@ -29,26 +28,63 @@ void initialize_test_signal() //todo remove together with tim2 & hdac2 wave gene
     HAL_TIM_Base_Start(&htim15);
 }
 
-constexpr array<Command, 2> commands{
-    {
-        {
+/** Oscilloscope commands
+ *
+ */
+
+constexpr Command CommandBiasChannelA{
             .name = "vbias.a",
-            .value = -500'000L, //todo 0
+    .value = -503'000LL, //todo 0
             .useNewValue = [](long long value)
             {
                 const uint16_t dac_bias = clamp((value + 1'000'000LL) * 4'095LL / 2'000'000LL, 0LL, 4095LL);
                 HAL_DAC_SetValue(&hdac1, DAC1_CHANNEL_1,DAC_ALIGN_12B_R, dac_bias);
             }
-        },
-        {
+};
+
+constexpr Command CommandTriggerLevel{
             .name = "trg_level",
-            .value = 800'000L, //todo 0
-            .useNewValue = [](long long value)
+    .value = 1200'000L, //todo 0
+    .useNewValue = [](const long long value)
             {
                 const uint16_t dac_bias = clamp((value + 1'000'000LL) * 4'095LL / 2'000'000LL, 0LL, 4095LL);
                 HAL_DAC_SetValue(&hdac1, DAC1_CHANNEL_2,DAC_ALIGN_12B_R, dac_bias);
             }
+};
+
+namespace sampling
+{
+    constexpr auto minAdcTime = 1'000'000'000LL / 4'000'000; // 4 MHz ADC max sampling
+    constexpr auto minSamplingTimeNs = 1'000'000'000LL / 8'000'000; // 8 MHz max sampling
+    constexpr auto maxSamplingTimeNs = 1'000'000'000LL / 20; // 20 Hz max sampling
+    constexpr Command CommandTimeResolution{
+        .name = "sampling.ns",
+        .requiresRestart = true,
+        .value = 250,
+        .adjustValue = [](const long long value) { return clamp(value, minSamplingTimeNs, maxSamplingTimeNs); }
+    };
+
+    bool isInterleaveSampling()
+    {
+        return CommandTimeResolution.value < minAdcTime;
+    }
+
+    uint32_t clockDivider()
+    {
+        //Hopefully APB1 divider is 1
+        // twice slower if interleaved sampling
+        unsigned long long fullDivider = (isInterleaveSampling()) ? 2 : 1;
+        fullDivider *= HAL_RCC_GetHCLKFreq() * static_cast<unsigned long long>(CommandTimeResolution.value) /
+            1'000'000'000ULL;
+        return static_cast<uint32_t>(fullDivider - 1);
         }
+    }
+
+constexpr array<const Command*, 3> commands{
+    {
+        &CommandBiasChannelA,
+        &CommandTriggerLevel,
+        &sampling::CommandTimeResolution
     }
 };
 
@@ -61,6 +97,20 @@ static char* skipWhiteSpace(char* & ptr)
     return ptr;
 }
 
+static volatile bool triggerArmed = false;
+
+static void startSampling()
+{
+    startMainAdc(sampling::isInterleaveSampling(), adcBuffer.data(), adcBuffer.size());
+    __HAL_TIM_SET_PRESCALER(&htim2, 0);
+    __HAL_TIM_SET_AUTORELOAD(&htim2, sampling::clockDivider());
+    __HAL_TIM_SET_COUNTER(&htim2, 0);
+    //todo set trigger
+    HAL_TIM_Base_Start(&htim2);
+    HAL_NVIC_ClearPendingIRQ(COMP4_5_6_IRQn);
+    triggerArmed = false;
+
+}
 static void executeIncomingCommand()
 {
     static char cmdBuffer[121];
@@ -77,55 +127,43 @@ static void executeIncomingCommand()
 
     char* ptr = cmdBuffer;
     skipWhiteSpace(ptr);
-    bool updated = false;
     bool requiresRestart = false;
     for (const auto command : commands)
     {
-        if (strncmp(ptr, command.name.data(), command.name.size()) != 0) continue;
-        ptr += command.name.size();
+        if (strncmp(ptr, command->name.data(), command->name.size()) != 0) continue;
+        ptr += command->name.size();
         skipWhiteSpace(ptr);
         if (*ptr++ != '=') continue;
         long long newValue = atoll(ptr);
-        newValue = command.adjustValue(newValue);
-        if (newValue == command.value) continue;
-        command.useNewValue(newValue);
-        updated = true;
-        command.value = newValue;
-        requiresRestart |= command.requiresRestart;
+        newValue = command->adjustValue(newValue);
+        if (newValue == command->value) continue;
+        command->useNewValue(newValue);
+        command->value = newValue;
+        requiresRestart |= command->requiresRestart;
+        break;
     }
+    if (requiresRestart)
+    {
+        startSampling();
 }
-
-static volatile bool triggerArmed = false;
-
-void startMainAdc()
-{
-    HAL_TIM_GenerateEvent(&htim1, TIM_EVENTSOURCE_UPDATE);
-    __HAL_TIM_CLEAR_FLAG(&htim1,TIM_FLAG_CC1);
-    HAL_ADCEx_MultiModeStart_DMA(&hadc3, reinterpret_cast<uint32_t*>(adcBuffer.data()), adcBuffer.size() / 2);
-    HAL_TIM_Base_Start(&htim2);
-    HAL_NVIC_ClearPendingIRQ(COMP4_5_6_IRQn);
-    triggerArmed = false;
 }
 
 [[noreturn]] void run_oscilloscope()
 {
     initialize_test_signal();
-    HAL_ADCEx_Calibration_Start(&hadc3, ADC_SINGLE_ENDED);
-    HAL_ADCEx_Calibration_Start(&hadc4, ADC_SINGLE_ENDED);
-
+    adcCalibration();
     HAL_DMA_RegisterCallback(&hdma_memtomem_dma1_channel2, HAL_DMA_XFER_CPLT_CB_ID, dmaMemToMemCallback);
-    HAL_ADC_Start(&hadc4);
     HAL_OPAMP_Start(&hopamp3);
     HAL_DAC_Start(&hdac1, DAC1_CHANNEL_1);
     HAL_DAC_Start(&hdac1, DAC1_CHANNEL_2);
     TIM_CCxChannelCmd(htim1.Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
     HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
     HAL_TIM_Base_Start(&htim1);
-    startMainAdc();
+    startSampling();
     HAL_COMP_Start(&hcomp5);
     for (const auto command : commands)
     {
-        command.useNewValue(command.value);
+        command->useNewValue(command->value);
     }
     startUartInput();
     while (true)
@@ -134,8 +172,9 @@ void startMainAdc()
     }
 }
 
-static void initFrameTransfer(const span<uint16_t, data_frame_size>& from)
+extern "C" void initFrameTransfer(const int subBufferIndex)
 {
+    const span<uint16_t, data_frame_size>& from = subBufferIndex ? adc1stHalf : adc2ndHalf;
     if (osSemaphoreAcquire(transmitBufferBusyHandle, 0) != osOK)
     {
         //transmit buffer busy, skip the frame
@@ -146,16 +185,6 @@ static void initFrameTransfer(const span<uint16_t, data_frame_size>& from)
                      reinterpret_cast<uint32_t>(from.data()),
                      reinterpret_cast<uint32_t>(transmitBuffer.samples.data()),
                      transmitBuffer.samples.size() / 2);
-}
-
-extern "C" void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
-{
-    initFrameTransfer(adc2ndHalf);
-}
-
-extern "C" void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
-{
-    initFrameTransfer(adc1stHalf);
 }
 
 void transmitBufferReady()
@@ -204,7 +233,7 @@ extern "C" [[noreturn]] void keyFramesProcessing()
         osSemaphoreAcquire(transmitBufferBusyHandle, osWaitForever);
         transmitBuffer.keyFrame = true;
 
-        const auto dma_samples_left = (hadc3.DMA_Handle->Instance->CNDTR) * 2;
+        const auto dma_samples_left = adcSamplesLeft();
         if (dma_samples_left <= data_frame_size)
         {
             const auto frame_start_position = (adcBuffer.size() - dma_samples_left) - data_frame_size;
@@ -221,7 +250,7 @@ extern "C" [[noreturn]] void keyFramesProcessing()
         }
         osThreadFlagsClear(THREAD_FLAG_KEY_FRAME_DETECTED);
         transmitBufferReady();
-        startMainAdc();
+        startSampling();
         HAL_NVIC_EnableIRQ(COMP4_5_6_IRQn);
     }
 }

@@ -21,6 +21,8 @@
 #include "adc.h"
 
 /* USER CODE BEGIN 0 */
+#include "tim.h"
+#include "stdbool.h"
 
 /* USER CODE END 0 */
 
@@ -291,6 +293,95 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 }
 
 /* USER CODE BEGIN 1 */
+void initFrameTransfer(int subBufferIndex);
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
+    UNUSED(hadc);
+    initFrameTransfer(1);
+}
+
+void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
+{
+    UNUSED(hadc);
+    initFrameTransfer(0);
+}
+
+void adcCalibration()
+{
+    HAL_ADCEx_Calibration_Start(&hadc3, ADC_SINGLE_ENDED);
+    HAL_ADCEx_Calibration_Start(&hadc4, ADC_SINGLE_ENDED);
+}
+
+/** sets DMA alignment 16 or 32 bit
+ *@param dmaAlign DMA_Memory_data_size
+ */
+static void setDmaDataAlign(const uint32_t dmaAlign)
+{
+    MODIFY_REG(hadc3.DMA_Handle->Instance->CCR, DMA_CCR_MSIZE_Msk, dmaAlign);
+    hadc3.DMA_Handle->Init.MemDataAlignment = dmaAlign;//useless, just for consistency
+}
+
+void startMainAdc(bool interleaveSampling, uint16_t* buffer, size_t bufferLength)
+{
+    HAL_ADC_Stop(&hadc4);
+    HAL_ADC_Stop_DMA(&hadc3);
+    HAL_TIM_Base_Stop(&htim2);
+    HAL_TIM_GenerateEvent(&htim1, TIM_EVENTSOURCE_UPDATE);
+    __HAL_TIM_CLEAR_FLAG(&htim1, TIM_FLAG_CC1);
+    if (interleaveSampling)
+    {
+        setDmaDataAlign(DMA_MDATAALIGN_WORD);
+        static const ADC_MultiModeTypeDef multimode = {
+            .Mode = ADC_DUALMODE_INTERL,
+            .DMAAccessMode = ADC_DMAACCESSMODE_12_10_BITS,
+            .TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_6CYCLES
+        };
+        if (HAL_ADCEx_MultiModeConfigChannel(&hadc3, &multimode) != HAL_OK)
+        {
+            Error_Handler();
+        }
+
+        if (HAL_ADC_Start(&hadc4))
+        {
+            Error_Handler();
+        }
+        if (HAL_ADCEx_MultiModeStart_DMA(&hadc3, (uint32_t*)buffer, bufferLength / 2))
+        {
+            Error_Handler();
+        }
+    }
+    else
+    {
+        setDmaDataAlign(DMA_MDATAALIGN_HALFWORD);
+        static const ADC_MultiModeTypeDef multimode = {.Mode = ADC_MODE_INDEPENDENT};
+        if (HAL_ADCEx_MultiModeConfigChannel(&hadc3, &multimode) != HAL_OK)
+        {
+            Error_Handler();
+        }
+
+        if (HAL_ADC_Start_DMA(&hadc3, (uint32_t*)buffer, bufferLength))
+        {
+            Error_Handler();
+        }
+
+    }
+}
+
+size_t adcSamplesLeft()
+{
+    const size_t result = hadc3.DMA_Handle->Instance->CNDTR;
+
+    switch (hadc3.DMA_Handle->Instance->CCR & DMA_CCR_MSIZE_Msk)
+    {
+    case DMA_MDATAALIGN_HALFWORD:
+        return result;
+    case DMA_MDATAALIGN_WORD:
+        return result * 2;
+    default: Error_Handler();
+        return result - 1;
+    }
+}
 
 /* USER CODE END 1 */
 
