@@ -102,7 +102,7 @@ void startMainAdc()
     HAL_TIM_GenerateEvent(&htim1, TIM_EVENTSOURCE_UPDATE);
     __HAL_TIM_CLEAR_FLAG(&htim1,TIM_FLAG_CC1);
     HAL_ADCEx_MultiModeStart_DMA(&hadc3, reinterpret_cast<uint32_t*>(adcBuffer.data()), adcBuffer.size() / 2);
-    HAL_TIM_Base_Start(&htim3);
+    HAL_TIM_Base_Start(&htim2);
     HAL_NVIC_ClearPendingIRQ(COMP4_5_6_IRQn);
     triggerArmed = false;
 }
@@ -191,7 +191,7 @@ extern "C" void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef* htim)
 {
     UNUSED(htim);
     HAL_TIM_Base_Stop_IT(&htim1);
-    HAL_TIM_Base_Stop(&htim3);
+    HAL_TIM_Base_Stop(&htim2);
     extern osThreadId_t keyFrameTaskHandle;
     osThreadFlagsSet(keyFrameTaskHandle, THREAD_FLAG_KEY_FRAME_DETECTED);
 }

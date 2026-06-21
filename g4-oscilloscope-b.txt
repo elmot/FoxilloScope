@@ -26,12 +26,12 @@ SYS	Internal voltage reference	VREFBUF_OUT	VREF+
 SYS	TIM7	SYS_VS_tim7	VP_SYS_VS_tim7
 SYS	Dead Battery Signals disabled	SYS_VS_DBSignals	VP_SYS_VS_DBSignals
 TIM1	External Clock Mode 1	TIM1_VS_ControllerModeClock	VP_TIM1_VS_ControllerModeClock
-TIM1	ITR2	TIM1_VS_ClockSourceITR	VP_TIM1_VS_ClockSourceITR
+TIM1	ITR1	TIM1_VS_ClockSourceITR	VP_TIM1_VS_ClockSourceITR
 TIM1	PWM Generation No Output	TIM1_VS_no_output1	VP_TIM1_VS_no_output1
 TIM1	One pulse	TIM1_VS_OPM	VP_TIM1_VS_OPM
-TIM3	Gated Mode	TIM3_VS_ControllerModeGated	VP_TIM3_VS_ControllerModeGated
-TIM3	ITR0	TIM3_VS_ClockSourceITR	VP_TIM3_VS_ClockSourceITR
-TIM3	Internal Clock	TIM3_VS_ClockSourceINT	VP_TIM3_VS_ClockSourceINT
+TIM2	Gated Mode	TIM2_VS_ControllerModeGated	VP_TIM2_VS_ControllerModeGated
+TIM2	ITR0	TIM2_VS_ClockSourceITR	VP_TIM2_VS_ClockSourceITR
+TIM2	Internal Clock	TIM2_VS_ClockSourceINT	VP_TIM2_VS_ClockSourceINT
 TIM15	Internal Clock	TIM15_VS_ClockSourceINT	VP_TIM15_VS_ClockSourceINT
 
 
@@ -76,12 +76,12 @@ SYS	Internal voltage reference	VREFBUF_OUT	VREF+
 SYS	TIM7	SYS_VS_tim7	VP_SYS_VS_tim7
 SYS	Dead Battery Signals disabled	SYS_VS_DBSignals	VP_SYS_VS_DBSignals
 TIM1	External Clock Mode 1	TIM1_VS_ControllerModeClock	VP_TIM1_VS_ControllerModeClock
-TIM1	ITR2	TIM1_VS_ClockSourceITR	VP_TIM1_VS_ClockSourceITR
+TIM1	ITR1	TIM1_VS_ClockSourceITR	VP_TIM1_VS_ClockSourceITR
 TIM1	PWM Generation No Output	TIM1_VS_no_output1	VP_TIM1_VS_no_output1
 TIM1	One pulse	TIM1_VS_OPM	VP_TIM1_VS_OPM
-TIM3	Gated Mode	TIM3_VS_ControllerModeGated	VP_TIM3_VS_ControllerModeGated
-TIM3	ITR0	TIM3_VS_ClockSourceITR	VP_TIM3_VS_ClockSourceITR
-TIM3	Internal Clock	TIM3_VS_ClockSourceINT	VP_TIM3_VS_ClockSourceINT
+TIM2	Gated Mode	TIM2_VS_ControllerModeGated	VP_TIM2_VS_ControllerModeGated
+TIM2	ITR0	TIM2_VS_ClockSourceITR	VP_TIM2_VS_ClockSourceITR
+TIM2	Internal Clock	TIM2_VS_ClockSourceINT	VP_TIM2_VS_ClockSourceINT
 TIM15	Internal Clock	TIM15_VS_ClockSourceINT	VP_TIM15_VS_ClockSourceINT
 
 

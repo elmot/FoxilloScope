@@ -84,7 +84,7 @@ void writeUart(const string_view& str)
         // Wait for the specific thread flag to be set by the ISR
         // This is immune to the race condition because even if the flag is set 1 microsecond
         // BEFORE this line executes, osThreadFlagsWait reads the already-set flag and moves on.
-        osThreadFlagsWait(0x01, osFlagsWaitAny, osWaitForever);
+        osThreadFlagsWait(UART_TX_BUSY, osFlagsWaitAny, osWaitForever);
 }
 
 extern "C" void lpuart1TransferComplete()

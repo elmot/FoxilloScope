@@ -14,6 +14,6 @@ MCU STM32G474RETx
 | OPAMP3      | OPAMP3_VINM0                                | Zero level bias, connect to **PA4**            | PB2  | PGA Connected-INVERTINGINPUT_IO0_BIAS |
 | OPAMP3      | OPAMP3_VINP                                 | *CH1 Input* (connect to **PA6**)               | PB0  | PGA Connected-INVERTINGINPUT_IO0_BIAS |
 | OPAMP3      | OPAMP3_VOUT                                 | CH1 amplified signal output                    | PB1  | PGA Connected-INVERTINGINPUT_IO0_BIAS |
-| TIM2        | TIM2_VS_ClockSourceINT                      | *TODO* remove - test signal clock              | -    | Internal Clock                        |
-| TIM3        | *(int)* TRGO->ADC3 trigger                  | Triggers ADC3/4 measurements                   | -    | Gated by ITR0(TIM1)                   |
-| TIM1        | *(int)* CH1 PWM1 -> TRGO -> TIM3 clock gate | Stops TIM3 when keyframe ended                 | -    | Clocked by ITR2(TIM3)                 |
+| TIM15       | Internal clock                              | *TODO* remove - test signal clock              | -    | Internal Clock                        |
+| TIM2        | *(int)* TRGO->ADC3 trigger                  | Triggers ADC3/4 measurements                   | -    | Gated by ITR0(TIM1)                   |
+| TIM1        | *(int)* CH1 PWM1 -> TRGO -> TIM3 clock gate | Stops TIM2 when keyframe ended                 | -    | Clocked by ITR1(TIM2)                 |
