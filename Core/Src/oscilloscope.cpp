@@ -26,7 +26,7 @@ void initialize_test_signal() //todo remove together with tim2 & hdac2 wave gene
 {
     extern const unsigned short fake_signal[];
     HAL_DAC_Start_DMA(&hdac2, DAC_CHANNEL_1, reinterpret_cast<const uint32_t*>(fake_signal), 140, DAC_ALIGN_12B_R);
-    HAL_TIM_Base_Start(&htim2);
+    HAL_TIM_Base_Start(&htim15);
 }
 
 constexpr array<Command, 2> commands{

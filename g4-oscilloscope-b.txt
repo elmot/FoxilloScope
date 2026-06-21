@@ -29,10 +29,10 @@ TIM1	External Clock Mode 1	TIM1_VS_ControllerModeClock	VP_TIM1_VS_ControllerMode
 TIM1	ITR2	TIM1_VS_ClockSourceITR	VP_TIM1_VS_ClockSourceITR
 TIM1	PWM Generation No Output	TIM1_VS_no_output1	VP_TIM1_VS_no_output1
 TIM1	One pulse	TIM1_VS_OPM	VP_TIM1_VS_OPM
-TIM2	Internal Clock	TIM2_VS_ClockSourceINT	VP_TIM2_VS_ClockSourceINT
 TIM3	Gated Mode	TIM3_VS_ControllerModeGated	VP_TIM3_VS_ControllerModeGated
 TIM3	ITR0	TIM3_VS_ClockSourceITR	VP_TIM3_VS_ClockSourceITR
 TIM3	Internal Clock	TIM3_VS_ClockSourceINT	VP_TIM3_VS_ClockSourceINT
+TIM15	Internal Clock	TIM15_VS_ClockSourceINT	VP_TIM15_VS_ClockSourceINT
 
 
 
@@ -79,10 +79,10 @@ TIM1	External Clock Mode 1	TIM1_VS_ControllerModeClock	VP_TIM1_VS_ControllerMode
 TIM1	ITR2	TIM1_VS_ClockSourceITR	VP_TIM1_VS_ClockSourceITR
 TIM1	PWM Generation No Output	TIM1_VS_no_output1	VP_TIM1_VS_no_output1
 TIM1	One pulse	TIM1_VS_OPM	VP_TIM1_VS_OPM
-TIM2	Internal Clock	TIM2_VS_ClockSourceINT	VP_TIM2_VS_ClockSourceINT
 TIM3	Gated Mode	TIM3_VS_ControllerModeGated	VP_TIM3_VS_ControllerModeGated
 TIM3	ITR0	TIM3_VS_ClockSourceITR	VP_TIM3_VS_ClockSourceITR
 TIM3	Internal Clock	TIM3_VS_ClockSourceINT	VP_TIM3_VS_ClockSourceINT
+TIM15	Internal Clock	TIM15_VS_ClockSourceINT	VP_TIM15_VS_ClockSourceINT
 
 
 
