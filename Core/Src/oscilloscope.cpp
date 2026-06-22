@@ -75,7 +75,7 @@ constexpr struct CommandBiasChannelA_t : Command
     void useNewValue() const override
     {
         const uint16_t dac_bias = std::ranges::clamp(
-            (value - min) * 4'095LL / (max - min), 0LL, 4095LL);
+            (max - value) * 4'095LL / (max - min), 0LL, 4095LL);
         HAL_DAC_SetValue(&hdac1, DAC1_CHANNEL_1,DAC_ALIGN_12B_R, dac_bias);
     }
 } CommandBiasChannelA{};
@@ -141,6 +141,12 @@ namespace trigger
         void useNewValue() const override { startSampling(); }
     } CommandTriggerType{};
 
+    constexpr struct CommandTriggerShift_t : Command
+    {
+        constexpr CommandTriggerShift_t() : Command("trg.shift", 200, 0, 1000) {}
+        void useNewValue() const override {}
+    } CommandTriggerShift{};
+
     void enableTrigger()
     {
         if (CommandTriggerType.getValue() == 0)
@@ -155,14 +161,13 @@ namespace trigger
 
     void setupTriggerDelay()
     {
-        if (CommandTimeResolution.isInterleaveSampling())
-        {
-            __HAL_TIM_SET_AUTORELOAD(&htim1, data_frame_size/2 - 1);
-        }
-        else
-        {
-            __HAL_TIM_SET_AUTORELOAD(&htim1, data_frame_size - 1);
-        }
+        const auto maxArr = CommandTimeResolution.isInterleaveSampling()
+            ? data_frame_size / 2 - 1
+            : data_frame_size - 1;
+
+        const auto arr = maxArr * (1000 - CommandTriggerShift.getValue()) / 1000;
+
+        __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_1,arr);
         __HAL_TIM_SET_COUNTER(&htim1, 0);
     }
 
@@ -183,24 +188,22 @@ constexpr struct CommandStateNo_t : Command
     }
 } CommandStateNo{};
 
-constexpr std::array<const Command*, 6> commands{
-    {
-        &CommandStateNo,
-        &CommandBiasChannelA,
-        &CommandGainChannelA,
-        &CommandTimeResolution,
-        &trigger::CommandTriggerLevel,
-        &trigger::CommandTriggerType,
-    }
+constexpr std::array<const Command*, 7> commands{
+    &CommandStateNo,
+    &CommandBiasChannelA,
+    &CommandGainChannelA,
+    &CommandTimeResolution,
+    &trigger::CommandTriggerLevel,
+    &trigger::CommandTriggerType,
+    &trigger::CommandTriggerShift,
 };
 
-static char* skipWhiteSpace(char* & ptr)
+void skipWhiteSpace(char* & ptr)
 {
     while (isspace(static_cast<unsigned char>(*ptr)))
     {
         ptr++;
     }
-    return ptr;
 }
 
 static volatile std::atomic<bool> triggerArmed = false;

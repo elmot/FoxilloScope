@@ -93,6 +93,21 @@
             font: inherit;
             writing-mode: sideways-lr
         }
+        .h-control-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .h-control-container input {
+            width: 120px;
+            background: #222;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 2px 5px;
+            font: inherit;
+        }
 
         #footer {
             text-align: center;
@@ -193,7 +208,7 @@
 <div id="topbar">
     <button id="refreshBtn">Reload</button>
     <div id="info">
-        <span><span class="label">freq</span> <span class="val" id="freq">—</span></span>
+        <span><span class="label">sampling, ns</span> <span class="val" id="sampling">—</span></span>
         <span><span class="label">gain</span> <span class="val" id="gain">—</span></span>
         <span><span class="label">shift</span> <span class="val" id="shift">—</span></span>
     </div>
@@ -201,11 +216,11 @@
 <div id="canvas-wrap">
     <div class="v-control-container">
         <span class="label"><label for="vbias.a">Bias A</label></span>
-        <input type="range" id="vbias.a" class="param-slider" value="0" min="-1000000" max="1000000" step="1000">
+        <input type="range" id="vbias.a" class="param-slider" value="0" min="-1000000" max="1000000">
     </div>
     <div class="v-control-container">
         <span class="label"><label for="trg.level">TRG lvl</label></span>
-        <input type="range" id="trg.level" class="param-slider" value="0" min="-1000000" max="1000000" step="1000">
+        <input type="range" id="trg.level" class="param-slider" value="0" min="-1000000" max="1000000">
         <div class="trg-type-container">
             <button class="trg-btn active" data-val="0" title="None">∅</button>
             <button class="trg-btn" data-val="1" title="Rising">↗</button>
@@ -252,6 +267,11 @@
         </select>
         <button>&gt;</button>
     </div>
+    <div class="h-control-container">
+        <span class="label">TRG shift</span>
+        <input type="range" id="trg.shift" class="param-slider"
+               value="200" min="0" max="1000" step="1">
+    </div>
 </div>
 <div id="footer"><span id="status">connecting...</span></div>
 
@@ -279,11 +299,6 @@
                 timer = setTimeout(() => this._setNow(name, value, opts), ms);
             };
         },
-        registerSliders(className) {
-            document.querySelectorAll('.' + className).forEach(el => {
-                this.register(el.id, el, (el, v) => el.value = String(v), 20);
-            });
-        },
         _setNow(name, value, opts) {
             this._values[name] = value;
             const ctrl = this._controls[name];
@@ -301,21 +316,30 @@
                 this._stateNo++;
                 ws.send(`state.no=${this._stateNo}\n${name}=${value}`);
             }
+        },
+        sendAllCommands() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                let data = `state.no=${this._stateNo}\n`
+                for (const k in param._controls) {
+                    const val = param._values[k]
+                    if (k !== "state.no" && val !== undefined)
+                        data+=`${k}=${val}\n`
+                }
+                ws.send(data)
+            }
         }
     };
 
-    param.registerSliders('param-slider');
+    document.querySelectorAll('.param-slider').forEach(slider => {
+        slider.oninput = () => param.set(slider.id, slider.value);
+        param._values[slider.id] = slider.value
+        param.register(slider.id, slider, (el, v) => el.value = String(v), 20);
+    });
 
     const trgBtns = document.querySelectorAll(".trg-btn");
     param.register('trg.type', trgBtns, (els, v) => {
         els.forEach(b => b.classList.toggle('active', b.dataset.val === String(v)));
     });
-
-    const vbiasInput_a = document.getElementById("vbias.a");
-    vbiasInput_a.oninput = () => param.set('vbias.a', vbiasInput_a.value);
-
-    const trg_level = document.getElementById("trg.level");
-    trg_level.oninput = () => param.set('trg.level', trg_level.value);
 
     trgBtns.forEach(btn => {
         btn.onclick = () => param.set('trg.type', btn.dataset.val);
@@ -458,9 +482,9 @@
                     keyFrame = samples
                     samples = null
                 }
-                document.getElementById("freq").textContent = buf["sampling.freq"] || "-";
-                document.getElementById("gain").textContent = buf["shift.a"] || "-";
-                document.getElementById("shift").textContent = buf["gain.a"] || "-";
+                document.getElementById("sampling").textContent = buf["sampling.ns"] || "-";
+                document.getElementById("gain").textContent = buf["gain.a"] || "-";
+                document.getElementById("shift").textContent = buf["shift.a"] || "-";
                 document.getElementById("status").textContent = "streaming";
                 plot(samples, keyFrame);
             }
@@ -474,9 +498,7 @@
                             param.set(k, buf[k], {send: false});
                     }
                 } else if (ncn < param._stateNo) {
-                    for (const k in param._controls)
-                        if (param._values[k] !== undefined)
-                            param.set(k, param._values[k]);
+                    param.sendAllCommands()
                 }
             }
         };
