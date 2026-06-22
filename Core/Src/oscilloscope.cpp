@@ -172,8 +172,20 @@ namespace trigger
     }
 }
 
-constexpr std::array<const Command*, 5> commands{
+constexpr struct CommandStateNo_t : Command
+{
+    constexpr CommandStateNo_t() : Command("state.no", 0, 0, 0) {}
+    void useNewValue() const override {}
+    bool setValue(const long aValue, [[maybe_unused]]const unsigned long aStateNumber) const override
     {
+        value = aValue;
+        return true;
+    }
+} CommandStateNo{};
+
+constexpr std::array<const Command*, 6> commands{
+    {
+        &CommandStateNo,
         &CommandBiasChannelA,
         &CommandGainChannelA,
         &CommandTimeResolution,
@@ -234,7 +246,7 @@ static void executeIncomingCommand()
 
         long newValue;
         std::from_chars(ptr, ptr + strlen(ptr), newValue); // NOLINT(*-err34-c)
-        if (command->setValue(newValue))
+        if (command->setValue(newValue, CommandStateNo.getValue()))
         {
             requiresRestart |= command->requires_restart;
             break;

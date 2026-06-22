@@ -35,8 +35,10 @@ struct Command
 
     long getValue() const { return value; }
 
-    bool setValue(long aValue) const
+    virtual bool setValue(long aValue, const unsigned long aStateNumber) const
     {
+        if (aStateNumber <= stateNumber) return false;
+        stateNumber = aStateNumber;
         aValue = adjustValue(aValue);
         if (aValue == value) return false;
         value = aValue;
@@ -54,7 +56,10 @@ struct Command
     }
 
 protected:
+    /** Mutable part*/
     mutable long value;
+    mutable unsigned long stateNumber = 0;
+    /**End of Mutable part*/
     const long min;
     const long max;
     virtual long adjustValue(const long aValue) const { return std::clamp(aValue, min, max); }

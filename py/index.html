@@ -267,6 +267,7 @@
         _values: {},
         _controls: {},
         _debounces: {},
+        _stateNo: 0,
         register(name, el, update, debounceMs) {
             this._controls[name] = { el, update };
             if (debounceMs) this._debounces[name] = this._makeDebouncer(debounceMs);
@@ -278,9 +279,9 @@
                 timer = setTimeout(() => this._setNow(name, value, opts), ms);
             };
         },
-        registerSliders(className, debounceMs) {
+        registerSliders(className) {
             document.querySelectorAll('.' + className).forEach(el => {
-                this.register(el.id, el, (el, v) => el.value = String(v), debounceMs);
+                this.register(el.id, el, (el, v) => el.value = String(v), 20);
             });
         },
         _setNow(name, value, opts) {
@@ -296,11 +297,14 @@
         },
         get(name) { return this._values[name]; },
         _send(name, value) {
-            if (ws && ws.readyState === WebSocket.OPEN) ws.send(`${name}=${value}`);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                this._stateNo++;
+                ws.send(`state.no=${this._stateNo}\n${name}=${value}`);
+            }
         }
     };
 
-    param.registerSliders('param-slider', 20);
+    param.registerSliders('param-slider');
 
     const trgBtns = document.querySelectorAll(".trg-btn");
     param.register('trg.type', trgBtns, (els, v) => {
@@ -459,6 +463,21 @@
                 document.getElementById("shift").textContent = buf["gain.a"] || "-";
                 document.getElementById("status").textContent = "streaming";
                 plot(samples, keyFrame);
+            }
+            const cn = buf["state.no"];
+            if (cn !== undefined) {
+                const ncn = Number(cn);
+                if (ncn > param._stateNo) {
+                    param._stateNo = ncn;
+                    for (const k in buf) {
+                        if (k !== "state.no" && param._controls[k])
+                            param.set(k, buf[k], {send: false});
+                    }
+                } else if (ncn < param._stateNo) {
+                    for (const k in param._controls)
+                        if (param._values[k] !== undefined)
+                            param.set(k, param._values[k]);
+                }
             }
         };
     }
