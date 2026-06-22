@@ -1,9 +1,10 @@
 #include "tim.h"
 #include "dma.h"
 #include "dac.h"
-#include "array"
-#include "string"
-#include "span"
+#include <array>
+#include <atomic>
+#include <string>
+#include <span>
 #include "oscilloscope.hpp"
 #include <cstring>
 #include <algorithm>
@@ -12,12 +13,10 @@
 #include "comp.h"
 #include "opamp.h"
 
-using namespace std;
+alignas(uint32_t) static std::array<uint16_t, data_frame_size * 2> adcBuffer{};
 
-alignas(uint32_t) static array<uint16_t, data_frame_size * 2> adcBuffer{};
-
-constexpr auto adc1stHalf = span(adcBuffer).first<data_frame_size>();
-constexpr auto adc2ndHalf = span(adcBuffer).last<data_frame_size>();
+constexpr auto adc1stHalf = std::span(adcBuffer).first<data_frame_size>();
+constexpr auto adc2ndHalf = std::span(adcBuffer).last<data_frame_size>();
 
 void dmaMemToMemCallback(DMA_HandleTypeDef* dma_handle_type_def);
 
@@ -32,11 +31,11 @@ void initialize_test_signal() //todo remove together with tim2 & hdac2 wave gene
  *
  */
 
-constexpr Command CommandGainChannelA{
-    .name = "gain.a",
-    .value = 16,
+constexpr struct CommandGainChannelA_t : Command
+{
+    constexpr CommandGainChannelA_t() : Command("gain.a", 16, 2, 64){}
 
-    .useNewValue = [](const long long value)
+    void useNewValue() const override
     {
         uint32_t dac_gain_bits;
         switch (value)
@@ -57,88 +56,94 @@ constexpr Command CommandGainChannelA{
         HAL_OPAMP_Stop(&hopamp3);
         HAL_OPAMP_Init(&hopamp3);
         HAL_OPAMP_Start(&hopamp3);
-    },
-    .adjustValue = [](const long long value)
+    }
+protected:
+    long adjustValue(const long value) const override
     {
-        for (const long long i : {2, 4, 8, 16, 32})
+        for (const long i : {2, 4, 8, 16, 32})
         {
             if (value <= i) return i;
         }
-        return 64LL;
-    },
-};
+        return 64L;
+    }
+} CommandGainChannelA{};
 
-constexpr Command CommandBiasChannelA{
-    .name = "vbias.a",
-    .value = -503'000LL, //todo 0
-
-    .useNewValue = [](const long long value)
-    {
-        const uint16_t dac_bias = clamp(
-            (CommandBiasChannelA.value + 1'000'000LL) * 4'095LL / 2'000'000LL, 0LL, 4095LL);
-        HAL_DAC_SetValue(&hdac1, DAC1_CHANNEL_1,DAC_ALIGN_12B_R, dac_bias);
-    },
-    .adjustValue = [](const long long value) { return clamp(value, -1'000'000LL, 1'000'000LL); },
-};
-
-namespace sampling
+constexpr struct CommandBiasChannelA_t : Command
 {
-    constexpr auto minAdcTime = 1'000'000'000LL / 4'000'000; // 4 MHz ADC max sampling
-    constexpr auto minSamplingTimeNs = 1'000'000'000LL / 8'000'000; // 8 MHz max sampling
-    constexpr auto maxSamplingTimeNs = 1'000'000'000LL / 20; // 20 Hz max sampling
-    constexpr Command CommandTimeResolution{
-        .name = "sampling.ns",
-        .requiresRestart = true,
-        .value = 250,
-        .adjustValue = [](const long long value) { return clamp(value, minSamplingTimeNs, maxSamplingTimeNs); },
-    };
+    constexpr CommandBiasChannelA_t() : Command("vbias.a", -503'000LL /*todo 0*/, -1'000'000, 1'000'000){}
 
-    bool isInterleaveSampling()
+    void useNewValue() const override
     {
-        return CommandTimeResolution.value < minAdcTime;
+        const uint16_t dac_bias = std::ranges::clamp(
+            (value - min) * 4'095LL / (max - min), 0LL, 4095LL);
+        HAL_DAC_SetValue(&hdac1, DAC1_CHANNEL_1,DAC_ALIGN_12B_R, dac_bias);
+    }
+} CommandBiasChannelA{};
+
+constexpr struct CommandTimeResolution_t : Command
+{
+    static constexpr long minAdcTime = 1'000'000'000LL / 4'000'000; // 4 MHz ADC max sampling
+
+    constexpr CommandTimeResolution_t() : Command("sampling.ns", 250,
+                                                  1'000'000'000LL / 8'000'000, // 8 MHz max sampling freq in nsec
+                                                  1'000'000'000LL / 20, // 20 Hz min sampling freq in nsec
+                                                  true)
+    {
     }
 
-    uint32_t clockDivider()
+    bool isInterleaveSampling() const
     {
-        //Hopefully APB1 divider is 1
+        return value < minAdcTime;
+    }
+
+    uint32_t clockDivider() const
+    {
+
+        if (LL_RCC_GetAPB1Prescaler() !=LL_RCC_APB1_DIV_1)
+        {
+            //APB1 divider must be 1
+            Error_Handler();
+        }
         // twice slower if interleaved sampling
         unsigned long long fullDivider = (isInterleaveSampling()) ? 2 : 1;
-        fullDivider *= HAL_RCC_GetHCLKFreq() * static_cast<unsigned long long>(CommandTimeResolution.value) /
+        fullDivider *= HAL_RCC_GetPCLK1Freq() * static_cast<unsigned long long>(value) /
             1'000'000'000ULL;
         return static_cast<uint32_t>(fullDivider - 1);
     }
-}
+
+    void useNewValue() const override
+    {
+    }
+
+} CommandTimeResolution{};
 
 
 static void startSampling();
 
 namespace trigger
 {
-    constexpr long long min = -1'000'000;
-    constexpr long long max = 1'000'000;
-    constexpr Command CommandTriggerLevel{
-        .name = "trg.level",
-        .value = 200'000L, //todo 0
-        .useNewValue = [](const long long value)
+    constexpr struct CommandTriggerLevel_t : Command
+    {
+        constexpr CommandTriggerLevel_t() : Command("trg.level", 200'000L/*todo 0*/, -1'000'000, 1'000'000){}
+
+        void useNewValue() const override
         {
-            const uint16_t dac_bias = clamp((value + 1'000'000LL) * 4'095LL / 2'000'000LL, 0LL, 4095LL);
+            const uint16_t dac_bias = std::ranges::clamp((value - min) * 4'095LL / (max - min), 0LL, 4095LL);
             HAL_DAC_SetValue(&hdac1, DAC1_CHANNEL_2,DAC_ALIGN_12B_R, dac_bias);
-        },
-        .adjustValue = [](const long long value) { return clamp(value, min, max); }
-    };
+        }
+    } CommandTriggerLevel{};
 
 
-    constexpr Command CommandTriggerType{
-        .name = "trg.type",
-        .value = 0,
-        .useNewValue = [](const long long value) { startSampling(); },
-        .adjustValue = [](const long long value) { return clamp(value, -1LL, 1LL); },
+    constexpr struct CommandTriggerType_t : Command
+    {
+        constexpr CommandTriggerType_t() : Command("trg.type", 0, -1, 1){}
 
-    };
+        void useNewValue() const override { startSampling(); }
+    } CommandTriggerType{};
 
     void enableTrigger()
     {
-        if (CommandTriggerType.value == 0)
+        if (CommandTriggerType.getValue() == 0)
         {
             HAL_NVIC_DisableIRQ(COMP4_5_6_IRQn);
         }
@@ -150,7 +155,7 @@ namespace trigger
 
     void setupTriggerDelay()
     {
-        if (sampling::isInterleaveSampling())
+        if (CommandTimeResolution.isInterleaveSampling())
         {
             __HAL_TIM_SET_AUTORELOAD(&htim1, data_frame_size/2 - 1);
         }
@@ -163,17 +168,17 @@ namespace trigger
 
     uint32_t comparatorValue()
     {
-        return CommandTriggerType.value == -1 ? COMP_OUTPUT_LEVEL_LOW : COMP_OUTPUT_LEVEL_HIGH;
+        return CommandTriggerType.getValue() == -1 ? COMP_OUTPUT_LEVEL_LOW : COMP_OUTPUT_LEVEL_HIGH;
     }
 }
 
-constexpr array<const Command*, 5> commands{
+constexpr std::array<const Command*, 5> commands{
     {
         &CommandBiasChannelA,
-        &sampling::CommandTimeResolution,
+        &CommandGainChannelA,
+        &CommandTimeResolution,
         &trigger::CommandTriggerLevel,
         &trigger::CommandTriggerType,
-        &CommandGainChannelA,
     }
 };
 
@@ -186,22 +191,15 @@ static char* skipWhiteSpace(char* & ptr)
     return ptr;
 }
 
-static volatile bool triggerArmed = false;
+static volatile std::atomic<bool> triggerArmed = false;
 
 static void startSampling()
 {
-    if (sampling::isInterleaveSampling())
-    {
-        __HAL_TIM_SET_AUTORELOAD(&htim1, data_frame_size/2 - 1);
-    }
-    else
-    {
-        __HAL_TIM_SET_AUTORELOAD(&htim1, data_frame_size - 1);
-    }
+    trigger::setupTriggerDelay();
     __HAL_TIM_SET_COUNTER(&htim1, 0);
-    startMainAdc(sampling::isInterleaveSampling(), adcBuffer.data(), adcBuffer.size());
+    startMainAdc(CommandTimeResolution.isInterleaveSampling(), adcBuffer.data(), adcBuffer.size());
     __HAL_TIM_SET_PRESCALER(&htim2, 0);
-    __HAL_TIM_SET_AUTORELOAD(&htim2, sampling::clockDivider());
+    __HAL_TIM_SET_AUTORELOAD(&htim2, CommandTimeResolution.clockDivider());
     __HAL_TIM_SET_COUNTER(&htim2, 0);
     HAL_TIM_Base_Start(&htim2);
     HAL_NVIC_ClearPendingIRQ(COMP4_5_6_IRQn);
@@ -223,22 +221,24 @@ static void executeIncomingCommand()
         }
     }
 
-    char* ptr = cmdBuffer;
-    skipWhiteSpace(ptr);
+    char* noSpacePtr = cmdBuffer;
+    skipWhiteSpace(noSpacePtr);
     bool requiresRestart = false;
-    for (const auto command : commands)
+    for (const auto& command : commands)
     {
+        char* ptr = noSpacePtr;
         if (strncmp(ptr, command->name.data(), command->name.size()) != 0) continue;
         ptr += command->name.size();
         skipWhiteSpace(ptr);
         if (*ptr++ != '=') continue;
-        long long newValue = atoll(ptr); // NOLINT(*-err34-c)
-        newValue = command->adjustValue(newValue);
-        if (newValue == command->value) continue;
-        command->value = newValue;
-        command->useNewValue(newValue);
-        requiresRestart |= command->requiresRestart;
-        break;
+
+        long newValue;
+        std::from_chars(ptr, ptr + strlen(ptr), newValue); // NOLINT(*-err34-c)
+        if (command->setValue(newValue))
+        {
+            requiresRestart |= command->requires_restart;
+            break;
+        }
     }
     if (requiresRestart)
     {
@@ -259,9 +259,9 @@ static void executeIncomingCommand()
     HAL_TIM_Base_Start(&htim1);
     startSampling();
     HAL_COMP_Start(&hcomp5);
-    for (const auto command : commands)
+    for (const auto& command : commands)
     {
-        command->useNewValue(command->value);
+        command->useNewValue();
     }
     startUartInput();
     while (true)
@@ -272,7 +272,7 @@ static void executeIncomingCommand()
 
 extern "C" void initFrameTransfer(const int subBufferIndex)
 {
-    const span<uint16_t, data_frame_size>& from = subBufferIndex ? adc1stHalf : adc2ndHalf;
+    const std::span<uint16_t, data_frame_size>& from = subBufferIndex ? adc1stHalf : adc2ndHalf;
     if (osSemaphoreAcquire(transmitBufferBusyHandle, 0) != osOK)
     {
         //transmit buffer busy, skip the frame
@@ -291,11 +291,12 @@ void transmitBufferReady()
     osThreadFlagsSet(transmitTaskHandle, THREAD_FLAG_READY_TO_TRANSMIT);
 }
 
-void dmaMemToMemCallback(__unused DMA_HandleTypeDef* dma_handle_type_def)
+void dmaMemToMemCallback([[maybe_unused]] DMA_HandleTypeDef* dma_handle_type_def)
 {
     transmitBufferReady();
 }
 
+// ReSharper disable once CppParameterMayBeConstPtrOrRef
 void HAL_COMP_TriggerCallback(COMP_HandleTypeDef* hcomp)
 {
     if (HAL_COMP_GetOutputLevel(hcomp) == trigger::comparatorValue())
@@ -313,7 +314,7 @@ void HAL_COMP_TriggerCallback(COMP_HandleTypeDef* hcomp)
     HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 }
 
-extern "C" void HAL_TIM_PWM_PulseFinishedCallback(__unused TIM_HandleTypeDef* htim)
+extern "C" void HAL_TIM_PWM_PulseFinishedCallback([[maybe_unused]] TIM_HandleTypeDef* htim)
 {
     HAL_TIM_Base_Stop_IT(&htim1);
     HAL_TIM_Base_Stop(&htim2);
@@ -348,5 +349,13 @@ extern "C" [[noreturn]] void keyFramesProcessing()
         transmitBufferReady();
         startSampling();
         trigger::enableTrigger();
+    }
+}
+
+void writeCommands(void (*write_uart)(const std::string_view& str))
+{
+    for (auto& command : commands)
+    {
+        command->write(write_uart);
     }
 }

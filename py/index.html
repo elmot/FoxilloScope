@@ -201,11 +201,11 @@
 <div id="canvas-wrap">
     <div class="v-control-container">
         <span class="label"><label for="vbias.a">Bias A</label></span>
-        <input type="range" id="vbias.a" value="0" min="-1000000" max="1000000" step="1000">
+        <input type="range" id="vbias.a" class="param-slider" value="0" min="-1000000" max="1000000" step="1000">
     </div>
     <div class="v-control-container">
         <span class="label"><label for="trg.level">TRG lvl</label></span>
-        <input type="range" id="trg.level" value="0" min="-1000000" max="1000000" step="1000">
+        <input type="range" id="trg.level" class="param-slider" value="0" min="-1000000" max="1000000" step="1000">
         <div class="trg-type-container">
             <button class="trg-btn active" data-val="0" title="None">∅</button>
             <button class="trg-btn" data-val="1" title="Rising">↗</button>
@@ -263,64 +263,84 @@
     const ctx = canvas.getContext("2d");
     let ws = null;
 
-    function sendParameter(parametersStr) {
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(parametersStr);
+    const param = {
+        _values: {},
+        _controls: {},
+        _debounces: {},
+        register(name, el, update, debounceMs) {
+            this._controls[name] = { el, update };
+            if (debounceMs) this._debounces[name] = this._makeDebouncer(debounceMs);
+        },
+        _makeDebouncer(ms) {
+            let timer;
+            return (name, value, opts) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => this._setNow(name, value, opts), ms);
+            };
+        },
+        registerSliders(className, debounceMs) {
+            document.querySelectorAll('.' + className).forEach(el => {
+                this.register(el.id, el, (el, v) => el.value = String(v), debounceMs);
+            });
+        },
+        _setNow(name, value, opts) {
+            this._values[name] = value;
+            const ctrl = this._controls[name];
+            if (ctrl) ctrl.update(ctrl.el, value);
+            if (!opts || opts.send !== false) this._send(name, value);
+        },
+        set(name, value, opts) {
+            const db = this._debounces[name];
+            if (db) { db(name, value, opts); return; }
+            this._setNow(name, value, opts);
+        },
+        get(name) { return this._values[name]; },
+        _send(name, value) {
+            if (ws && ws.readyState === WebSocket.OPEN) ws.send(`${name}=${value}`);
         }
-    }
+    };
 
-    const debounce = (callback) => {
-        let timeoutId = null;
-        return (...args) => {
-            window.clearTimeout(timeoutId);
-            timeoutId = window.setTimeout(() => {
-                callback(...args);
-            }, 20);
-        };
-    }
-
-    function setupSwitch(id, action) {
-        const input = document.getElementById(id);
-        input.updateRes = (idx) => {
-            const opt = input.options[idx];
-            input.value = opt.value;
-            action(opt.value)
-        };
-
-        input.parentElement.getElementsByTagName("button")[0].onclick = () => {
-            input.updateRes(Math.max(0, input.selectedIndex - 1));
-        };
-        input.parentElement.getElementsByTagName("button")[1].onclick = () => {
-            input.updateRes(Math.min(input.options.length - 1, input.selectedIndex + 1));
-        };
-        input.onchange = () => {
-            input.updateRes(input.selectedIndex)
-        }
-    }
-
-    const vbiasInput_a = document.getElementById("vbias.a");
-
-    vbiasInput_a.oninput = debounce(() => {
-        sendParameter(`vbias.a=${vbiasInput_a.value}`)
-    });
-
-    const trg_level = document.getElementById("trg.level");
-
-    trg_level.oninput = debounce(() => {
-        sendParameter(`trg.level=${trg_level.value}`)
-    });
+    param.registerSliders('param-slider', 20);
 
     const trgBtns = document.querySelectorAll(".trg-btn");
-    trgBtns.forEach(btn => {
-        btn.onclick = () => {
-            trgBtns.forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            sendParameter(`trg.type=${btn.dataset.val}`);
-        };
+    param.register('trg.type', trgBtns, (els, v) => {
+        els.forEach(b => b.classList.toggle('active', b.dataset.val === String(v)));
     });
 
-    setupSwitch("resInput", (value) => {sendParameter(`sampling.ns=${value / 4 }`)});
-    setupSwitch("gain.a", (value) => {sendParameter(`gain.a=${value}`)});
+    const vbiasInput_a = document.getElementById("vbias.a");
+    vbiasInput_a.oninput = () => param.set('vbias.a', vbiasInput_a.value);
+
+    const trg_level = document.getElementById("trg.level");
+    trg_level.oninput = () => param.set('trg.level', trg_level.value);
+
+    trgBtns.forEach(btn => {
+        btn.onclick = () => param.set('trg.type', btn.dataset.val);
+    });
+
+    const selectParam = {
+        wire(id, paramName, toWire, fromWire) {
+            toWire = toWire || (v => v);
+            fromWire = fromWire || (v => v);
+            const el = document.getElementById(id);
+            param.register(paramName, el, (el, v) => {
+                const sv = fromWire(v);
+                for (let opt of el.options) {
+                    if (Number(opt.value) === Number(sv)) { el.value = opt.value; return; }
+                }
+            });
+            const btns = el.parentElement.getElementsByTagName("button");
+            const step = (d) => {
+                const idx = Math.max(0, Math.min(el.options.length - 1, el.selectedIndex + d));
+                el.value = el.options[idx].value;
+                param.set(paramName, toWire(el.value));
+            };
+            btns[0].onclick = () => step(-1);
+            btns[1].onclick = () => step(1);
+            el.onchange = () => param.set(paramName, toWire(el.value));
+        }
+    };
+    selectParam.wire("gain.a", "gain.a");
+    selectParam.wire("resInput", "sampling.ns", v => v / 4, v => v * 4);
 
     function plot(frame, keyFrame) {
         if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {

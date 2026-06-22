@@ -36,13 +36,9 @@ extern "C" [[noreturn]] void startTransmitTask([[maybe_unused]] void* argument)
             *(textPtr++) = BASE64_CHARS[low6];
         }
         *textPtr = 0;
-        constexpr auto dataHeader = R"(
-[frame]
-sampling.freq=100
-shift.a=0
-gain.a=1
-data.a=)";
-        writeUart(dataHeader);
+        writeUart("[frame]\n");
+        writeCommands(writeUart);
+        writeUart("data.a=");
         writeUart(dataBuffer.data());
         if (transmitBuffer.keyFrame)
         {

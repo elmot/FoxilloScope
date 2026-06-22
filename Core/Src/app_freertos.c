@@ -65,7 +65,7 @@ const osThreadAttr_t defaultTask_attributes = {
 };
 /* Definitions for transmitTask */
 osThreadId_t transmitTaskHandle;
-uint32_t transmitTaskBuffer[ 128 ];
+uint32_t transmitTaskBuffer[ 200 ];
 osStaticThreadDef_t transmitTaskControlBlock;
 const osThreadAttr_t transmitTask_attributes = {
   .name = "transmitTask",
