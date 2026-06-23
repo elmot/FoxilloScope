@@ -303,7 +303,7 @@ void HAL_COMP_TriggerCallback(COMP_HandleTypeDef* hcomp)
 extern "C" void HAL_TIM_PWM_PulseFinishedCallback([[maybe_unused]] TIM_HandleTypeDef* htim)
 {
     HAL_TIM_Base_Stop_IT(&htim1);
-    HAL_TIM_Base_Stop(&htim2);
+        HAL_TIM_Base_Stop(&htim2);
     extern osThreadId_t keyFrameTaskHandle;
     osThreadFlagsSet(keyFrameTaskHandle, THREAD_FLAG_KEY_FRAME_DETECTED);
 }

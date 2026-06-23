@@ -266,7 +266,7 @@
     </div>
     <div class="switch-control">
         <button>&lt;</button>
-        <select id="resInput">
+        <select id="sampling.ns">
             <option value="500">0.5&micro;s</option>
             <option value="1000">1&micro;s</option>
             <option value="2000">2&micro;s</option>
@@ -378,11 +378,11 @@
     });
 
     const selectParam = {
-        wire(id, paramName, toWire, fromWire) {
+        wire(id, toWire, fromWire) {
             toWire = toWire || (v => v);
             fromWire = fromWire || (v => v);
             const el = document.getElementById(id);
-            param.register(paramName, el, (el, v) => {
+            param.register(id, el, (el, v) => {
                 const sv = fromWire(v);
                 for (let opt of el.options) {
                     if (Number(opt.value) === Number(sv)) { el.value = opt.value; return; }
@@ -392,16 +392,18 @@
             const step = (d) => {
                 const idx = Math.max(0, Math.min(el.options.length - 1, el.selectedIndex + d));
                 el.value = el.options[idx].value;
-                param.set(paramName, toWire(el.value));
+                param.set(id, toWire(el.value));
             };
             btns[0].onclick = () => step(-1);
             btns[1].onclick = () => step(1);
-            el.onchange = () => param.set(paramName, toWire(el.value));
+            el.onchange = () => param.set(id, toWire(el.value));
+            const idx = Math.max(0, Math.min(el.options.length - 1, el.selectedIndex));
+            param._values[id] = el.options[idx].value;
         }
     };
-    selectParam.wire("gain.a", "gain.a");
-    selectParam.wire("gain.b", "gain.b");
-    selectParam.wire("resInput", "sampling.ns", v => v / 4, v => v * 4);
+    selectParam.wire("gain.a");
+    selectParam.wire("gain.b");
+    selectParam.wire("sampling.ns", v => v / 4, v => v * 4);
 
     function plot(frameA, keyFrameA, frameB, keyFrameB) {
         if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
