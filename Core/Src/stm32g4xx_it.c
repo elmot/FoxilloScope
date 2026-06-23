@@ -56,9 +56,9 @@
 
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_adc3;
-extern COMP_HandleTypeDef hcomp5;
-extern DMA_HandleTypeDef hdma_dac2_ch1;
-extern DAC_HandleTypeDef hdac2;
+extern COMP_HandleTypeDef hcomp1;
+extern DMA_HandleTypeDef hdma_dac4_ch2;
+extern DAC_HandleTypeDef hdac4;
 extern DMA_HandleTypeDef hdma_memtomem_dma1_channel2;
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim7;
@@ -173,7 +173,7 @@ void DMA1_Channel1_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
 
   /* USER CODE END DMA1_Channel1_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_dac2_ch1);
+  HAL_DMA_IRQHandler(&hdma_dac4_ch2);
   /* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
 
   /* USER CODE END DMA1_Channel1_IRQn 1 */
@@ -244,24 +244,24 @@ void TIM7_DAC_IRQHandler(void)
 
   /* USER CODE END TIM7_DAC_IRQn 0 */
   HAL_TIM_IRQHandler(&htim7);
-  HAL_DAC_IRQHandler(&hdac2);
+  HAL_DAC_IRQHandler(&hdac4);
   /* USER CODE BEGIN TIM7_DAC_IRQn 1 */
 
   /* USER CODE END TIM7_DAC_IRQn 1 */
 }
 
 /**
-  * @brief This function handles COMP4, COMP5 and COMP6 interrupts through EXTI lines 30, 31 and 32.
+  * @brief This function handles COMP1, COMP2 and COMP3 interrupts through EXTI lines 21, 22 and 29.
   */
-void COMP4_5_6_IRQHandler(void)
+void COMP1_2_3_IRQHandler(void)
 {
-  /* USER CODE BEGIN COMP4_5_6_IRQn 0 */
+  /* USER CODE BEGIN COMP1_2_3_IRQn 0 */
 
-  /* USER CODE END COMP4_5_6_IRQn 0 */
-  HAL_COMP_IRQHandler(&hcomp5);
-  /* USER CODE BEGIN COMP4_5_6_IRQn 1 */
+  /* USER CODE END COMP1_2_3_IRQn 0 */
+  HAL_COMP_IRQHandler(&hcomp1);
+  /* USER CODE BEGIN COMP1_2_3_IRQn 1 */
 
-  /* USER CODE END COMP4_5_6_IRQn 1 */
+  /* USER CODE END COMP1_2_3_IRQn 1 */
 }
 
 /**
@@ -287,6 +287,19 @@ void LPUART1_IRQHandler(void)
   /* USER CODE BEGIN LPUART1_IRQn 1 */
 
   /* USER CODE END LPUART1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMAMUX overrun interrupt.
+  */
+void DMAMUX_OVR_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMAMUX_OVR_IRQn 0 */
+
+  /* USER CODE END DMAMUX_OVR_IRQn 0 */
+  /* USER CODE BEGIN DMAMUX_OVR_IRQn 1 */
+
+  /* USER CODE END DMAMUX_OVR_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
