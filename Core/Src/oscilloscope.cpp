@@ -104,6 +104,15 @@ namespace trigger
         void useNewValue() const override {}
     } CommandTriggerShift{};
 
+    constexpr struct CommandTriggerChannel_t : Command
+    {
+        constexpr CommandTriggerChannel_t() : Command("trg.chan", 0, 0, 1) {}
+        void useNewValue() const override
+        {
+            startSampling();
+        }
+    } CommandTriggerChannel{};
+
     void enableTrigger()
     {
         if (CommandTriggerType.getValue() == 0)
@@ -124,7 +133,7 @@ namespace trigger
 
 constexpr struct CommandStateNo_t : Command
 {
-    constexpr CommandStateNo_t() : Command("state.no", 0, 0, 0) {}
+    constexpr CommandStateNo_t() : Command("state.no", 0, 0, 0x7FFF'FFFF) {}
     void useNewValue() const override {}
     bool setValue(const long aValue, [[maybe_unused]]const unsigned long aStateNumber) const override
     {
@@ -133,7 +142,7 @@ constexpr struct CommandStateNo_t : Command
     }
 } CommandStateNo{};
 
-const std::array<const Command*, 9> commands{
+const std::array<const Command*, 10> commands{
     &CommandStateNo,
     &CommandBiasChannelA_ref,
     &CommandBiasChannelB_ref,
@@ -143,6 +152,7 @@ const std::array<const Command*, 9> commands{
     &trigger::CommandTriggerLevel,
     &trigger::CommandTriggerType,
     &trigger::CommandTriggerShift,
+    &trigger::CommandTriggerChannel
 };
 
 void skipWhiteSpace(char* & ptr)
@@ -160,7 +170,8 @@ static void startSampling()
     const auto maxArr = CommandTimeResolution.isInterleaveSampling()
         ? data_frame_size / 2 - 1
         : data_frame_size - 1;
-
+    /* Select COMP1 input pin: PB1 or PA1*/
+    MODIFY_REG(hcomp1.Instance->CSR, COMP_CSR_INPSEL, trigger::CommandTriggerChannel.getValue() == 0 ? COMP_INPUT_PLUS_IO2 : COMP_INPUT_PLUS_IO1);
     const auto arr = maxArr * (1000 - trigger::CommandTriggerShift.getValue()) / 1000;
     __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_1,arr);
     __HAL_TIM_SET_COUNTER(&htim1, 0);

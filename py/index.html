@@ -228,8 +228,8 @@
         <span class="label"><label for="trg.level">TRG lvl</label></span>
         <input type="range" id="trg.level" class="param-slider" value="0" min="-1000000" max="1000000">
         <div class="trg-type-container">
-            <button class="trg-btn trg-chan-btn active" data-val="a" title="Channel A">A</button>
-            <button class="trg-btn trg-chan-btn" data-val="b" title="Channel B">B</button>
+            <button class="trg-btn trg-chan-btn active" data-val="0" title="Channel A">A</button>
+            <button class="trg-btn trg-chan-btn" data-val="1" title="Channel B">B</button>
         </div>
         <div class="trg-type-container">
             <button class="trg-btn active" data-val="0" title="None">∅</button>
@@ -371,7 +371,7 @@
     param.register('trg.chan', trgChanBtns, (els, v) => {
         els.forEach(b => b.classList.toggle('active', b.dataset.val === String(v)));
     });
-    param._values['trg.chan'] = 'a';
+    param._values['trg.chan'] = '0';
 
     trgChanBtns.forEach(btn => {
         btn.onclick = () => param.set('trg.chan', btn.dataset.val);
@@ -510,22 +510,22 @@
                     const k = line.substring(0, eqIdx).trim();
                     buf[k] = line.substring(eqIdx + 1).trim();
                 }
-                let samplesA = decode(buf["data.a"] || "");
-                let samplesB = decode(buf["data.b"] || "");
-                if (buf["keyframe"] === "1") {
-                    keyFrameA = samplesA
-                    keyFrameB = samplesB
-                    samplesA = null
-                    samplesB = null
-                }
-                document.getElementById("sampling").textContent = buf["sampling.ns"] || "-";
-                document.getElementById("gain").textContent = buf["gain.a"] || "-";
-                document.getElementById("shift").textContent = buf["shift.a"] || "-";
-                document.getElementById("gain.b.val").textContent = buf["gain.b"] || "-";
-                document.getElementById("shift.b.val").textContent = buf["shift.b"] || "-";
-                document.getElementById("status").textContent = "streaming";
-                plot(samplesA, keyFrameA, samplesB, keyFrameB);
             }
+            let samplesA = decode(buf["data.a"] || "");
+            let samplesB = decode(buf["data.b"] || "");
+            if (buf["keyframe"] === "1") {
+                keyFrameA = samplesA
+                keyFrameB = samplesB
+                samplesA = null
+                samplesB = null
+            }
+            document.getElementById("sampling").textContent = buf["sampling.ns"] || "-";
+            document.getElementById("gain").textContent = buf["gain.a"] || "-";
+            document.getElementById("shift").textContent = buf["shift.a"] || "-";
+            document.getElementById("gain.b.val").textContent = buf["gain.b"] || "-";
+            document.getElementById("shift.b.val").textContent = buf["shift.b"] || "-";
+            document.getElementById("status").textContent = "streaming";
+            plot(samplesA, keyFrameA, samplesB, keyFrameB);
             const cn = buf["state.no"];
             if (cn !== undefined) {
                 const ncn = Number(cn);
