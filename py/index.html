@@ -59,20 +59,20 @@
 
         #canvas-wrap {
             overflow: auto;
-            min-width: 0px;
-            min-height: 0px;
+            min-width: 0;
+            min-height: 0;
             display: flex;
             flex: 1;
         }
 
         #canvas-wrap canvas {
-            min-width: 0px;
-            min-height: 0px;
+            min-width: 0;
+            min-height: 0;
             max-width: 100%;
             max-height: 100%;
             width: 100%;
             height: 100%;
-            flex: 1 1 0%;
+            flex: 1 1 0;
             margin-right: 0.5vw;
         }
 
@@ -140,14 +140,15 @@
         .switch-control {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 0;
         }
 
         .switch-control button {
             background: #333;
+            height: 1.5em;
             color: #0f0;
             border: 1px solid #0f0;
-            padding: 4px 10px;
+            padding: 0 4px;
             cursor: pointer;
             border-radius: 3px;
             font: inherit;
@@ -159,13 +160,14 @@
         }
 
         .switch-control select {
-            min-width: 80px;
+            min-width: 3em;
+            height: 1.5em;
             text-align: center;
             color: #0f0;
-            font-weight: bold;
             background: #222;
             border: 1px solid #0f0;
             font: inherit;
+            font-weight: bold;
             cursor: pointer;
         }
 
@@ -201,6 +203,9 @@
         .trg-btn.active {
             background: #0f0;
             color: #000;
+        }
+        #trg\.time\.offset {
+            width: 50vh;
         }
     </style>
 </head>
@@ -291,8 +296,13 @@
     </div>
     <div class="h-control-container">
         <span class="label">TRG shift</span>
-        <input type="range" id="trg.shift" class="param-slider"
-               value="200" min="0" max="1000" step="1">
+        <input type="range" id="trg.time.offset" class="param-slider"
+               value="0" min="-1000000" max="1000000" list="trg-shift-ticks">
+        <datalist id="trg-shift-ticks">
+            <option value="-500000"></option>
+            <option value="0"></option>
+            <option value="500000"></option>
+        </datalist>
     </div>
 </div>
 <div id="footer"><span id="status">connecting...</span></div>

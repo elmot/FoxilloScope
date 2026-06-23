@@ -55,8 +55,7 @@ constexpr struct CommandTimeResolution_t : Command
 
     uint32_t clockDivider() const
     {
-
-        if (LL_RCC_GetAPB1Prescaler() !=LL_RCC_APB1_DIV_1)
+        if (LL_RCC_GetAPB1Prescaler() != LL_RCC_APB1_DIV_1)
         {
             //APB1 divider must be 1
             Error_Handler();
@@ -71,7 +70,6 @@ constexpr struct CommandTimeResolution_t : Command
     void useNewValue() const override
     {
     }
-
 } CommandTimeResolution{};
 
 
@@ -81,7 +79,9 @@ namespace trigger
 {
     constexpr struct CommandTriggerLevel_t : Command
     {
-        constexpr CommandTriggerLevel_t() : Command("trg.level", 200'000L/*todo 0*/, -1'000'000, 1'000'000){}
+        constexpr CommandTriggerLevel_t() : Command("trg.level", 200'000L/*todo 0*/, -1'000'000, 1'000'000)
+        {
+        }
 
         void useNewValue() const override
         {
@@ -93,20 +93,37 @@ namespace trigger
 
     constexpr struct CommandTriggerType_t : Command
     {
-        constexpr CommandTriggerType_t() : Command("trg.type", 0, -1, 1){}
+        constexpr CommandTriggerType_t() : Command("trg.type", 0, -1, 1)
+        {
+        }
 
         void useNewValue() const override { startSampling(); }
     } CommandTriggerType{};
 
-    constexpr struct CommandTriggerShift_t : Command
+    constexpr struct CommandTriggerOffset_t : Command
     {
-        constexpr CommandTriggerShift_t() : Command("trg.shift", 200, 0, 1000) {}
-        void useNewValue() const override {}
-    } CommandTriggerShift{};
+        constexpr CommandTriggerOffset_t() : Command("trg.time.offset", 0, -1'000'000, 1'000'000)
+        {
+        }
+
+        void useNewValue() const override
+        {
+        }
+
+
+        int timerShiftSamples() const
+        {
+            return static_cast<int>(data_frame_size * (value - min)* 2 / (max - min)) ;
+        }
+
+    } CommandTriggerOffset{};
 
     constexpr struct CommandTriggerChannel_t : Command
     {
-        constexpr CommandTriggerChannel_t() : Command("trg.chan", 0, 0, 1) {}
+        constexpr CommandTriggerChannel_t() : Command("trg.chan", 0, 0, 1)
+        {
+        }
+
         void useNewValue() const override
         {
             startSampling();
@@ -133,9 +150,15 @@ namespace trigger
 
 constexpr struct CommandStateNo_t : Command
 {
-    constexpr CommandStateNo_t() : Command("state.no", 0, 0, 0x7FFF'FFFF) {}
-    void useNewValue() const override {}
-    bool setValue(const long aValue, [[maybe_unused]]const unsigned long aStateNumber) const override
+    constexpr CommandStateNo_t() : Command("state.no", 0, 0, 0x7FFF'FFFF)
+    {
+    }
+
+    void useNewValue() const override
+    {
+    }
+
+    bool setValue(const long aValue, [[maybe_unused]] const unsigned long aStateNumber) const override
     {
         value = aValue;
         return true;
@@ -151,7 +174,7 @@ const std::array<const Command*, 10> commands{
     &CommandTimeResolution,
     &trigger::CommandTriggerLevel,
     &trigger::CommandTriggerType,
-    &trigger::CommandTriggerShift,
+    &trigger::CommandTriggerOffset,
     &trigger::CommandTriggerChannel
 };
 
@@ -164,18 +187,21 @@ void skipWhiteSpace(char* & ptr)
 }
 
 static volatile std::atomic<bool> triggerArmed = false;
+static volatile std::atomic<int> triggerCounter;
 
 static void startSampling()
 {
-    const auto maxArr = CommandTimeResolution.isInterleaveSampling()
-        ? data_frame_size / 2 - 1
-        : data_frame_size - 1;
     /* Select COMP1 input pin: PB1 or PA1*/
-    MODIFY_REG(hcomp1.Instance->CSR, COMP_CSR_INPSEL, trigger::CommandTriggerChannel.getValue() == 0 ? COMP_INPUT_PLUS_IO2 : COMP_INPUT_PLUS_IO1);
-    const auto arr = maxArr * (1000 - trigger::CommandTriggerShift.getValue()) / 1000;
-    __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_1,arr);
+    MODIFY_REG(hcomp1.Instance->CSR, COMP_CSR_INPSEL,
+               trigger::CommandTriggerChannel.getValue() == 0 ? COMP_INPUT_PLUS_IO2 : COMP_INPUT_PLUS_IO1);
+    int arr = trigger::CommandTriggerOffset.timerShiftSamples() + data_frame_size / 2;
+    triggerCounter = 2; //todo proper value
+    if (arr < 0) arr = 0;
+    if (CommandTimeResolution.isInterleaveSampling()) arr /= 2;
+    __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_1, arr);
     __HAL_TIM_SET_COUNTER(&htim1, 0);
-    startMainAdcs(CommandTimeResolution.isInterleaveSampling(), adcBufferA.data(), adcBufferB.data(), adcBufferA.size());
+    startMainAdcs(CommandTimeResolution.isInterleaveSampling(), adcBufferA.data(), adcBufferB.data(),
+                  adcBufferA.size());
     __HAL_TIM_SET_PRESCALER(&htim2, 0);
     __HAL_TIM_SET_AUTORELOAD(&htim2, CommandTimeResolution.clockDivider());
     __HAL_TIM_SET_COUNTER(&htim2, 0);
@@ -261,9 +287,9 @@ extern "C" void initFrameTransfer(const int subBufferIndex)
     }
     transmitBuffer.keyFrame = false;
     HAL_DMA_Start(&hdma_memtomem_dma1_channel6,
-                     reinterpret_cast<uint32_t>(fromA.data()),
-                     reinterpret_cast<uint32_t>(transmitBuffer.samplesA.data()),
-                     transmitBuffer.samplesA.size() / 2);
+                  reinterpret_cast<uint32_t>(fromA.data()),
+                  reinterpret_cast<uint32_t>(transmitBuffer.samplesA.data()),
+                  transmitBuffer.samplesA.size() / 2);
     HAL_DMA_Start_IT(&hdma_memtomem_dma1_channel2,
                      reinterpret_cast<uint32_t>(fromB.data()),
                      reinterpret_cast<uint32_t>(transmitBuffer.samplesB.data()),
@@ -278,7 +304,7 @@ void transmitBufferReady()
 
 void dmaMemToMemCallback([[maybe_unused]] DMA_HandleTypeDef* dma_handle_type_def)
 {
-    HAL_DMA_PollForTransfer(&hdma_memtomem_dma1_channel6, HAL_DMA_FULL_TRANSFER,10000);
+    HAL_DMA_PollForTransfer(&hdma_memtomem_dma1_channel6, HAL_DMA_FULL_TRANSFER, 10000);
     transmitBufferReady();
 }
 
@@ -289,8 +315,13 @@ void HAL_COMP_TriggerCallback(COMP_HandleTypeDef* hcomp)
     {
         if (triggerArmed)
         {
-            __HAL_TIM_ENABLE(&htim1);
-            HAL_NVIC_DisableIRQ(COMP1_2_3_IRQn);
+            triggerArmed = false;
+            if (triggerCounter.fetch_sub(1) == 0)
+            {
+                __HAL_TIM_ENABLE(&htim1);
+                HAL_NVIC_DisableIRQ(COMP1_2_3_IRQn);
+            }
+
         }
     }
     else
@@ -303,7 +334,7 @@ void HAL_COMP_TriggerCallback(COMP_HandleTypeDef* hcomp)
 extern "C" void HAL_TIM_PWM_PulseFinishedCallback([[maybe_unused]] TIM_HandleTypeDef* htim)
 {
     HAL_TIM_Base_Stop_IT(&htim1);
-        HAL_TIM_Base_Stop(&htim2);
+    HAL_TIM_Base_Stop(&htim2);
     extern osThreadId_t keyFrameTaskHandle;
     osThreadFlagsSet(keyFrameTaskHandle, THREAD_FLAG_KEY_FRAME_DETECTED);
 }
