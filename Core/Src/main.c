@@ -108,6 +108,10 @@ int main(void)
   MX_DAC4_Init();
   MX_OPAMP5_Init();
   MX_DAC3_Init();
+  MX_ADC1_Init();
+  MX_ADC2_Init();
+  MX_DAC2_Init();
+  MX_OPAMP4_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */

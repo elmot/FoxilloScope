@@ -65,6 +65,11 @@ protected:
     virtual long adjustValue(const long aValue) const { return std::clamp(aValue, min, max); }
 };
 
+extern const Command& CommandBiasChannelA_ref;
+extern const Command& CommandBiasChannelB_ref;
+extern const Command& CommandGainChannelA_ref;
+extern const Command& CommandGainChannelB_ref;
+
 constexpr uint32_t THREAD_FLAG_READY_TO_TRANSMIT = 0x20;
 constexpr uint32_t THREAD_FLAG_KEY_FRAME_DETECTED = 0x40;
 
@@ -74,7 +79,8 @@ extern osSemaphoreId_t transmitBufferBusyHandle; // NOLINT(*-dynamic-static-init
 
 struct transmitBuffer_t
 {
-    alignas(uint32_t) std::array<uint16_t, data_frame_size> samples;
+    alignas(uint32_t) std::array<uint16_t, data_frame_size> samplesA;
+    alignas(uint32_t) std::array<uint16_t, data_frame_size> samplesB;
     bool keyFrame;
 };
 
@@ -86,7 +92,7 @@ extern osMessageQueueId_t cmdRxQueueHandle; // NOLINT(*-dynamic-static-initializ
 void startUartInput();
 
 extern "C" void adcCalibration();
-extern "C" void startMainAdc(bool interleaveSampling, uint16_t* buffer, size_t bufferLength);
+extern "C" void startMainAdcs(bool interleaveSampling, uint16_t* bufferA, uint16_t* bufferB, size_t bufferLength);
 extern "C" size_t adcSamplesLeft();
 
 void writeCommands(void (*write_uart)(const std::string_view& str));

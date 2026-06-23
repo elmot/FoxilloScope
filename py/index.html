@@ -211,6 +211,8 @@
         <span><span class="label">sampling, ns</span> <span class="val" id="sampling">—</span></span>
         <span><span class="label">gain</span> <span class="val" id="gain">—</span></span>
         <span><span class="label">shift</span> <span class="val" id="shift">—</span></span>
+        <span><span class="label">gain.b</span> <span class="val" id="gain.b.val">—</span></span>
+        <span><span class="label">shift.b</span> <span class="val" id="shift.b.val">—</span></span>
     </div>
 </div>
 <div id="canvas-wrap">
@@ -219,8 +221,16 @@
         <input type="range" id="vbias.a" class="param-slider" value="0" min="-1000000" max="1000000">
     </div>
     <div class="v-control-container">
+        <span class="label"><label for="vbias.b">Bias B</label></span>
+        <input type="range" id="vbias.b" class="param-slider" value="0" min="-1000000" max="1000000">
+    </div>
+    <div class="v-control-container">
         <span class="label"><label for="trg.level">TRG lvl</label></span>
         <input type="range" id="trg.level" class="param-slider" value="0" min="-1000000" max="1000000">
+        <div class="trg-type-container">
+            <button class="trg-btn trg-chan-btn active" data-val="a" title="Channel A">A</button>
+            <button class="trg-btn trg-chan-btn" data-val="b" title="Channel B">B</button>
+        </div>
         <div class="trg-type-container">
             <button class="trg-btn active" data-val="0" title="None">∅</button>
             <button class="trg-btn" data-val="1" title="Rising">↗</button>
@@ -233,6 +243,18 @@
     <div class="switch-control">
         <button>&lt;</button>
         <select id="gain.a">
+            <option value="2">x2</option>
+            <option value="4">x4</option>
+            <option value="8">x8</option>
+            <option value="16">x16</option>
+            <option value="32">x32</option>
+            <option value="64">x64</option>
+        </select>
+        <button>&gt;</button>
+    </div>
+    <div class="switch-control">
+        <button>&lt;</button>
+        <select id="gain.b">
             <option value="2">x2</option>
             <option value="4">x4</option>
             <option value="8">x8</option>
@@ -336,13 +358,23 @@
         param.register(slider.id, slider, (el, v) => el.value = String(v), 20);
     });
 
-    const trgBtns = document.querySelectorAll(".trg-btn");
-    param.register('trg.type', trgBtns, (els, v) => {
+    const trgTypeBtns = document.querySelectorAll(".trg-type-container:last-child .trg-btn");
+    param.register('trg.type', trgTypeBtns, (els, v) => {
         els.forEach(b => b.classList.toggle('active', b.dataset.val === String(v)));
     });
 
-    trgBtns.forEach(btn => {
+    trgTypeBtns.forEach(btn => {
         btn.onclick = () => param.set('trg.type', btn.dataset.val);
+    });
+
+    const trgChanBtns = document.querySelectorAll(".trg-chan-btn");
+    param.register('trg.chan', trgChanBtns, (els, v) => {
+        els.forEach(b => b.classList.toggle('active', b.dataset.val === String(v)));
+    });
+    param._values['trg.chan'] = 'a';
+
+    trgChanBtns.forEach(btn => {
+        btn.onclick = () => param.set('trg.chan', btn.dataset.val);
     });
 
     const selectParam = {
@@ -368,9 +400,10 @@
         }
     };
     selectParam.wire("gain.a", "gain.a");
+    selectParam.wire("gain.b", "gain.b");
     selectParam.wire("resInput", "sampling.ns", v => v / 4, v => v * 4);
 
-    function plot(frame, keyFrame) {
+    function plot(frameA, keyFrameA, frameB, keyFrameB) {
         if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
             canvas.width = canvas.clientWidth;
             canvas.height = canvas.clientHeight;
@@ -403,7 +436,7 @@
 
         const mid = H / 2;
         const scale = H / 4096;
-        for (const [data, color] of [[frame, "#0F0"], [keyFrame, "#AA0"]]) {
+        for (const [data, color] of [[frameA, "#0F0"], [keyFrameA, "#AA0"], [frameB, "#0FF"], [keyFrameB, "#F0F"]]) {
             if (!data || data.length < 2) continue;
             // waveform
             const len = data.length;
@@ -447,7 +480,7 @@
         return results;
     }
 
-    let keyFrame
+    let keyFrameA, keyFrameB
 
     function connect() {
         if (ws) {
@@ -477,16 +510,21 @@
                     const k = line.substring(0, eqIdx).trim();
                     buf[k] = line.substring(eqIdx + 1).trim();
                 }
-                let samples = decode(buf["data.a"] || "");
+                let samplesA = decode(buf["data.a"] || "");
+                let samplesB = decode(buf["data.b"] || "");
                 if (buf["keyframe"] === "1") {
-                    keyFrame = samples
-                    samples = null
+                    keyFrameA = samplesA
+                    keyFrameB = samplesB
+                    samplesA = null
+                    samplesB = null
                 }
                 document.getElementById("sampling").textContent = buf["sampling.ns"] || "-";
                 document.getElementById("gain").textContent = buf["gain.a"] || "-";
                 document.getElementById("shift").textContent = buf["shift.a"] || "-";
+                document.getElementById("gain.b.val").textContent = buf["gain.b"] || "-";
+                document.getElementById("shift.b.val").textContent = buf["shift.b"] || "-";
                 document.getElementById("status").textContent = "streaming";
-                plot(samples, keyFrame);
+                plot(samplesA, keyFrameA, samplesB, keyFrameB);
             }
             const cn = buf["state.no"];
             if (cn !== undefined) {

@@ -13,10 +13,15 @@
 #include "comp.h"
 #include "opamp.h"
 
-alignas(uint32_t) static std::array<uint16_t, data_frame_size * 2> adcBuffer{};
+alignas(uint32_t) static std::array<uint16_t, data_frame_size * 2> adcBufferA{};
 
-constexpr auto adc1stHalf = std::span(adcBuffer).first<data_frame_size>();
-constexpr auto adc2ndHalf = std::span(adcBuffer).last<data_frame_size>();
+alignas(uint32_t) static std::array<uint16_t, data_frame_size * 2> adcBufferB{100, 1000, 2000, 3000, 4000};
+
+constexpr auto adcA1stHalf = std::span(adcBufferA).first<data_frame_size>();
+constexpr auto adcA2ndHalf = std::span(adcBufferA).last<data_frame_size>();
+
+constexpr auto adcB1stHalf = std::span(adcBufferB).first<data_frame_size>();
+constexpr auto adcB2ndHalf = std::span(adcBufferB).last<data_frame_size>();
 
 void dmaMemToMemCallback(DMA_HandleTypeDef* dma_handle_type_def);
 
@@ -31,55 +36,6 @@ void initialize_test_signal() //todo remove together with tim2 & hdac2 wave gene
 /** Oscilloscope commands
  *
  */
-
-constexpr struct CommandGainChannelA_t : Command
-{
-    constexpr CommandGainChannelA_t() : Command("gain.a", 16, 2, 64){}
-
-    void useNewValue() const override
-    {
-        uint32_t dac_gain_bits;
-        switch (value)
-        {
-        case 2: dac_gain_bits = OPAMP_PGA_GAIN_2_OR_MINUS_1;
-            break;
-        case 4: dac_gain_bits = OPAMP_PGA_GAIN_4_OR_MINUS_3;
-            break;
-        case 8: dac_gain_bits = OPAMP_PGA_GAIN_8_OR_MINUS_7;
-            break;
-        case 16: dac_gain_bits = OPAMP_PGA_GAIN_16_OR_MINUS_15;
-            break;
-        case 32: dac_gain_bits = OPAMP_PGA_GAIN_32_OR_MINUS_31;
-            break;
-        default: dac_gain_bits = OPAMP_PGA_GAIN_64_OR_MINUS_63;
-        }
-        hopamp3.Init.PgaGain = dac_gain_bits;
-        HAL_OPAMP_Stop(&hopamp3);
-        HAL_OPAMP_Init(&hopamp3);
-        HAL_OPAMP_Start(&hopamp3);
-    }
-protected:
-    long adjustValue(const long value) const override
-    {
-        for (const long i : {2, 4, 8, 16, 32})
-        {
-            if (value <= i) return i;
-        }
-        return 64L;
-    }
-} CommandGainChannelA{};
-
-constexpr struct CommandBiasChannelA_t : Command
-{
-    constexpr CommandBiasChannelA_t() : Command("vbias.a", -503'000LL /*todo 0*/, -1'000'000, 1'000'000){}
-
-    void useNewValue() const override
-    {
-        const uint16_t dac_bias = std::ranges::clamp(
-            (max - value) * 4'095LL / (max - min), 0LL, 4095LL);
-        HAL_DAC_SetValue(&hdac1, DAC1_CHANNEL_1,DAC_ALIGN_12B_R, dac_bias);
-    }
-} CommandBiasChannelA{};
 
 constexpr struct CommandTimeResolution_t : Command
 {
@@ -152,24 +108,12 @@ namespace trigger
     {
         if (CommandTriggerType.getValue() == 0)
         {
-            HAL_NVIC_DisableIRQ(COMP4_5_6_IRQn);
+            HAL_NVIC_DisableIRQ(COMP1_2_3_IRQn);
         }
         else
         {
-            HAL_NVIC_EnableIRQ(COMP4_5_6_IRQn);
+            HAL_NVIC_EnableIRQ(COMP1_2_3_IRQn);
         }
-    }
-
-    void setupTriggerDelay()
-    {
-        const auto maxArr = CommandTimeResolution.isInterleaveSampling()
-            ? data_frame_size / 2 - 1
-            : data_frame_size - 1;
-
-        const auto arr = maxArr * (1000 - CommandTriggerShift.getValue()) / 1000;
-
-        __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_1,arr);
-        __HAL_TIM_SET_COUNTER(&htim1, 0);
     }
 
     uint32_t comparatorValue()
@@ -189,10 +133,12 @@ constexpr struct CommandStateNo_t : Command
     }
 } CommandStateNo{};
 
-constexpr std::array<const Command*, 7> commands{
+const std::array<const Command*, 9> commands{
     &CommandStateNo,
-    &CommandBiasChannelA,
-    &CommandGainChannelA,
+    &CommandBiasChannelA_ref,
+    &CommandBiasChannelB_ref,
+    &CommandGainChannelA_ref,
+    &CommandGainChannelB_ref,
     &CommandTimeResolution,
     &trigger::CommandTriggerLevel,
     &trigger::CommandTriggerType,
@@ -211,14 +157,19 @@ static volatile std::atomic<bool> triggerArmed = false;
 
 static void startSampling()
 {
-    trigger::setupTriggerDelay();
+    const auto maxArr = CommandTimeResolution.isInterleaveSampling()
+        ? data_frame_size / 2 - 1
+        : data_frame_size - 1;
+
+    const auto arr = maxArr * (1000 - trigger::CommandTriggerShift.getValue()) / 1000;
+    __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_1,arr);
     __HAL_TIM_SET_COUNTER(&htim1, 0);
-    startMainAdc(CommandTimeResolution.isInterleaveSampling(), adcBuffer.data(), adcBuffer.size());
+    startMainAdcs(CommandTimeResolution.isInterleaveSampling(), adcBufferA.data(), adcBufferB.data(), adcBufferA.size());
     __HAL_TIM_SET_PRESCALER(&htim2, 0);
     __HAL_TIM_SET_AUTORELOAD(&htim2, CommandTimeResolution.clockDivider());
     __HAL_TIM_SET_COUNTER(&htim2, 0);
     HAL_TIM_Base_Start(&htim2);
-    HAL_NVIC_ClearPendingIRQ(COMP4_5_6_IRQn);
+    HAL_NVIC_ClearPendingIRQ(COMP1_2_3_IRQn);
     triggerArmed = false;
     trigger::enableTrigger();
 }
@@ -268,8 +219,10 @@ static void executeIncomingCommand()
     adcCalibration();
     HAL_DMA_RegisterCallback(&hdma_memtomem_dma1_channel2, HAL_DMA_XFER_CPLT_CB_ID, dmaMemToMemCallback);
     HAL_OPAMP_Start(&hopamp3);
+    HAL_OPAMP_Start(&hopamp4);
     HAL_DAC_Start(&hdac1, DAC1_CHANNEL_1);
-    HAL_DAC_Start(&hdac3, DAC1_CHANNEL_1);
+    HAL_DAC_Start(&hdac2, DAC2_CHANNEL_1);
+    HAL_DAC_Start(&hdac3, DAC_CHANNEL_1);
     TIM_CCxChannelCmd(htim1.Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
     HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
     HAL_TIM_Base_Start(&htim1);
@@ -288,17 +241,22 @@ static void executeIncomingCommand()
 
 extern "C" void initFrameTransfer(const int subBufferIndex)
 {
-    const std::span<uint16_t, data_frame_size>& from = subBufferIndex ? adc1stHalf : adc2ndHalf;
+    const std::span<uint16_t, data_frame_size>& fromA = subBufferIndex ? adcA1stHalf : adcA2ndHalf;
+    const std::span<uint16_t, data_frame_size>& fromB = subBufferIndex ? adcB1stHalf : adcB2ndHalf;
     if (osSemaphoreAcquire(transmitBufferBusyHandle, 0) != osOK)
     {
         //transmit buffer busy, skip the frame
         return;
     }
     transmitBuffer.keyFrame = false;
+    HAL_DMA_Start(&hdma_memtomem_dma1_channel6,
+                     reinterpret_cast<uint32_t>(fromA.data()),
+                     reinterpret_cast<uint32_t>(transmitBuffer.samplesA.data()),
+                     transmitBuffer.samplesA.size() / 2);
     HAL_DMA_Start_IT(&hdma_memtomem_dma1_channel2,
-                     reinterpret_cast<uint32_t>(from.data()),
-                     reinterpret_cast<uint32_t>(transmitBuffer.samples.data()),
-                     transmitBuffer.samples.size() / 2);
+                     reinterpret_cast<uint32_t>(fromB.data()),
+                     reinterpret_cast<uint32_t>(transmitBuffer.samplesB.data()),
+                     transmitBuffer.samplesB.size() / 2);
 }
 
 void transmitBufferReady()
@@ -309,6 +267,7 @@ void transmitBufferReady()
 
 void dmaMemToMemCallback([[maybe_unused]] DMA_HandleTypeDef* dma_handle_type_def)
 {
+    HAL_DMA_PollForTransfer(&hdma_memtomem_dma1_channel6, HAL_DMA_FULL_TRANSFER,10000);
     transmitBufferReady();
 }
 
@@ -320,7 +279,7 @@ void HAL_COMP_TriggerCallback(COMP_HandleTypeDef* hcomp)
         if (triggerArmed)
         {
             __HAL_TIM_ENABLE(&htim1);
-            HAL_NVIC_DisableIRQ(COMP4_5_6_IRQn);
+            HAL_NVIC_DisableIRQ(COMP1_2_3_IRQn);
         }
     }
     else
@@ -349,17 +308,24 @@ extern "C" [[noreturn]] void keyFramesProcessing()
         const auto dma_samples_left = adcSamplesLeft();
         if (dma_samples_left <= data_frame_size)
         {
-            const auto frame_start_position = (adcBuffer.size() - dma_samples_left) - data_frame_size;
-            memcpy(&transmitBuffer.samples[0], &adcBuffer[frame_start_position],
-                   data_frame_size * sizeof (adcBuffer[0]));
+            const auto frame_start_position = (adcBufferA.size() - dma_samples_left) - data_frame_size;
+            memcpy(&transmitBuffer.samplesA[0], &adcBufferA[frame_start_position],
+                   data_frame_size * sizeof (adcBufferA[0]));
+            memcpy(&transmitBuffer.samplesB[0], &adcBufferB[frame_start_position],
+                   data_frame_size * sizeof (adcBufferB[0]));
         }
         else
         {
             const auto first_chunk_len = dma_samples_left - data_frame_size;
-            memcpy(&transmitBuffer.samples[0], &adcBuffer[adcBuffer.size() - first_chunk_len],
-                   first_chunk_len * sizeof (adcBuffer[0]));
-            memcpy(&transmitBuffer.samples[first_chunk_len], &adcBuffer[0],
-                   (data_frame_size - first_chunk_len) * sizeof (adcBuffer[0]));
+            memcpy(&transmitBuffer.samplesA[0], &adcBufferA[adcBufferA.size() - first_chunk_len],
+                   first_chunk_len * sizeof (adcBufferA[0]));
+            memcpy(&transmitBuffer.samplesB[0], &adcBufferB[adcBufferB.size() - first_chunk_len],
+                   first_chunk_len * sizeof (adcBufferB[0]));
+
+            memcpy(&transmitBuffer.samplesA[first_chunk_len], &adcBufferA[0],
+                   (data_frame_size - first_chunk_len) * sizeof (adcBufferA[0]));
+            memcpy(&transmitBuffer.samplesB[first_chunk_len], &adcBufferB[0],
+                   (data_frame_size - first_chunk_len) * sizeof (adcBufferB[0]));
         }
         osThreadFlagsClear(THREAD_FLAG_KEY_FRAME_DETECTED);
         transmitBufferReady();

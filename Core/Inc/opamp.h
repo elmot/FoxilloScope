@@ -34,6 +34,8 @@ extern "C" {
 
 extern OPAMP_HandleTypeDef hopamp3;
 
+extern OPAMP_HandleTypeDef hopamp4;
+
 extern OPAMP_HandleTypeDef hopamp5;
 
 /* USER CODE BEGIN Private defines */
@@ -41,6 +43,7 @@ extern OPAMP_HandleTypeDef hopamp5;
 /* USER CODE END Private defines */
 
 void MX_OPAMP3_Init(void);
+void MX_OPAMP4_Init(void);
 void MX_OPAMP5_Init(void);
 
 /* USER CODE BEGIN Prototypes */

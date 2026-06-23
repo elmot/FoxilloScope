@@ -33,11 +33,13 @@
 
 /* USER CODE END 1 */
 DMA_HandleTypeDef hdma_memtomem_dma1_channel2;
+DMA_HandleTypeDef hdma_memtomem_dma1_channel6;
 
 /**
   * Enable DMA controller clock
   * Configure DMA for memory to memory transfers
   *   hdma_memtomem_dma1_channel2
+  *   hdma_memtomem_dma1_channel6
   */
 void MX_DMA_Init(void)
 {
@@ -61,6 +63,21 @@ void MX_DMA_Init(void)
     Error_Handler();
   }
 
+  /* Configure DMA request hdma_memtomem_dma1_channel6 on DMA1_Channel6 */
+  hdma_memtomem_dma1_channel6.Instance = DMA1_Channel6;
+  hdma_memtomem_dma1_channel6.Init.Request = DMA_REQUEST_MEM2MEM;
+  hdma_memtomem_dma1_channel6.Init.Direction = DMA_MEMORY_TO_MEMORY;
+  hdma_memtomem_dma1_channel6.Init.PeriphInc = DMA_PINC_ENABLE;
+  hdma_memtomem_dma1_channel6.Init.MemInc = DMA_MINC_ENABLE;
+  hdma_memtomem_dma1_channel6.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+  hdma_memtomem_dma1_channel6.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+  hdma_memtomem_dma1_channel6.Init.Mode = DMA_NORMAL;
+  hdma_memtomem_dma1_channel6.Init.Priority = DMA_PRIORITY_LOW;
+  if (HAL_DMA_Init(&hdma_memtomem_dma1_channel6) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
   /* DMA interrupt init */
   /* DMA1_Channel1_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 5, 0);
@@ -74,9 +91,9 @@ void MX_DMA_Init(void)
   /* DMA1_Channel4_IRQn interrupt configuration */
   NVIC_SetPriority(DMA1_Channel4_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
   NVIC_EnableIRQ(DMA1_Channel4_IRQn);
-  /* DMAMUX_OVR_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMAMUX_OVR_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMAMUX_OVR_IRQn);
+  /* DMA1_Channel5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
 
 }
 
