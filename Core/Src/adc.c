@@ -544,16 +544,16 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 /* USER CODE BEGIN 1 */
 void initFrameTransfer(int subBufferIndex);
 
+void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
+{
+  UNUSED(hadc);
+  initFrameTransfer(0);
+}
+
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
     UNUSED(hadc);
     initFrameTransfer(1);
-}
-
-void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
-{
-    UNUSED(hadc);
-    initFrameTransfer(0);
 }
 
 void adcCalibration()

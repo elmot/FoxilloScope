@@ -3,7 +3,6 @@
 #include "dac.h"
 #include <array>
 #include <atomic>
-#include <string>
 #include <span>
 #include "oscilloscope.hpp"
 #include <cstring>
@@ -15,13 +14,15 @@
 
 alignas(uint32_t) static std::array<uint16_t, data_frame_size * 2> adcBufferA{};
 
-alignas(uint32_t) static std::array<uint16_t, data_frame_size * 2> adcBufferB{100, 1000, 2000, 3000, 4000};
+alignas(uint32_t) static std::array<uint16_t, data_frame_size * 2> adcBufferB{};
 
-constexpr auto adcA1stHalf = std::span(adcBufferA).first<data_frame_size>();
-constexpr auto adcA2ndHalf = std::span(adcBufferA).last<data_frame_size>();
+constexpr auto bufferHalves = std::array{
+    std::pair(std::span(adcBufferA).first<data_frame_size>(),
+              std::span(adcBufferB).first<data_frame_size>()),
 
-constexpr auto adcB1stHalf = std::span(adcBufferB).first<data_frame_size>();
-constexpr auto adcB2ndHalf = std::span(adcBufferB).last<data_frame_size>();
+    std::pair(std::span(adcBufferA).last<data_frame_size>(),
+              std::span(adcBufferB).last<data_frame_size>())
+};
 
 void dmaMemToMemCallback(DMA_HandleTypeDef* dma_handle_type_def);
 
@@ -30,6 +31,7 @@ void initialize_test_signal() //todo remove together with tim2 & hdac2 wave gene
     extern const unsigned short fake_signal[];
     HAL_OPAMP_Start(&hopamp5);
     HAL_DAC_Start_DMA(&hdac4, DAC_CHANNEL_2, reinterpret_cast<const uint32_t*>(fake_signal), 164, DAC_ALIGN_12B_R);
+    __HAL_TIM_SET_PRESCALER(&htim15, 30000);
     HAL_TIM_Base_Start(&htim15);
 }
 
@@ -44,9 +46,7 @@ constexpr struct CommandTimeResolution_t : Command
     constexpr CommandTimeResolution_t() : Command("sampling.ns", 250,
                                                   1'000'000'000LL / 8'000'000, // 8 MHz max sampling freq in nsec
                                                   1'000'000'000LL / 20, // 20 Hz min sampling freq in nsec
-                                                  true)
-    {
-    }
+                                                  true) {}
 
     bool isInterleaveSampling() const
     {
@@ -106,16 +106,12 @@ namespace trigger
         {
         }
 
-        void useNewValue() const override
-        {
-        }
-
+        void useNewValue() const override {}
 
         int timerShiftSamples() const
         {
-            return static_cast<int>(data_frame_size * (value - min)* 2 / (max - min)) ;
+            return static_cast<int>(data_frame_size * (value - min) * 2 / (max - min));
         }
-
     } CommandTriggerOffset{};
 
     constexpr struct CommandTriggerChannel_t : Command
@@ -150,13 +146,9 @@ namespace trigger
 
 constexpr struct CommandStateNo_t : Command
 {
-    constexpr CommandStateNo_t() : Command("state.no", 0, 0, 0x7FFF'FFFF)
-    {
-    }
+    constexpr CommandStateNo_t() : Command("state.no", 0, 0, 0x7FFF'FFFF) {}
 
-    void useNewValue() const override
-    {
-    }
+    void useNewValue() const override {}
 
     bool setValue(const long aValue, [[maybe_unused]] const unsigned long aStateNumber) const override
     {
@@ -165,12 +157,20 @@ constexpr struct CommandStateNo_t : Command
     }
 } CommandStateNo{};
 
-const std::array<const Command*, 10> commands{
+constexpr CommandGainChannel_t CommandGainChannelA{"gain.a", &hopamp3};
+
+constexpr CommandGainChannel_t CommandGainChannelB{"gain.b", &hopamp4};
+
+constexpr CommandBiasChannel_t CommandBiasChannelA{"vbias.a", &hdac1,DAC1_CHANNEL_1};
+
+constexpr CommandBiasChannel_t CommandBiasChannelB{"vbias.b", &hdac2,DAC2_CHANNEL_1};
+
+constexpr std::array<const Command*, 10> commands{
     &CommandStateNo,
-    &CommandBiasChannelA_ref,
-    &CommandBiasChannelB_ref,
-    &CommandGainChannelA_ref,
-    &CommandGainChannelB_ref,
+    &CommandBiasChannelA,
+    &CommandBiasChannelB,
+    &CommandGainChannelA,
+    &CommandGainChannelB,
     &CommandTimeResolution,
     &trigger::CommandTriggerLevel,
     &trigger::CommandTriggerType,
@@ -187,7 +187,6 @@ void skipWhiteSpace(char* & ptr)
 }
 
 static volatile std::atomic<bool> triggerArmed = false;
-static volatile std::atomic<int> triggerCounter;
 
 static void startSampling()
 {
@@ -195,7 +194,6 @@ static void startSampling()
     MODIFY_REG(hcomp1.Instance->CSR, COMP_CSR_INPSEL,
                trigger::CommandTriggerChannel.getValue() == 0 ? COMP_INPUT_PLUS_IO2 : COMP_INPUT_PLUS_IO1);
     int arr = trigger::CommandTriggerOffset.timerShiftSamples() + data_frame_size / 2;
-    triggerCounter = 2; //todo proper value
     if (arr < 0) arr = 0;
     if (CommandTimeResolution.isInterleaveSampling()) arr /= 2;
     __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_1, arr);
@@ -213,7 +211,7 @@ static void startSampling()
 
 static void executeIncomingCommand()
 {
-    static char cmdBuffer[121];
+    static char cmdBuffer[2064];
     cmdBuffer[0] = 0;
     for (size_t i = 0; true; i = (i + 1) % sizeof(cmdBuffer))
     {
@@ -237,7 +235,8 @@ static void executeIncomingCommand()
         if (*ptr++ != '=') continue;
 
         long newValue;
-        std::from_chars(ptr, ptr + strlen(ptr), newValue); // NOLINT(*-err34-c)
+        auto [cookie_ptr,errc] = std::from_chars(ptr, ptr + strlen(ptr), newValue);
+        if (errc != std::errc{}) break;
         if (command->setValue(newValue, CommandStateNo.getValue()))
         {
             requiresRestart |= command->requires_restart;
@@ -278,8 +277,7 @@ static void executeIncomingCommand()
 
 extern "C" void initFrameTransfer(const int subBufferIndex)
 {
-    const std::span<uint16_t, data_frame_size>& fromA = subBufferIndex ? adcA1stHalf : adcA2ndHalf;
-    const std::span<uint16_t, data_frame_size>& fromB = subBufferIndex ? adcB1stHalf : adcB2ndHalf;
+    const auto& [fromA, fromB] = bufferHalves[subBufferIndex];
     if (osSemaphoreAcquire(transmitBufferBusyHandle, 0) != osOK)
     {
         //transmit buffer busy, skip the frame
@@ -316,12 +314,8 @@ void HAL_COMP_TriggerCallback(COMP_HandleTypeDef* hcomp)
         if (triggerArmed)
         {
             triggerArmed = false;
-            if (triggerCounter.fetch_sub(1) == 0)
-            {
-                __HAL_TIM_ENABLE(&htim1);
-                HAL_NVIC_DisableIRQ(COMP1_2_3_IRQn);
-            }
-
+            __HAL_TIM_ENABLE(&htim1);
+            HAL_NVIC_DisableIRQ(COMP1_2_3_IRQn);
         }
     }
     else
@@ -339,7 +333,7 @@ extern "C" void HAL_TIM_PWM_PulseFinishedCallback([[maybe_unused]] TIM_HandleTyp
     osThreadFlagsSet(keyFrameTaskHandle, THREAD_FLAG_KEY_FRAME_DETECTED);
 }
 
-extern "C" [[noreturn]] void keyFramesProcessing()
+extern "C" [[noreturn]] void keyFramesProcessing([[maybe_unused]] void*)
 {
     while (true)
     {
@@ -376,10 +370,10 @@ extern "C" [[noreturn]] void keyFramesProcessing()
     }
 }
 
-void writeCommands(void (*write_uart)(const std::string_view& str))
+void writeCommands()
 {
     for (auto& command : commands)
     {
-        command->write(write_uart);
+        command->write();
     }
 }

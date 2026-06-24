@@ -1,7 +1,3 @@
-//
-// Created by elmot on 14/06/2026.
-//
-
 #ifndef G4_OSCILLOSCOPE_B_OSCILLOSCOPE_H
 #define G4_OSCILLOSCOPE_B_OSCILLOSCOPE_H
 
@@ -12,6 +8,8 @@
 #include <array>
 #include <string>
 #include <charconv>
+
+void writeUart(const std::string_view& str);
 
 struct Command
 {
@@ -28,7 +26,7 @@ struct Command
 
     virtual ~Command() = default;
 
-    std::string name;
+    std::string_view name;
     const bool requires_restart{false};
 
     virtual void useNewValue() const = 0;
@@ -46,13 +44,13 @@ struct Command
         return true;
     }
 
-    void write(void (*writeText)(const std::string_view&)) const
+    void write() const
     {
-        writeText(name);
+        writeUart(name);
         std::array<char,32> buffer{'='};
         auto [ptr, _] = std::to_chars(&buffer[1], &buffer.back(),value);
         *ptr++ ='\n';
-        writeText(std::string_view(buffer.data(), ptr - buffer.data()));
+        writeUart(std::string_view(buffer.data(), ptr - buffer.data()));
     }
 
 protected:
@@ -65,10 +63,32 @@ protected:
     virtual long adjustValue(const long aValue) const { return std::clamp(aValue, min, max); }
 };
 
-extern const Command& CommandBiasChannelA_ref;
-extern const Command& CommandBiasChannelB_ref;
-extern const Command& CommandGainChannelA_ref;
-extern const Command& CommandGainChannelB_ref;
+struct CommandGainChannel_t : Command
+{
+    constexpr CommandGainChannel_t(const char* name, OPAMP_HandleTypeDef * opamp) : Command(name, 16, 2, 64), opamp(opamp){}
+    void useNewValue() const override;
+protected:
+    OPAMP_HandleTypeDef  * opamp;
+    long adjustValue(long value) const override;
+};
+
+struct CommandBiasChannel_t : Command
+{
+    constexpr CommandBiasChannel_t(const char* name, DAC_HandleTypeDef* dac, uint32_t dac_channel)
+        : Command(name, 0, -1'000'000, 1'000'000), dac{dac}, dac_channel{dac_channel}
+    {
+    }
+
+    DAC_HandleTypeDef* dac;
+    const uint32_t dac_channel;
+
+    void useNewValue() const override
+    {
+        const uint16_t dac_bias = std::ranges::clamp(
+            (max - value) * 4'095LL / (max - min), 0LL, 4095LL);
+        HAL_DAC_SetValue(dac, dac_channel,DAC_ALIGN_12B_R, dac_bias);
+    }
+};
 
 constexpr uint32_t THREAD_FLAG_READY_TO_TRANSMIT = 0x20;
 constexpr uint32_t THREAD_FLAG_KEY_FRAME_DETECTED = 0x40;
@@ -81,7 +101,7 @@ struct transmitBuffer_t
 {
     alignas(uint32_t) std::array<uint16_t, data_frame_size> samplesA;
     alignas(uint32_t) std::array<uint16_t, data_frame_size> samplesB;
-    bool keyFrame;
+    std::atomic<bool> keyFrame;
 };
 
 extern transmitBuffer_t transmitBuffer; // NOLINT(*-dynamic-static-initializers)
@@ -95,6 +115,10 @@ extern "C" void adcCalibration();
 extern "C" void startMainAdcs(bool interleaveSampling, uint16_t* bufferA, uint16_t* bufferB, size_t bufferLength);
 extern "C" size_t adcSamplesLeft();
 
-void writeCommands(void (*write_uart)(const std::string_view& str));
+static uint32_t msec_to_ticks(uint32_t msec) {
+    uint32_t ticks_per_sec = osKernelGetTickFreq(); // Usually 1000 Hz
+    return (msec * ticks_per_sec) / 1000U;
+}
+void writeCommands();
 
 #endif //G4_OSCILLOSCOPE_B_OSCILLOSCOPE_H

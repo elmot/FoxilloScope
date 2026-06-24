@@ -404,7 +404,7 @@
     selectParam.wire("gain.b");
     selectParam.wire("sampling.ns", v => v / 4, v => v * 4);
 
-    function plot(frameA, keyFrameA, frameB, keyFrameB) {
+    function plot(frame_width, frameColorPairs) {
         if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
             canvas.width = canvas.clientWidth;
             canvas.height = canvas.clientHeight;
@@ -437,15 +437,15 @@
 
         const mid = H / 2;
         const scale = H / 4096;
-        for (const [data, color] of [[frameA, "#0F0A"], [keyFrameA, "#AA0A"], [frameB, "#0FFA"], [keyFrameB, "#F0FA"]]) {
+        for (const [data, color] of frameColorPairs) {
             if (!data || data.length < 2) continue;
             // waveform
-            const len = data.length;
-            const step = W / len;
+            const step = W / frame_width;
 
             ctx.strokeStyle = color;
             ctx.lineWidth = 2;
             ctx.beginPath();
+            const len = Math.min(frame_width, data.length)
             for (let i = 0; i < len; i++) {
                 const x = i * step;
                 const y = mid - (data[i] - 2048) * scale;
@@ -522,7 +522,8 @@
             }
             document.getElementById("sampling").textContent = buf["sampling.ns"] || "-";
             document.getElementById("status").textContent = "streaming";
-            plot(samplesA, keyFrameA, samplesB, keyFrameB);
+            let frameWidth = parseInt(buf["frame.size"]) || 200;
+            plot(frameWidth, [[samplesA, "#0F0A"], [keyFrameA, "#AA0A"], [samplesB, "#0FFA"], [keyFrameB, "#F0FA"]]);
             const cn = buf["state.no"];
             if (cn !== undefined) {
                 const ncn = Number(cn);
