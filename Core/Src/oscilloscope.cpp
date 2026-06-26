@@ -31,7 +31,7 @@ void initialize_test_signal() //todo remove together with tim2 & hdac2 wave gene
     extern const unsigned short fake_signal[];
     HAL_OPAMP_Start(&hopamp5);
     HAL_DAC_Start_DMA(&hdac4, DAC_CHANNEL_2, reinterpret_cast<const uint32_t*>(fake_signal), 164, DAC_ALIGN_12B_R);
-    __HAL_TIM_SET_PRESCALER(&htim15, 30000);
+    //__HAL_TIM_SET_PRESCALER(&htim15, 30000);
     HAL_TIM_Base_Start(&htim15);
 }
 
@@ -281,9 +281,10 @@ static void executeIncomingCommand()
     }
 }
 
-std::atomic<bool> fullFrameSent = false;
+//std::atomic<bool> fullFrameSent = false;
+std::atomic<int> partialSamplesSent = false;
 
-void initPartialFrameTransfer(const int subBufferIndex, const size_t length)
+void initPartialFrameTransfer(const int subBufferIndex,const int start_index, const size_t length)
 {
     --trigger::pre_arming;
     const auto& [fromA, fromB] = bufferHalves[subBufferIndex];
@@ -293,12 +294,13 @@ void initPartialFrameTransfer(const int subBufferIndex, const size_t length)
         return;
     }
     transmitBuffer.length = length;
+    transmitBuffer.head = start_index == 0;
     HAL_DMA_Start(&hdma_memtomem_dma1_channel6,
-                  reinterpret_cast<uint32_t>(fromA.data()),
+                  reinterpret_cast<uint32_t>(fromA.data() + start_index),
                   reinterpret_cast<uint32_t>(transmitBuffer.samplesA.data()),
                   (length + 1) / 2);
     HAL_DMA_Start_IT(&hdma_memtomem_dma1_channel2,
-                     reinterpret_cast<uint32_t>(fromB.data()),
+                     reinterpret_cast<uint32_t>(fromB.data() + start_index),
                      reinterpret_cast<uint32_t>(transmitBuffer.samplesB.data()),
                      (length + 1) / 2);
 }
@@ -306,8 +308,8 @@ void initPartialFrameTransfer(const int subBufferIndex, const size_t length)
 
 extern "C" void initFrameTransfer(const int subBufferIndex)
 {
-    initPartialFrameTransfer(subBufferIndex, data_frame_size);
-    fullFrameSent = true;
+    initPartialFrameTransfer(subBufferIndex,0, data_frame_size);
+    partialSamplesSent = -1;
 }
 
 void signalTransmit()
@@ -358,6 +360,7 @@ extern "C" [[noreturn]] void keyFramesProcessing([[maybe_unused]] void*)
         osThreadFlagsWait(THREAD_FLAG_KEY_FRAME_DETECTED,osFlagsNoClear,osWaitForever);
         osSemaphoreAcquire(transmitKeyBuffer.semaphore, osWaitForever);
         transmitKeyBuffer.length = data_frame_size;
+        transmitKeyBuffer.head = true;
 
         const auto dma_samples_left = adcSamplesLeft();
         if (dma_samples_left <= data_frame_size)
@@ -386,7 +389,7 @@ extern "C" [[noreturn]] void keyFramesProcessing([[maybe_unused]] void*)
         signalTransmit();
         startSampling();
         trigger::enableTrigger();
-        fullFrameSent = true;
+        partialSamplesSent = -1;
     }
 }
 
@@ -400,9 +403,9 @@ void writeCommands()
 
 extern "C" void partialFrameSend([[maybe_unused]] void*)
 {
-    if (fullFrameSent)
+    if (partialSamplesSent < 0)
     {
-        fullFrameSent = false;
+        partialSamplesSent = 0;
         return;
     }
     unsigned int dma_samples_left = adcSamplesLeft();
@@ -413,10 +416,14 @@ extern "C" void partialFrameSend([[maybe_unused]] void*)
     constexpr int lastSubFrameThresholdHigh = data_frame_size * 95 / 100;
     constexpr int garbageDmaTail = 1;
 
-    const auto measuredSamples = data_frame_size - dma_samples_left - garbageDmaTail;
+    const int measuredSamples = static_cast<int>(data_frame_size) - dma_samples_left - garbageDmaTail;
 
-    if (measuredSamples > lastSubFrameThresholdLow && measuredSamples < lastSubFrameThresholdHigh && !fullFrameSent)
+    if (measuredSamples > lastSubFrameThresholdLow
+        && measuredSamples < lastSubFrameThresholdHigh
+        && partialSamplesSent >= 0
+        && partialSamplesSent < measuredSamples)
     {
-        initPartialFrameTransfer(subBufferIndex, measuredSamples);
+        initPartialFrameTransfer(subBufferIndex, partialSamplesSent, measuredSamples - partialSamplesSent);
+        partialSamplesSent = measuredSamples;
     }
 }

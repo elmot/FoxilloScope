@@ -77,6 +77,10 @@ extern "C" [[noreturn]] void startTransmitTask([[maybe_unused]] void* argument)
         {
             writeUart("keyframe=1\n");
         }
+        if (buffer->head)
+        {
+            writeUart("head=1\n");
+        }
         writeCommands();
         const auto& encodedA = encode_bin_buffer(span{buffer->samplesA.begin(),buffer->length}, asciiBufferA);
         writeUart("data.a=");

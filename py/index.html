@@ -509,7 +509,8 @@
         return results;
     }
 
-    let keyFrame = {}
+    let keyFrame = { samplesA:[], samplesB:[]}
+    let frame = {samplesA:[], samplesB:[]}
 
     function connect() {
         if (ws) {
@@ -542,9 +543,20 @@
             }
             let samplesA = decode(incomingCommands["data.a"] || "");
             let samplesB = decode(incomingCommands["data.b"] || "");
-            if (incomingCommands["keyframe"] === "1") {
-                keyFrame.samplesA = samplesA
-                keyFrame.samplesB = samplesB
+            if (incomingCommands["head"] === "1") {
+                frame = {samplesA: samplesA, samplesB: samplesB}
+            } else {
+                frame = {samplesA: frame.samplesA.concat(samplesA), samplesB: frame.samplesB.concat(samplesB)}
+
+            }
+                if (incomingCommands["keyframe"] === "1") {
+                if (incomingCommands["head"] === "1") {
+                    keyFrame.samplesA = samplesA
+                    keyFrame.samplesB = samplesB
+                } else {
+                    keyFrame.samplesA = keyFrame.samplesA.concat(samplesA)
+                    keyFrame.samplesB = keyFrame.samplesB.concat(samplesB)
+                }
                 keyFrame.timestamp = Date.now()
                 samplesA = null
                 samplesB = null
@@ -556,7 +568,7 @@
             const alphaKeyFrame = Math.max(30, 250 -  Math.ceil(50 * (Date.now() - (keyFrame.timestamp || 0 )) /1000))
                 .toString(16).padStart(2,"0")
 
-            plot(frameWidth, [[samplesA, "#FFD600" + alphaNormal], [keyFrame.samplesA, "#FFF59D" + alphaKeyFrame], [samplesB, "#00E5FF" + alphaNormal], [keyFrame.samplesB, "#84FFFF" + alphaKeyFrame]]);
+            plot(frameWidth, [[frame.samplesA, "#FFD600" + alphaNormal], [keyFrame.samplesA, "#FFF59D" + alphaKeyFrame], [frame.samplesB, "#00E5FF" + alphaNormal], [keyFrame.samplesB, "#84FFFF" + alphaKeyFrame]]);
             const cn = incomingCommands["state.no"];
             if (cn !== undefined) {
                 const ncn = Number(cn);

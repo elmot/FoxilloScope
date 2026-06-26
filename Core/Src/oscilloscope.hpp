@@ -102,6 +102,7 @@ struct TransmitBuffer_t
     alignas(uint32_t) std::array<uint16_t, data_frame_size> samplesB{};
     std::atomic<size_t> length{};
     std::atomic<bool> ready{};
+    std::atomic<bool> head{};
     const osSemaphoreId_t& semaphore;
 };
 
