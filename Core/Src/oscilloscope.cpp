@@ -31,7 +31,7 @@ void initialize_test_signal() //todo remove together with tim2 & hdac2 wave gene
     extern const unsigned short fake_signal[];
     HAL_OPAMP_Start(&hopamp5);
     HAL_DAC_Start_DMA(&hdac4, DAC_CHANNEL_2, reinterpret_cast<const uint32_t*>(fake_signal), 164, DAC_ALIGN_12B_R);
-    __HAL_TIM_SET_PRESCALER(&htim15, 30000);
+    //__HAL_TIM_SET_PRESCALER(&htim15, 30000);
     HAL_TIM_Base_Start(&htim15);
 }
 
@@ -106,11 +106,14 @@ namespace trigger
         {
         }
 
-        void useNewValue() const override {}
+        void useNewValue() const override
+        {
+        }
 
         int timerShiftSamples() const
         {
-            return static_cast<int>(data_frame_size * (value - min) * 2 / (max - min));
+            constexpr long range = data_frame_size;
+            return static_cast<int>(range * value / min);
         }
     } CommandTriggerOffset{};
 
@@ -142,13 +145,21 @@ namespace trigger
     {
         return CommandTriggerType.getValue() == -1 ? COMP_OUTPUT_LEVEL_LOW : COMP_OUTPUT_LEVEL_HIGH;
     }
+
+    std::atomic<TriggerState> state  = TriggerState::DISARMED;
+    std::atomic<int> pre_arming  = 0;
+
 }
 
 constexpr struct CommandStateNo_t : Command
 {
-    constexpr CommandStateNo_t() : Command("state.no", 0, 0, 0x7FFF'FFFF) {}
+    constexpr CommandStateNo_t() : Command("state.no", 0, 0, 0x7FFF'FFFF)
+    {
+    }
 
-    void useNewValue() const override {}
+    void useNewValue() const override
+    {
+    }
 
     bool setValue(const long aValue, [[maybe_unused]] const unsigned long aStateNumber) const override
     {
@@ -186,16 +197,15 @@ void skipWhiteSpace(char* & ptr)
     }
 }
 
-static std::atomic<TriggerState> triggerArmed = TriggerState::DISARMED;
-
 static void startSampling()
 {
     /* Select COMP1 input pin: PB1 or PA1*/
     MODIFY_REG(hcomp1.Instance->CSR, COMP_CSR_INPSEL,
                trigger::CommandTriggerChannel.getValue() == 0 ? COMP_INPUT_PLUS_IO2 : COMP_INPUT_PLUS_IO1);
-    int arr = trigger::CommandTriggerOffset.timerShiftSamples() + data_frame_size / 2;
+    int arr = trigger::CommandTriggerOffset.timerShiftSamples() + data_frame_size;
     if (arr < 0) arr = 0;
     if (CommandTimeResolution.isInterleaveSampling()) arr /= 2;
+    arr = std::ranges::clamp(arr, 1, 1000);
     __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_1, arr);
     __HAL_TIM_SET_COUNTER(&htim1, 0);
     startMainAdcs(CommandTimeResolution.isInterleaveSampling(), adcBufferA.data(), adcBufferB.data(),
@@ -205,7 +215,8 @@ static void startSampling()
     __HAL_TIM_SET_COUNTER(&htim2, 0);
     HAL_TIM_Base_Start(&htim2);
     HAL_NVIC_ClearPendingIRQ(COMP1_2_3_IRQn);
-    triggerArmed = TriggerState::DISARMED;
+    trigger::pre_arming = trigger::CommandTriggerOffset.timerShiftSamples() < 0 ? 1 : 0;
+    trigger::state = TriggerState::DISARMED;
     trigger::enableTrigger();
 }
 
@@ -277,8 +288,9 @@ static void executeIncomingCommand()
 
 extern "C" void initFrameTransfer(const int subBufferIndex)
 {
+    --trigger::pre_arming;
     const auto& [fromA, fromB] = bufferHalves[subBufferIndex];
-    if (triggerArmed == TriggerState::TRIGGERED) return;
+    if (trigger::state == TriggerState::TRIGGERED) return;
     if (osSemaphoreAcquire(transmitBufferBusyHandle, 0) != osOK)
     {
         //transmit buffer busy, skip the frame
@@ -310,18 +322,19 @@ void dmaMemToMemCallback([[maybe_unused]] DMA_HandleTypeDef* dma_handle_type_def
 // ReSharper disable once CppParameterMayBeConstPtrOrRef
 void HAL_COMP_TriggerCallback(COMP_HandleTypeDef* hcomp)
 {
+    if (trigger::pre_arming > 0) return;
     if (HAL_COMP_GetOutputLevel(hcomp) == trigger::comparatorValue())
     {
-        if (triggerArmed == TriggerState::ARMED)
+        if (trigger::state == TriggerState::ARMED)
         {
-            triggerArmed = TriggerState::TRIGGERED;
+            trigger::state = TriggerState::TRIGGERED;
             __HAL_TIM_ENABLE(&htim1);
             HAL_NVIC_DisableIRQ(COMP1_2_3_IRQn);
         }
     }
     else
     {
-        triggerArmed = TriggerState::ARMED;
+        trigger::state = TriggerState::ARMED;
     }
     HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 }

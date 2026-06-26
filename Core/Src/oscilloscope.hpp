@@ -116,7 +116,7 @@ extern "C" void adcCalibration();
 extern "C" void startMainAdcs(bool interleaveSampling, uint16_t* bufferA, uint16_t* bufferB, size_t bufferLength);
 extern "C" size_t adcSamplesLeft();
 
-static uint32_t msec_to_ticks(uint32_t msec) {
+[[maybe_unused]]static uint32_t msec_to_ticks(uint32_t msec) {
     uint32_t ticks_per_sec = osKernelGetTickFreq(); // Usually 1000 Hz
     return (msec * ticks_per_sec) / 1000U;
 }
