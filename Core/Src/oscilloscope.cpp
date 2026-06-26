@@ -186,7 +186,7 @@ void skipWhiteSpace(char* & ptr)
     }
 }
 
-static volatile std::atomic<bool> triggerArmed = false;
+static std::atomic<TriggerState> triggerArmed = TriggerState::DISARMED;
 
 static void startSampling()
 {
@@ -205,7 +205,7 @@ static void startSampling()
     __HAL_TIM_SET_COUNTER(&htim2, 0);
     HAL_TIM_Base_Start(&htim2);
     HAL_NVIC_ClearPendingIRQ(COMP1_2_3_IRQn);
-    triggerArmed = false;
+    triggerArmed = TriggerState::DISARMED;
     trigger::enableTrigger();
 }
 
@@ -278,6 +278,7 @@ static void executeIncomingCommand()
 extern "C" void initFrameTransfer(const int subBufferIndex)
 {
     const auto& [fromA, fromB] = bufferHalves[subBufferIndex];
+    if (triggerArmed == TriggerState::TRIGGERED) return;
     if (osSemaphoreAcquire(transmitBufferBusyHandle, 0) != osOK)
     {
         //transmit buffer busy, skip the frame
@@ -311,16 +312,16 @@ void HAL_COMP_TriggerCallback(COMP_HandleTypeDef* hcomp)
 {
     if (HAL_COMP_GetOutputLevel(hcomp) == trigger::comparatorValue())
     {
-        if (triggerArmed)
+        if (triggerArmed == TriggerState::ARMED)
         {
-            triggerArmed = false;
+            triggerArmed = TriggerState::TRIGGERED;
             __HAL_TIM_ENABLE(&htim1);
             HAL_NVIC_DisableIRQ(COMP1_2_3_IRQn);
         }
     }
     else
     {
-        triggerArmed = true;
+        triggerArmed = TriggerState::ARMED;
     }
     HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 }

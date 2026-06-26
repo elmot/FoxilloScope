@@ -82,7 +82,7 @@ extern "C" [[noreturn]] void startTransmitTask([[maybe_unused]] void* argument)
     }
 }
 
-volatile static osThreadId_t transmittingTaskHandle = nullptr;
+static atomic<osThreadId_t> transmittingTaskHandle = nullptr;
 constexpr uint32_t UART_TX_BUSY = 0x1;
 
 void writeUart(const string_view& str)

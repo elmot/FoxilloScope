@@ -6,6 +6,7 @@
 #include "main.h"
 #include "cmsis_os2.h"
 #include <array>
+#include <atomic>
 #include <string>
 #include <charconv>
 
@@ -121,4 +122,10 @@ static uint32_t msec_to_ticks(uint32_t msec) {
 }
 void writeCommands();
 
+enum class TriggerState
+{
+    DISARMED,
+    ARMED,
+    TRIGGERED
+};
 #endif //G4_OSCILLOSCOPE_B_OSCILLOSCOPE_H
