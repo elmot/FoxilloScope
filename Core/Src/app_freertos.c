@@ -32,6 +32,7 @@
 /* Private typedef -----------------------------------------------------------*/
 typedef StaticTask_t osStaticThreadDef_t;
 typedef StaticQueue_t osStaticMessageQDef_t;
+typedef StaticTimer_t osStaticTimerDef_t;
 typedef StaticSemaphore_t osStaticSemaphoreDef_t;
 /* USER CODE BEGIN PTD */
 
@@ -98,6 +99,14 @@ const osMessageQueueAttr_t cmdRxQueue_attributes = {
   .mq_mem = &cmdRxQueueBuffer,
   .mq_size = sizeof(cmdRxQueueBuffer)
 };
+/* Definitions for partialFrameTimer */
+osTimerId_t partialFrameTimerHandle;
+osStaticTimerDef_t partialFrameTimerControlBlock;
+const osTimerAttr_t partialFrameTimer_attributes = {
+  .name = "partialFrameTimer",
+  .cb_mem = &partialFrameTimerControlBlock,
+  .cb_size = sizeof(partialFrameTimerControlBlock),
+};
 /* Definitions for transmitBufferBusy */
 osSemaphoreId_t transmitBufferBusyHandle;
 osStaticSemaphoreDef_t transmitBufferBusyControlBlock;
@@ -105,6 +114,14 @@ const osSemaphoreAttr_t transmitBufferBusy_attributes = {
   .name = "transmitBufferBusy",
   .cb_mem = &transmitBufferBusyControlBlock,
   .cb_size = sizeof(transmitBufferBusyControlBlock),
+};
+/* Definitions for transmitKeyBufferBusy */
+osSemaphoreId_t transmitKeyBufferBusyHandle;
+osStaticSemaphoreDef_t transmitKeyBufferBusyControlBlock;
+const osSemaphoreAttr_t transmitKeyBufferBusy_attributes = {
+  .name = "transmitKeyBufferBusy",
+  .cb_mem = &transmitKeyBufferBusyControlBlock,
+  .cb_size = sizeof(transmitKeyBufferBusyControlBlock),
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -116,6 +133,7 @@ void initialize_test_signal(void);
 void startDefaultTask(void *argument);
 extern void startTransmitTask(void *argument);
 extern void keyFramesProcessing(void *argument);
+extern void partialFrameSend(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -154,9 +172,16 @@ void MX_FREERTOS_Init(void) {
   /* creation of transmitBufferBusy */
   transmitBufferBusyHandle = osSemaphoreNew(1, 1, &transmitBufferBusy_attributes);
 
+  /* creation of transmitKeyBufferBusy */
+  transmitKeyBufferBusyHandle = osSemaphoreNew(1, 1, &transmitKeyBufferBusy_attributes);
+
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
+
+  /* Create the timer(s) */
+  /* creation of partialFrameTimer */
+  partialFrameTimerHandle = osTimerNew(partialFrameSend, osTimerPeriodic, NULL, &partialFrameTimer_attributes);
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */

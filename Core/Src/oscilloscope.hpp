@@ -96,19 +96,21 @@ constexpr uint32_t THREAD_FLAG_KEY_FRAME_DETECTED = 0x40;
 
 constexpr size_t data_frame_size = 200;
 
-extern osSemaphoreId_t transmitBufferBusyHandle; // NOLINT(*-dynamic-static-initializers)
-
-struct transmitBuffer_t
-{
-    alignas(uint32_t) std::array<uint16_t, data_frame_size> samplesA;
-    alignas(uint32_t) std::array<uint16_t, data_frame_size> samplesB;
-    std::atomic<bool> keyFrame;
+struct TransmitBuffer_t
+{   constexpr TransmitBuffer_t(osSemaphoreId_t& a_semaphore): semaphore(a_semaphore){}
+    alignas(uint32_t) std::array<uint16_t, data_frame_size> samplesA{};
+    alignas(uint32_t) std::array<uint16_t, data_frame_size> samplesB{};
+    std::atomic<size_t> length{};
+    std::atomic<bool> ready{};
+    const osSemaphoreId_t& semaphore;
 };
 
-extern transmitBuffer_t transmitBuffer; // NOLINT(*-dynamic-static-initializers)
+extern TransmitBuffer_t transmitBuffer; // NOLINT(*-dynamic-static-initializers)
+extern TransmitBuffer_t transmitKeyBuffer; // NOLINT(*-dynamic-static-initializers)
 
 extern osMessageQueueId_t cmdRxQueueHandle; // NOLINT(*-dynamic-static-initializers)
 
+extern osTimerId_t partialFrameTimerHandle;
 
 void startUartInput();
 
@@ -126,6 +128,7 @@ enum class TriggerState
 {
     DISARMED,
     ARMED,
-    TRIGGERED
+    TRIGGERED,
+    PROCESSING
 };
 #endif //G4_OSCILLOSCOPE_B_OSCILLOSCOPE_H

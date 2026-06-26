@@ -31,7 +31,7 @@ void initialize_test_signal() //todo remove together with tim2 & hdac2 wave gene
     extern const unsigned short fake_signal[];
     HAL_OPAMP_Start(&hopamp5);
     HAL_DAC_Start_DMA(&hdac4, DAC_CHANNEL_2, reinterpret_cast<const uint32_t*>(fake_signal), 164, DAC_ALIGN_12B_R);
-    //__HAL_TIM_SET_PRESCALER(&htim15, 30000);
+    __HAL_TIM_SET_PRESCALER(&htim15, 30000);
     HAL_TIM_Base_Start(&htim15);
 }
 
@@ -77,6 +77,9 @@ static void startSampling();
 
 namespace trigger
 {
+    std::atomic<TriggerState> state  = TriggerState::DISARMED;
+    std::atomic<int> pre_arming  = 0;
+
     constexpr struct CommandTriggerLevel_t : Command
     {
         constexpr CommandTriggerLevel_t() : Command("trg.level", 200'000L/*todo 0*/, -1'000'000, 1'000'000)
@@ -106,9 +109,7 @@ namespace trigger
         {
         }
 
-        void useNewValue() const override
-        {
-        }
+        void useNewValue() const override {}
 
         int timerShiftSamples() const
         {
@@ -137,6 +138,7 @@ namespace trigger
         }
         else
         {
+            trigger::state = TriggerState::DISARMED;
             HAL_NVIC_EnableIRQ(COMP1_2_3_IRQn);
         }
     }
@@ -146,20 +148,13 @@ namespace trigger
         return CommandTriggerType.getValue() == -1 ? COMP_OUTPUT_LEVEL_LOW : COMP_OUTPUT_LEVEL_HIGH;
     }
 
-    std::atomic<TriggerState> state  = TriggerState::DISARMED;
-    std::atomic<int> pre_arming  = 0;
-
 }
 
 constexpr struct CommandStateNo_t : Command
 {
-    constexpr CommandStateNo_t() : Command("state.no", 0, 0, 0x7FFF'FFFF)
-    {
-    }
+    constexpr CommandStateNo_t() : Command("state.no", 0, 0, 0x7FFF'FFFF) {}
 
-    void useNewValue() const override
-    {
-    }
+    void useNewValue() const override {}
 
     bool setValue(const long aValue, [[maybe_unused]] const unsigned long aStateNumber) const override
     {
@@ -216,7 +211,6 @@ static void startSampling()
     HAL_TIM_Base_Start(&htim2);
     HAL_NVIC_ClearPendingIRQ(COMP1_2_3_IRQn);
     trigger::pre_arming = trigger::CommandTriggerOffset.timerShiftSamples() < 0 ? 1 : 0;
-    trigger::state = TriggerState::DISARMED;
     trigger::enableTrigger();
 }
 
@@ -280,34 +274,43 @@ static void executeIncomingCommand()
         command->useNewValue();
     }
     startUartInput();
+    osTimerStart(partialFrameTimerHandle, msec_to_ticks(50));
     while (true)
     {
         executeIncomingCommand();
     }
 }
 
-extern "C" void initFrameTransfer(const int subBufferIndex)
+std::atomic<bool> fullFrameSent = false;
+
+void initPartialFrameTransfer(const int subBufferIndex, const size_t length)
 {
     --trigger::pre_arming;
     const auto& [fromA, fromB] = bufferHalves[subBufferIndex];
-    if (trigger::state == TriggerState::TRIGGERED) return;
-    if (osSemaphoreAcquire(transmitBufferBusyHandle, 0) != osOK)
+    if (osSemaphoreAcquire(transmitBuffer.semaphore, 0) != osOK)
     {
         //transmit buffer busy, skip the frame
         return;
     }
-    transmitBuffer.keyFrame = false;
+    transmitBuffer.length = length;
     HAL_DMA_Start(&hdma_memtomem_dma1_channel6,
                   reinterpret_cast<uint32_t>(fromA.data()),
                   reinterpret_cast<uint32_t>(transmitBuffer.samplesA.data()),
-                  transmitBuffer.samplesA.size() / 2);
+                  (length + 1) / 2);
     HAL_DMA_Start_IT(&hdma_memtomem_dma1_channel2,
                      reinterpret_cast<uint32_t>(fromB.data()),
                      reinterpret_cast<uint32_t>(transmitBuffer.samplesB.data()),
-                     transmitBuffer.samplesB.size() / 2);
+                     (length + 1) / 2);
 }
 
-void transmitBufferReady()
+
+extern "C" void initFrameTransfer(const int subBufferIndex)
+{
+    initPartialFrameTransfer(subBufferIndex, data_frame_size);
+    fullFrameSent = true;
+}
+
+void signalTransmit()
 {
     extern osThreadId_t transmitTaskHandle;
     osThreadFlagsSet(transmitTaskHandle, THREAD_FLAG_READY_TO_TRANSMIT);
@@ -316,7 +319,8 @@ void transmitBufferReady()
 void dmaMemToMemCallback([[maybe_unused]] DMA_HandleTypeDef* dma_handle_type_def)
 {
     HAL_DMA_PollForTransfer(&hdma_memtomem_dma1_channel6, HAL_DMA_FULL_TRANSFER, 10000);
-    transmitBufferReady();
+    transmitBuffer.ready = true;
+    signalTransmit();
 }
 
 // ReSharper disable once CppParameterMayBeConstPtrOrRef
@@ -352,35 +356,37 @@ extern "C" [[noreturn]] void keyFramesProcessing([[maybe_unused]] void*)
     while (true)
     {
         osThreadFlagsWait(THREAD_FLAG_KEY_FRAME_DETECTED,osFlagsNoClear,osWaitForever);
-        osSemaphoreAcquire(transmitBufferBusyHandle, osWaitForever);
-        transmitBuffer.keyFrame = true;
+        osSemaphoreAcquire(transmitKeyBuffer.semaphore, osWaitForever);
+        transmitKeyBuffer.length = data_frame_size;
 
         const auto dma_samples_left = adcSamplesLeft();
         if (dma_samples_left <= data_frame_size)
         {
             const auto frame_start_position = (adcBufferA.size() - dma_samples_left) - data_frame_size;
-            memcpy(&transmitBuffer.samplesA[0], &adcBufferA[frame_start_position],
+            memcpy(&transmitKeyBuffer.samplesA[0], &adcBufferA[frame_start_position],
                    data_frame_size * sizeof (adcBufferA[0]));
-            memcpy(&transmitBuffer.samplesB[0], &adcBufferB[frame_start_position],
+            memcpy(&transmitKeyBuffer.samplesB[0], &adcBufferB[frame_start_position],
                    data_frame_size * sizeof (adcBufferB[0]));
         }
         else
         {
             const auto first_chunk_len = dma_samples_left - data_frame_size;
-            memcpy(&transmitBuffer.samplesA[0], &adcBufferA[adcBufferA.size() - first_chunk_len],
+            memcpy(&transmitKeyBuffer.samplesA[0], &adcBufferA[adcBufferA.size() - first_chunk_len],
                    first_chunk_len * sizeof (adcBufferA[0]));
-            memcpy(&transmitBuffer.samplesB[0], &adcBufferB[adcBufferB.size() - first_chunk_len],
+            memcpy(&transmitKeyBuffer.samplesB[0], &adcBufferB[adcBufferB.size() - first_chunk_len],
                    first_chunk_len * sizeof (adcBufferB[0]));
 
-            memcpy(&transmitBuffer.samplesA[first_chunk_len], &adcBufferA[0],
+            memcpy(&transmitKeyBuffer.samplesA[first_chunk_len], &adcBufferA[0],
                    (data_frame_size - first_chunk_len) * sizeof (adcBufferA[0]));
-            memcpy(&transmitBuffer.samplesB[first_chunk_len], &adcBufferB[0],
+            memcpy(&transmitKeyBuffer.samplesB[first_chunk_len], &adcBufferB[0],
                    (data_frame_size - first_chunk_len) * sizeof (adcBufferB[0]));
         }
         osThreadFlagsClear(THREAD_FLAG_KEY_FRAME_DETECTED);
-        transmitBufferReady();
+        transmitKeyBuffer.ready = true;
+        signalTransmit();
         startSampling();
         trigger::enableTrigger();
+        fullFrameSent = true;
     }
 }
 
@@ -389,5 +395,28 @@ void writeCommands()
     for (auto& command : commands)
     {
         command->write();
+    }
+}
+
+extern "C" void partialFrameSend([[maybe_unused]] void*)
+{
+    if (fullFrameSent)
+    {
+        fullFrameSent = false;
+        return;
+    }
+    unsigned int dma_samples_left = adcSamplesLeft();
+    const int subBufferIndex = dma_samples_left > data_frame_size ? 0 : 1;
+    dma_samples_left %= data_frame_size;
+
+    constexpr int lastSubFrameThresholdLow = data_frame_size * 5 / 100;
+    constexpr int lastSubFrameThresholdHigh = data_frame_size * 95 / 100;
+    constexpr int garbageDmaTail = 1;
+
+    const auto measuredSamples = data_frame_size - dma_samples_left - garbageDmaTail;
+
+    if (measuredSamples > lastSubFrameThresholdLow && measuredSamples < lastSubFrameThresholdHigh && !fullFrameSent)
+    {
+        initPartialFrameTransfer(subBufferIndex, measuredSamples);
     }
 }

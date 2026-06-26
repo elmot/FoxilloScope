@@ -8,7 +8,11 @@
 
 using namespace std;
 
-transmitBuffer_t transmitBuffer{};
+extern osSemaphoreId_t transmitBufferBusyHandle; // NOLINT(*-dynamic-static-initializers)
+extern osSemaphoreId_t transmitKeyBufferBusyHandle; // NOLINT(*-dynamic-static-initializers)
+
+TransmitBuffer_t transmitBuffer{transmitBufferBusyHandle};
+TransmitBuffer_t transmitKeyBuffer{transmitKeyBufferBusyHandle};
 
 static constexpr char BASE64_CHARS[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -67,18 +71,23 @@ extern "C" [[noreturn]] void startTransmitTask([[maybe_unused]] void* argument)
         osThreadFlagsWait(THREAD_FLAG_READY_TO_TRANSMIT, osFlagsWaitAny, osWaitForever);
         writeUart("[frame]\nframe.size=");
         writeUart(string_view(to_constexpr_string_cr<data_frame_size>()));
-        if (transmitBuffer.keyFrame)
+        const bool keyBuffer = transmitKeyBuffer.ready;
+        TransmitBuffer_t* const buffer = keyBuffer ? &transmitKeyBuffer : &transmitBuffer;
+        if (keyBuffer)
         {
             writeUart("keyframe=1\n");
         }
         writeCommands();
-        const auto& encodedA = encode_bin_buffer(span{transmitBuffer.samplesA.begin(),transmitBuffer.samplesA.size()}, asciiBufferA);
+        const auto& encodedA = encode_bin_buffer(span{buffer->samplesA.begin(),buffer->length}, asciiBufferA);
         writeUart("data.a=");
         writeUart(string_view{encodedA});
-        const auto& encodedB = encode_bin_buffer(span{transmitBuffer.samplesB.begin(),transmitBuffer.samplesB.size()}, asciiBufferB);
+        const auto& encodedB = encode_bin_buffer(span{buffer->samplesB.begin(),buffer->length}, asciiBufferB);
         writeUart("data.b=");
         writeUart(string_view{encodedB});
-        osSemaphoreRelease(transmitBufferBusyHandle);
+        transmitBuffer.ready = false;
+        transmitKeyBuffer.ready = false;
+        osSemaphoreRelease(transmitBuffer.semaphore);
+        osSemaphoreRelease(transmitKeyBuffer.semaphore);
     }
 }
 
