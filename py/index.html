@@ -204,6 +204,34 @@
             background: #0f0;
             color: #000;
         }
+
+        .trg-btn.channel-a {
+            color: #FFD600;
+        }
+
+        .trg-btn.channel-a:hover {
+            background: #222;
+            color: #fff;
+        }
+
+        .trg-btn.channel-a.active {
+            background: #FFD600;
+            color: #000;
+        }
+
+        .trg-btn.channel-b {
+            color: #00E5FF;
+        }
+
+        .trg-btn.channel-b:hover {
+            background: #222;
+            color: #fff;
+        }
+
+        .trg-btn.channel-b.active {
+            background: #00E5FF;
+            color: #000;
+        }
         #trg\.time\.offset {
             width: 50vh;
         }
@@ -229,8 +257,8 @@
         <span class="label"><label for="trg.level">TRG lvl</label></span>
         <input type="range" id="trg.level" class="param-slider" value="0" min="-1000000" max="1000000">
         <div class="button-switch-block" id="trg.chan">
-            <button class="trg-btn active" data-val="0" title="Channel A">A</button>
-            <button class="trg-btn " data-val="1" title="Channel B">B</button>
+            <button class="trg-btn active channel-a" data-val="0" title="Channel A">A</button>
+            <button class="trg-btn  channel-b" data-val="1" title="Channel B">B</button>
         </div>
         <div class="button-switch-block" id="trg.type">
             <button class="trg-btn active" data-val="0" title="None">∅</button>
@@ -481,7 +509,7 @@
         return results;
     }
 
-    let keyFrameA, keyFrameB
+    let keyFrame = {}
 
     function connect() {
         if (ws) {
@@ -501,7 +529,7 @@
             }
 
             const lines = payloadText.split("\n");
-            let buf = {};
+            let incomingCommands = {};
 
             for (let rawLine of lines) {
                 const line = rawLine.trim();
@@ -509,29 +537,34 @@
                 const eqIdx = line.indexOf("=");
                 if (eqIdx !== -1) {
                     const k = line.substring(0, eqIdx).trim();
-                    buf[k] = line.substring(eqIdx + 1).trim();
+                    incomingCommands[k] = line.substring(eqIdx + 1).trim();
                 }
             }
-            let samplesA = decode(buf["data.a"] || "");
-            let samplesB = decode(buf["data.b"] || "");
-            if (buf["keyframe"] === "1") {
-                keyFrameA = samplesA
-                keyFrameB = samplesB
+            let samplesA = decode(incomingCommands["data.a"] || "");
+            let samplesB = decode(incomingCommands["data.b"] || "");
+            if (incomingCommands["keyframe"] === "1") {
+                keyFrame.samplesA = samplesA
+                keyFrame.samplesB = samplesB
+                keyFrame.timestamp = Date.now()
                 samplesA = null
                 samplesB = null
             }
-            document.getElementById("sampling").textContent = buf["sampling.ns"] || "-";
+            document.getElementById("sampling").textContent = incomingCommands["sampling.ns"] || "-";
             document.getElementById("status").textContent = "streaming";
-            let frameWidth = parseInt(buf["frame.size"]) || 200;
-            plot(frameWidth, [[samplesA, "#0F0A"], [keyFrameA, "#AA0A"], [samplesB, "#0FFA"], [keyFrameB, "#F0FA"]]);
-            const cn = buf["state.no"];
+            let frameWidth = parseInt(incomingCommands["frame.size"]) || 200;
+            const alphaNormal = param._values["trg.type"] === "0" ? "A0" : "30"
+            const alphaKeyFrame = Math.max(30, 250 -  Math.ceil(50 * (Date.now() - (keyFrame.timestamp || 0 )) /1000))
+                .toString(16).padStart(2,"0")
+
+            plot(frameWidth, [[samplesA, "#FFD600" + alphaNormal], [keyFrame.samplesA, "#FFF59D" + alphaKeyFrame], [samplesB, "#00E5FF" + alphaNormal], [keyFrame.samplesB, "#84FFFF" + alphaKeyFrame]]);
+            const cn = incomingCommands["state.no"];
             if (cn !== undefined) {
                 const ncn = Number(cn);
                 if (ncn > param._stateNo) {
                     param._stateNo = ncn;
-                    for (const k in buf) {
+                    for (const k in incomingCommands) {
                         if (k !== "state.no" && param._controls[k])
-                            param.set(k, buf[k], {send: false});
+                            param.set(k, incomingCommands[k], {send: false});
                     }
                 } else if (ncn < param._stateNo) {
                     param.sendAllCommands()
