@@ -29,8 +29,11 @@ void dmaMemToMemCallback(DMA_HandleTypeDef* dma_handle_type_def);
 void initialize_test_signal() //todo remove together with tim2 & hdac2 wave generation
 {
     extern const unsigned short fake_signal[];
-    HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, reinterpret_cast<const uint32_t*>(fake_signal), 164, DAC_ALIGN_12B_R);
-    __HAL_TIM_SET_PRESCALER(&htim15, 30000);
+    HAL_DAC_Start_DMA(&hdac1, DAC1_CHANNEL_1, reinterpret_cast<const uint32_t*>(fake_signal), 164, DAC_ALIGN_12B_R);
+    //__HAL_TIM_SET_PRESCALER(&htim15, 30000);
+    HAL_DAC_Start(&hdac4, DAC_CHANNEL_1);
+    HAL_OPAMP_Start(&hopamp4);
+    HAL_OPAMP_SelfCalibrate(&hopamp4);
     HAL_TIM_Base_Start(&htim15);
 }
 
@@ -88,7 +91,7 @@ namespace trigger
         void useNewValue() const override
         {
             const uint16_t dac_bias = std::ranges::clamp((max - value) * 4'095LL / (max - min), 0LL, 4095LL);
-            HAL_DAC_SetValue(&hdac4, DAC_CHANNEL_1,DAC_ALIGN_12B_R, dac_bias);
+            HAL_DAC_SetValue(&hdac1, DAC1_CHANNEL_2,DAC_ALIGN_12B_R, dac_bias);
             HAL_DAC_SetValue(&hdac4, DAC_CHANNEL_2,DAC_ALIGN_12B_R, dac_bias);
         }
     } CommandTriggerLevel{};
@@ -276,7 +279,7 @@ static void executeIncomingCommand()
 
     HAL_DAC_Start(&hdac3, DAC_CHANNEL_1);
     HAL_DAC_Start(&hdac3, DAC_CHANNEL_2);
-    HAL_DAC_Start(&hdac4, DAC_CHANNEL_1);
+    HAL_DAC_Start(&hdac1, DAC1_CHANNEL_2);
     HAL_DAC_Start(&hdac4, DAC_CHANNEL_2);
     TIM_CCxChannelCmd(htim1.Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
     HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);

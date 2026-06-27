@@ -113,6 +113,7 @@ int main(void)
   MX_COMP6_Init();
   MX_OPAMP2_Init();
   MX_OPAMP6_Init();
+  MX_OPAMP4_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */

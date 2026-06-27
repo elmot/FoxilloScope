@@ -36,6 +36,8 @@ extern OPAMP_HandleTypeDef hopamp2;
 
 extern OPAMP_HandleTypeDef hopamp3;
 
+extern OPAMP_HandleTypeDef hopamp4;
+
 extern OPAMP_HandleTypeDef hopamp5;
 
 extern OPAMP_HandleTypeDef hopamp6;
@@ -46,6 +48,7 @@ extern OPAMP_HandleTypeDef hopamp6;
 
 void MX_OPAMP2_Init(void);
 void MX_OPAMP3_Init(void);
+void MX_OPAMP4_Init(void);
 void MX_OPAMP5_Init(void);
 void MX_OPAMP6_Init(void);
 

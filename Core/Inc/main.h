@@ -83,8 +83,8 @@ void Error_Handler(void);
 #define SHIFTED_A_GPIO_Port GPIOA
 #define AMPLIFIED_A_Pin GPIO_PIN_1
 #define AMPLIFIED_A_GPIO_Port GPIOA
-#define TEST_SIGNAL_Pin GPIO_PIN_4
-#define TEST_SIGNAL_GPIO_Port GPIOA
+#define TEST_SIGNAL_A_Pin GPIO_PIN_4
+#define TEST_SIGNAL_A_GPIO_Port GPIOA
 #define LD2_Pin GPIO_PIN_5
 #define LD2_GPIO_Port GPIOA
 #define AMPLIFIED_B_Pin GPIO_PIN_6
@@ -97,6 +97,8 @@ void Error_Handler(void);
 #define AMPLIFIED_BB2_GPIO_Port GPIOB
 #define SHIFTED_AB11_Pin GPIO_PIN_11
 #define SHIFTED_AB11_GPIO_Port GPIOB
+#define TEST_SIGNAL_B_Pin GPIO_PIN_12
+#define TEST_SIGNAL_B_GPIO_Port GPIOB
 #define SHIFTED_BB13_Pin GPIO_PIN_13
 #define SHIFTED_BB13_GPIO_Port GPIOB
 #define SHIFTED_BB15_Pin GPIO_PIN_15

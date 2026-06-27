@@ -40,7 +40,7 @@ void MX_COMP5_Init(void)
   /* USER CODE END COMP5_Init 1 */
   hcomp5.Instance = COMP5;
   hcomp5.Init.InputPlus = COMP_INPUT_PLUS_IO1;
-  hcomp5.Init.InputMinus = COMP_INPUT_MINUS_DAC4_CH1;
+  hcomp5.Init.InputMinus = COMP_INPUT_MINUS_DAC1_CH2;
   hcomp5.Init.OutputPol = COMP_OUTPUTPOL_NONINVERTED;
   hcomp5.Init.Hysteresis = COMP_HYSTERESIS_10MV;
   hcomp5.Init.BlankingSrce = COMP_BLANKINGSRC_NONE;

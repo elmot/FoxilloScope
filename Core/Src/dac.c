@@ -66,6 +66,17 @@ void MX_DAC1_Init(void)
   {
     Error_Handler();
   }
+
+  /** DAC channel OUT2 config
+  */
+  sConfig.DAC_DMADoubleDataMode = DISABLE;
+  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
+  sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_DISABLE;
+  sConfig.DAC_ConnectOnChipPeripheral = DAC_CHIPCONNECT_INTERNAL;
+  if (HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN DAC1_Init 2 */
 
   /* USER CODE END DAC1_Init 2 */
@@ -148,7 +159,7 @@ void MX_DAC4_Init(void)
   sConfig.DAC_DMADoubleDataMode = DISABLE;
   sConfig.DAC_SignedFormat = DISABLE;
   sConfig.DAC_SampleAndHold = DAC_SAMPLEANDHOLD_DISABLE;
-  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
+  sConfig.DAC_Trigger = DAC_TRIGGER_T15_TRGO;
   sConfig.DAC_Trigger2 = DAC_TRIGGER_NONE;
   sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_DISABLE;
   sConfig.DAC_ConnectOnChipPeripheral = DAC_CHIPCONNECT_INTERNAL;
@@ -158,8 +169,16 @@ void MX_DAC4_Init(void)
     Error_Handler();
   }
 
+  /** Configure Triangle wave generation on DAC OUT1
+  */
+  if (HAL_DACEx_TriangleWaveGenerate(&hdac4, DAC_CHANNEL_1, DAC_TRIANGLEAMPLITUDE_2047) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
   /** DAC channel OUT2 config
   */
+  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
   if (HAL_DAC_ConfigChannel(&hdac4, &sConfig, DAC_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
@@ -186,10 +205,10 @@ void HAL_DAC_MspInit(DAC_HandleTypeDef* dacHandle)
     /**DAC1 GPIO Configuration
     PA4     ------> DAC1_OUT1
     */
-    GPIO_InitStruct.Pin = TEST_SIGNAL_Pin;
+    GPIO_InitStruct.Pin = TEST_SIGNAL_A_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(TEST_SIGNAL_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(TEST_SIGNAL_A_GPIO_Port, &GPIO_InitStruct);
 
     /* DAC1 DMA Init */
     /* DAC1_CH1 Init */
@@ -255,7 +274,7 @@ void HAL_DAC_MspDeInit(DAC_HandleTypeDef* dacHandle)
     /**DAC1 GPIO Configuration
     PA4     ------> DAC1_OUT1
     */
-    HAL_GPIO_DeInit(TEST_SIGNAL_GPIO_Port, TEST_SIGNAL_Pin);
+    HAL_GPIO_DeInit(TEST_SIGNAL_A_GPIO_Port, TEST_SIGNAL_A_Pin);
 
     /* DAC1 DMA DeInit */
     HAL_DMA_DeInit(dacHandle->DMA_Handle1);
