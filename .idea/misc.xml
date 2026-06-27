@@ -13,6 +13,7 @@
     </sourceRoots>
     <excludeRoots>
       <file path="$PROJECT_DIR$/build" />
+      <file path="$PROJECT_DIR$/esp32-gateway" />
     </excludeRoots>
   </component>
   <component name="WestSettings">{}</component>
