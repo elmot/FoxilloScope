@@ -1,0 +1,62 @@
+menu "Gateway Configuration"
+
+    menu "SoftAP Configuration"
+
+        config ESP_WIFI_AP_SSID
+            string "WiFi AP SSID"
+            default "Elmot-Oscilloscope"
+            help
+                SSID of the soft-AP.
+
+        config ESP_WIFI_AP_PASSWORD
+            string "WiFi AP Password"
+            default ""
+            help
+                WiFi password (empty = open).
+
+        config ESP_WIFI_AP_CHANNEL
+            int "WiFi AP Channel"
+            range 1 14
+            default 1
+
+        config ESP_MAX_STA_CONN_AP
+            int "Max STA connections"
+            default 4
+    endmenu
+
+    menu "STA Configuration"
+
+        config ESP_WIFI_REMOTE_AP_SSID
+            string "WiFi STA SSID"
+            default "mywifi"
+
+        config ESP_WIFI_REMOTE_AP_PASSWORD
+            string "WiFi STA Password"
+            default "mypassword"
+
+        config ESP_MAXIMUM_STA_RETRY
+            int "Max STA retry count"
+            default 5
+
+        choice ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD
+            prompt "Scan auth mode threshold"
+            default ESP_WIFI_AUTH_WPA2_PSK
+
+            config ESP_WIFI_AUTH_OPEN
+                bool "OPEN"
+            config ESP_WIFI_AUTH_WEP
+                bool "WEP"
+            config ESP_WIFI_AUTH_WPA_PSK
+                bool "WPA PSK"
+            config ESP_WIFI_AUTH_WPA2_PSK
+                bool "WPA2 PSK"
+            config ESP_WIFI_AUTH_WPA_WPA2_PSK
+                bool "WPA/WPA2 PSK"
+            config ESP_WIFI_AUTH_WPA3_PSK
+                bool "WPA3 PSK"
+            config ESP_WIFI_AUTH_WPA2_WPA3_PSK
+                bool "WPA2/WPA3 PSK"
+        endchoice
+    endmenu
+
+endmenu
