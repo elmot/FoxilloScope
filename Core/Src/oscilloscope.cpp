@@ -29,9 +29,8 @@ void dmaMemToMemCallback(DMA_HandleTypeDef* dma_handle_type_def);
 void initialize_test_signal() //todo remove together with tim2 & hdac2 wave generation
 {
     extern const unsigned short fake_signal[];
-    HAL_OPAMP_Start(&hopamp5);
-    HAL_DAC_Start_DMA(&hdac4, DAC_CHANNEL_2, reinterpret_cast<const uint32_t*>(fake_signal), 164, DAC_ALIGN_12B_R);
-    //__HAL_TIM_SET_PRESCALER(&htim15, 30000);
+    HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, reinterpret_cast<const uint32_t*>(fake_signal), 164, DAC_ALIGN_12B_R);
+    __HAL_TIM_SET_PRESCALER(&htim15, 30000);
     HAL_TIM_Base_Start(&htim15);
 }
 
@@ -88,8 +87,9 @@ namespace trigger
 
         void useNewValue() const override
         {
-            const uint16_t dac_bias = std::ranges::clamp((value - min) * 4'095LL / (max - min), 0LL, 4095LL);
-            HAL_DAC_SetValue(&hdac3, DAC1_CHANNEL_1,DAC_ALIGN_12B_R, dac_bias);
+            const uint16_t dac_bias = std::ranges::clamp((max - value) * 4'095LL / (max - min), 0LL, 4095LL);
+            HAL_DAC_SetValue(&hdac4, DAC_CHANNEL_1,DAC_ALIGN_12B_R, dac_bias);
+            HAL_DAC_SetValue(&hdac4, DAC_CHANNEL_2,DAC_ALIGN_12B_R, dac_bias);
         }
     } CommandTriggerLevel{};
 
@@ -134,18 +134,18 @@ namespace trigger
     {
         if (CommandTriggerType.getValue() == 0)
         {
-            HAL_NVIC_DisableIRQ(COMP1_2_3_IRQn);
+            HAL_NVIC_DisableIRQ(COMP4_5_6_IRQn);
         }
         else
         {
             trigger::state = TriggerState::DISARMED;
-            HAL_NVIC_EnableIRQ(COMP1_2_3_IRQn);
+            HAL_NVIC_EnableIRQ(COMP4_5_6_IRQn);
         }
     }
 
     uint32_t comparatorValue()
     {
-        return CommandTriggerType.getValue() == -1 ? COMP_OUTPUT_LEVEL_LOW : COMP_OUTPUT_LEVEL_HIGH;
+        return CommandTriggerType.getValue() == -1 ? COMP_OUTPUT_LEVEL_HIGH : COMP_OUTPUT_LEVEL_LOW;
     }
 
 }
@@ -163,13 +163,13 @@ constexpr struct CommandStateNo_t : Command
     }
 } CommandStateNo{};
 
-constexpr CommandGainChannel_t CommandGainChannelA{"gain.a", &hopamp3};
+constexpr CommandGainChannel_t CommandGainChannelA{"gain.a", &hopamp6};
 
-constexpr CommandGainChannel_t CommandGainChannelB{"gain.b", &hopamp4};
+constexpr CommandGainChannel_t CommandGainChannelB{"gain.b", &hopamp3};
 
-constexpr CommandBiasChannel_t CommandBiasChannelA{"vbias.a", &hdac1,DAC1_CHANNEL_1};
+constexpr CommandBiasChannel_t CommandBiasChannelA{"vbias.a", &hdac3,DAC_CHANNEL_1};
 
-constexpr CommandBiasChannel_t CommandBiasChannelB{"vbias.b", &hdac2,DAC2_CHANNEL_1};
+constexpr CommandBiasChannel_t CommandBiasChannelB{"vbias.b", &hdac3,DAC_CHANNEL_2};
 
 constexpr std::array<const Command*, 10> commands{
     &CommandStateNo,
@@ -195,8 +195,16 @@ void skipWhiteSpace(char* & ptr)
 static void startSampling()
 {
     /* Select COMP1 input pin: PB1 or PA1*/
-    MODIFY_REG(hcomp1.Instance->CSR, COMP_CSR_INPSEL,
-               trigger::CommandTriggerChannel.getValue() == 0 ? COMP_INPUT_PLUS_IO2 : COMP_INPUT_PLUS_IO1);
+    if (trigger::CommandTriggerChannel.getValue() == 0)
+    {
+        __HAL_COMP_COMP6_EXTI_ENABLE_IT();
+        __HAL_COMP_COMP5_EXTI_DISABLE_IT();
+    }
+    else
+    {
+        __HAL_COMP_COMP5_EXTI_ENABLE_IT();
+        __HAL_COMP_COMP6_EXTI_DISABLE_IT();
+    }
     int arr = trigger::CommandTriggerOffset.timerShiftSamples() + data_frame_size;
     if (arr < 0) arr = 0;
     if (CommandTimeResolution.isInterleaveSampling()) arr /= 2;
@@ -209,7 +217,7 @@ static void startSampling()
     __HAL_TIM_SET_AUTORELOAD(&htim2, CommandTimeResolution.clockDivider());
     __HAL_TIM_SET_COUNTER(&htim2, 0);
     HAL_TIM_Base_Start(&htim2);
-    HAL_NVIC_ClearPendingIRQ(COMP1_2_3_IRQn);
+    HAL_NVIC_ClearPendingIRQ(COMP4_5_6_IRQn);
     trigger::pre_arming = trigger::CommandTriggerOffset.timerShiftSamples() < 0 ? 1 : 0;
     trigger::enableTrigger();
 }
@@ -259,16 +267,23 @@ static void executeIncomingCommand()
     initialize_test_signal();
     adcCalibration();
     HAL_DMA_RegisterCallback(&hdma_memtomem_dma1_channel2, HAL_DMA_XFER_CPLT_CB_ID, dmaMemToMemCallback);
-    HAL_OPAMP_Start(&hopamp3);
-    HAL_OPAMP_Start(&hopamp4);
-    HAL_DAC_Start(&hdac1, DAC1_CHANNEL_1);
-    HAL_DAC_Start(&hdac2, DAC2_CHANNEL_1);
+
+    for (const auto opamp : {&hopamp2,&hopamp3,&hopamp5,&hopamp6})
+    {
+        HAL_OPAMP_Start(opamp);
+        HAL_OPAMP_SelfCalibrate(opamp);
+    }
+
     HAL_DAC_Start(&hdac3, DAC_CHANNEL_1);
+    HAL_DAC_Start(&hdac3, DAC_CHANNEL_2);
+    HAL_DAC_Start(&hdac4, DAC_CHANNEL_1);
+    HAL_DAC_Start(&hdac4, DAC_CHANNEL_2);
     TIM_CCxChannelCmd(htim1.Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
     HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
     HAL_TIM_Base_Start(&htim1);
     startSampling();
-    HAL_COMP_Start(&hcomp1);
+    HAL_COMP_Start(&hcomp5);
+    HAL_COMP_Start(&hcomp6);
     for (const auto& command : commands)
     {
         command->useNewValue();
@@ -335,7 +350,7 @@ void HAL_COMP_TriggerCallback(COMP_HandleTypeDef* hcomp)
         {
             trigger::state = TriggerState::TRIGGERED;
             __HAL_TIM_ENABLE(&htim1);
-            HAL_NVIC_DisableIRQ(COMP1_2_3_IRQn);
+            HAL_NVIC_DisableIRQ(COMP4_5_6_IRQn);
         }
     }
     else

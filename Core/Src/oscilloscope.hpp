@@ -66,7 +66,7 @@ protected:
 
 struct CommandGainChannel_t : Command
 {
-    constexpr CommandGainChannel_t(const char* name, OPAMP_HandleTypeDef * opamp) : Command(name, 16, 2, 64), opamp(opamp){}
+    constexpr CommandGainChannel_t(const char* name, OPAMP_HandleTypeDef * opamp) : Command(name, 15, 1, 63), opamp(opamp){}
     void useNewValue() const override;
 protected:
     OPAMP_HandleTypeDef  * opamp;

@@ -104,14 +104,15 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM15_Init();
   MX_TIM2_Init();
-  MX_COMP1_Init();
   MX_DAC4_Init();
   MX_OPAMP5_Init();
   MX_DAC3_Init();
   MX_ADC1_Init();
   MX_ADC2_Init();
-  MX_DAC2_Init();
-  MX_OPAMP4_Init();
+  MX_COMP5_Init();
+  MX_COMP6_Init();
+  MX_OPAMP2_Init();
+  MX_OPAMP6_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */

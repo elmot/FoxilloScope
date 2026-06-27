@@ -62,7 +62,7 @@ async def index_handler(request: web.Request) -> web.FileResponse:
 
 def main():
     global serial_writer
-    port = sys.argv[1] if len(sys.argv) > 1 else "COM4"
+    port = sys.argv[1] if len(sys.argv) > 1 else "COM11"
     baud = int(sys.argv[2]) if len(sys.argv) > 2 else 460800
 
     async def on_startup(app):

@@ -74,8 +74,8 @@ void MX_ADC1_Init(void)
   /** Configure the ADC multi-mode
   */
   multimode.Mode = ADC_DUALMODE_INTERL;
-  multimode.DMAAccessMode = ADC_DMAACCESSMODE_12_10_BITS;
-  multimode.TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_6CYCLES;
+  multimode.DMAAccessMode = ADC_DMAACCESSMODE_DISABLED;
+  multimode.TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_1CYCLE;
   if (HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode) != HAL_OK)
   {
     Error_Handler();
@@ -83,7 +83,7 @@ void MX_ADC1_Init(void)
 
   /** Configure Regular Channel
   */
-  sConfig.Channel = ADC_CHANNEL_2;
+  sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = ADC_REGULAR_RANK_1;
   sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
@@ -126,7 +126,7 @@ void MX_ADC2_Init(void)
   hadc2.Init.NbrOfConversion = 1;
   hadc2.Init.DiscontinuousConvMode = DISABLE;
   hadc2.Init.DMAContinuousRequests = DISABLE;
-  hadc2.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
+  hadc2.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc2.Init.OversamplingMode = DISABLE;
   if (HAL_ADC_Init(&hadc2) != HAL_OK)
   {
@@ -135,7 +135,7 @@ void MX_ADC2_Init(void)
 
   /** Configure Regular Channel
   */
-  sConfig.Channel = ADC_CHANNEL_2;
+  sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = ADC_REGULAR_RANK_1;
   sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
@@ -301,12 +301,12 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
 
     __HAL_RCC_GPIOA_CLK_ENABLE();
     /**ADC1 GPIO Configuration
-    PA1     ------> ADC1_IN2
+    PA0     ------> ADC1_IN1
     */
-    GPIO_InitStruct.Pin = AMPLIFIED_B_Pin;
+    GPIO_InitStruct.Pin = SHIFTED_A_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(AMPLIFIED_B_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(SHIFTED_A_GPIO_Port, &GPIO_InitStruct);
 
     /* ADC1 DMA Init */
     /* ADC1 Init */
@@ -353,12 +353,12 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
 
     __HAL_RCC_GPIOA_CLK_ENABLE();
     /**ADC2 GPIO Configuration
-    PA1     ------> ADC2_IN2
+    PA0     ------> ADC2_IN1
     */
-    GPIO_InitStruct.Pin = AMPLIFIED_B_Pin;
+    GPIO_InitStruct.Pin = SHIFTED_A_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(AMPLIFIED_B_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(SHIFTED_A_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN ADC2_MspInit 1 */
 
@@ -389,10 +389,10 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     /**ADC3 GPIO Configuration
     PB13     ------> ADC3_IN5
     */
-    GPIO_InitStruct.Pin = AMPLIFIED_AB13_Pin;
+    GPIO_InitStruct.Pin = SHIFTED_BB13_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(AMPLIFIED_AB13_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(SHIFTED_BB13_GPIO_Port, &GPIO_InitStruct);
 
     /* ADC3 DMA Init */
     /* ADC3 Init */
@@ -441,10 +441,10 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     /**ADC4 GPIO Configuration
     PB15     ------> ADC4_IN5
     */
-    GPIO_InitStruct.Pin = AMPLIFIED_AB15_Pin;
+    GPIO_InitStruct.Pin = SHIFTED_BB15_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(AMPLIFIED_AB15_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(SHIFTED_BB15_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN ADC4_MspInit 1 */
 
@@ -467,9 +467,9 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
     }
 
     /**ADC1 GPIO Configuration
-    PA1     ------> ADC1_IN2
+    PA0     ------> ADC1_IN1
     */
-    HAL_GPIO_DeInit(AMPLIFIED_B_GPIO_Port, AMPLIFIED_B_Pin);
+    HAL_GPIO_DeInit(SHIFTED_A_GPIO_Port, SHIFTED_A_Pin);
 
     /* ADC1 DMA DeInit */
     HAL_DMA_DeInit(adcHandle->DMA_Handle);
@@ -489,9 +489,9 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
     }
 
     /**ADC2 GPIO Configuration
-    PA1     ------> ADC2_IN2
+    PA0     ------> ADC2_IN1
     */
-    HAL_GPIO_DeInit(AMPLIFIED_B_GPIO_Port, AMPLIFIED_B_Pin);
+    HAL_GPIO_DeInit(SHIFTED_A_GPIO_Port, SHIFTED_A_Pin);
 
   /* USER CODE BEGIN ADC2_MspDeInit 1 */
 
@@ -511,7 +511,7 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
     /**ADC3 GPIO Configuration
     PB13     ------> ADC3_IN5
     */
-    HAL_GPIO_DeInit(AMPLIFIED_AB13_GPIO_Port, AMPLIFIED_AB13_Pin);
+    HAL_GPIO_DeInit(SHIFTED_BB13_GPIO_Port, SHIFTED_BB13_Pin);
 
     /* ADC3 DMA DeInit */
     HAL_DMA_DeInit(adcHandle->DMA_Handle);
@@ -533,7 +533,7 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
     /**ADC4 GPIO Configuration
     PB15     ------> ADC4_IN5
     */
-    HAL_GPIO_DeInit(AMPLIFIED_AB15_GPIO_Port, AMPLIFIED_AB15_Pin);
+    HAL_GPIO_DeInit(SHIFTED_BB15_GPIO_Port, SHIFTED_BB15_Pin);
 
   /* USER CODE BEGIN ADC4_MspDeInit 1 */
 
@@ -578,10 +578,10 @@ static void setDmaDataAlign(const uint32_t dmaAlign)
 
 void startMainAdcs(bool interleaveSampling, uint16_t* bufferA, uint16_t* bufferB, size_t bufferLength)
 {
-    HAL_ADC_Stop(&hadc4);
     HAL_ADC_Stop(&hadc2);
-    HAL_ADC_Stop_DMA(&hadc3);
+    HAL_ADC_Stop(&hadc4);
     HAL_ADC_Stop_DMA(&hadc1);
+    HAL_ADC_Stop_DMA(&hadc3);
     HAL_TIM_Base_Stop(&htim2);
     HAL_TIM_GenerateEvent(&htim1, TIM_EVENTSOURCE_UPDATE);
     __HAL_TIM_CLEAR_FLAG(&htim1, TIM_FLAG_CC1);
@@ -593,18 +593,18 @@ void startMainAdcs(bool interleaveSampling, uint16_t* bufferA, uint16_t* bufferB
             .DMAAccessMode = ADC_DMAACCESSMODE_12_10_BITS,
             .TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_6CYCLES
         };
-        if (HAL_ADCEx_MultiModeConfigChannel(&hadc3, &multimode) != HAL_OK ||
-          HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode) != HAL_OK)
+        if (HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode) != HAL_OK ||
+          HAL_ADCEx_MultiModeConfigChannel(&hadc3, &multimode) != HAL_OK)
         {
           Error_Handler();
         }
 
-        if (HAL_ADC_Start(&hadc4) != HAL_OK || HAL_ADC_Start(&hadc2) != HAL_OK)
+        if (HAL_ADC_Start(&hadc2) != HAL_OK || HAL_ADC_Start(&hadc4) != HAL_OK)
         {
             Error_Handler();
         }
-        if (HAL_ADCEx_MultiModeStart_DMA(&hadc3, (uint32_t*)bufferA, bufferLength / 2) != HAL_OK ||
-          HAL_ADCEx_MultiModeStart_DMA(&hadc1, (uint32_t*)bufferB, bufferLength / 2) != HAL_OK)
+        if (HAL_ADCEx_MultiModeStart_DMA(&hadc1, (uint32_t*)bufferA, bufferLength / 2) != HAL_OK ||
+          HAL_ADCEx_MultiModeStart_DMA(&hadc3, (uint32_t*)bufferB, bufferLength / 2) != HAL_OK)
         {
             Error_Handler();
         }
@@ -613,14 +613,14 @@ void startMainAdcs(bool interleaveSampling, uint16_t* bufferA, uint16_t* bufferB
     {
         setDmaDataAlign(DMA_MDATAALIGN_HALFWORD);
         static const ADC_MultiModeTypeDef multimode = {.Mode = ADC_MODE_INDEPENDENT};
-        if (HAL_ADCEx_MultiModeConfigChannel(&hadc3, &multimode) != HAL_OK ||
-          HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode) != HAL_OK)
+        if (HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode) != HAL_OK ||
+          HAL_ADCEx_MultiModeConfigChannel(&hadc3, &multimode) != HAL_OK)
         {
             Error_Handler();
         }
 
-        if (HAL_ADC_Start_DMA(&hadc3, (uint32_t*)bufferA, bufferLength) != HAL_OK ||
-        HAL_ADC_Start_DMA(&hadc1, (uint32_t*)bufferB, bufferLength) != HAL_OK)
+        if (HAL_ADC_Start_DMA(&hadc1, (uint32_t*)bufferA, bufferLength) != HAL_OK ||
+        HAL_ADC_Start_DMA(&hadc3, (uint32_t*)bufferB, bufferLength) != HAL_OK)
         {
             Error_Handler();
         }
