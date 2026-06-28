@@ -59,4 +59,15 @@ menu "Gateway Configuration"
         endchoice
     endmenu
 
+    menu "LED Configuration"
+
+        config LED_GPIO
+            int "RGB LED GPIO pin"
+            default 48
+            range 0 48
+            help
+                GPIO pin connected to the WS2812 RGB LED data line.
+                Common values: 48 (ESP32-S3-DevKitC), 38 (ESP32-S3-Box), 21 (various).
+    endmenu
+
 endmenu

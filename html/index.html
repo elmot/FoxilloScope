@@ -535,7 +535,8 @@
             ws.close();
             ws = null;
         }
-        ws = new WebSocket(`ws://${location.host}/ws`);
+        const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        ws = new WebSocket(`${proto}//${location.host}/ws`);
         ws.onopen = () => document.getElementById("status").textContent = "connected";
         ws.onclose = () => document.getElementById("status").textContent = "disconnected";
         ws.onerror = () => document.getElementById("status").textContent = "error";
