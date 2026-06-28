@@ -35,6 +35,7 @@
             padding: 6px 12px;
             background: #1a1a1a;
             flex-shrink: 0;
+            border-bottom: 1px solid #2a2a2a;
         }
 
         #topbar button {
@@ -45,6 +46,7 @@
             cursor: pointer;
             border-radius: 3px;
             font: inherit;
+            transition: background 0.15s, color 0.15s;
         }
 
         #topbar button:hover {
@@ -63,6 +65,10 @@
             min-height: 0;
             display: flex;
             flex: 1;
+            background: #0d0d0d;
+            border: 1px solid #2a2a2a;
+            border-radius: 4px;
+            margin: 4px 8px;
         }
 
         #canvas-wrap canvas {
@@ -73,7 +79,6 @@
             width: 100%;
             height: 100%;
             flex: 1 1 0;
-            margin-right: 0.5vw;
         }
 
         .v-control-container {
@@ -113,6 +118,7 @@
             text-align: center;
             padding: 4px;
             flex-shrink: 0;
+            border-top: 1px solid #2a2a2a;
         }
 
         #status {
@@ -133,8 +139,9 @@
             justify-content: center;
             padding: 10px;
             background: #1a1a1a;
-            gap: 1em;
+            gap: 1.5em;
             flex-shrink: 0;
+            border-top: 1px solid #2a2a2a;
         }
 
         .switch-control {
@@ -152,6 +159,10 @@
             cursor: pointer;
             border-radius: 3px;
             font: inherit;
+        }
+
+        .switch-control button {
+            transition: background 0.15s, color 0.15s;
         }
 
         .switch-control button:hover {
@@ -199,6 +210,8 @@
             background: #222;
             color: #fff;
         }
+
+        .trg-btn { transition: background 0.15s, color 0.15s; }
 
         .trg-btn.active {
             background: #0f0;
@@ -457,27 +470,68 @@
         const W = canvas.width, H = canvas.height;
         ctx.clearRect(0, 0, W, H);
         // grid
-        ctx.strokeStyle = "#222";
+        const hDivs = parameters.h_grid_steps;
+        const vDivs = 8;
+        const hStep = W / hDivs;
+        const vStep = H / vDivs;
+        const sub = 5;
+
+        // minor grid
+        ctx.strokeStyle = "#1a1a1a";
         ctx.lineWidth = 1;
-        for (let x = 0; x < W; x += W / parameters.h_grid_steps) {
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, H);
-            ctx.stroke();
+        for (let i = 1; i < hDivs * sub; i++) {
+            if (i % sub === 0) continue;
+            const x = (i / sub) * hStep;
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
         }
-        for (let y = 0; y < H; y += 60) {
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(W, y);
-            ctx.stroke();
+        for (let i = 1; i < vDivs * sub; i++) {
+            if (i % sub === 0) continue;
+            const y = (i / sub) * vStep;
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+        }
+
+        // major grid
+        ctx.strokeStyle = "#333";
+        for (let i = 0; i <= hDivs; i++) {
+            const x = i * hStep;
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+        }
+        for (let i = 0; i <= vDivs; i++) {
+            const y = i * vStep;
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
         }
 
         // centre line
-        ctx.strokeStyle = "#333";
-        ctx.beginPath();
-        ctx.moveTo(0, H / 2);
-        ctx.lineTo(W, H / 2);
-        ctx.stroke();
+        ctx.strokeStyle = "#555";
+        ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
+
+        // time labels
+        ctx.fillStyle = "#999";
+        ctx.font = "10px monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        const sp = parseFloat(param.get("sampling.ns")) || 500000;
+        const totalTime = sp * frame_width;
+        const timePerDiv = totalTime / hDivs;
+        for (let i = 1; i < hDivs; i++) {
+            const t = i * timePerDiv;
+            let label, unit;
+            if (t >= 1e9)      { label = (t / 1e9).toFixed(t >= 10e9 ? 1 : 2); unit = "s"; }
+            else if (t >= 1e6) { label = (t / 1e6).toFixed(t >= 10e6 ? 1 : 2); unit = "ms"; }
+            else if (t >= 1e3) { label = (t / 1e3).toFixed(t >= 10e3 ? 1 : 2); unit = "µs"; }
+            else               { label = t.toFixed(0); unit = "ns"; }
+            ctx.fillText(label + unit, i * hStep, H - 2);
+        }
+
+        // voltage labels
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "#999";
+        for (let i = 1; i < vDivs; i++) {
+            const y = i * vStep;
+            const offset = Math.round(2048 - 4096 * i / vDivs);
+            ctx.fillText((offset > 0 ? "+" : "") + offset, 6, y);
+        }
 
 
         const mid = H / 2;
