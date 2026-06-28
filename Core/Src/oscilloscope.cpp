@@ -153,19 +153,6 @@ namespace trigger
 
 }
 
-constexpr struct CommandStateNo_t : Command
-{
-    constexpr CommandStateNo_t() : Command("state.no", 0, 0, 0x7FFF'FFFF) {}
-
-    void useNewValue() const override {}
-
-    bool setValue(const long aValue, [[maybe_unused]] const unsigned long aStateNumber) const override
-    {
-        value = aValue;
-        return true;
-    }
-} CommandStateNo{};
-
 constexpr CommandGainChannel_t CommandGainChannelA{"gain.a", &hopamp6};
 
 constexpr CommandGainChannel_t CommandGainChannelB{"gain.b", &hopamp3};
@@ -174,8 +161,7 @@ constexpr CommandBiasChannel_t CommandBiasChannelA{"vbias.a", &hdac3,DAC_CHANNEL
 
 constexpr CommandBiasChannel_t CommandBiasChannelB{"vbias.b", &hdac3,DAC_CHANNEL_2};
 
-constexpr std::array<const Command*, 10> commands{
-    &CommandStateNo,
+constexpr std::array<const Command*, 9> commands{
     &CommandBiasChannelA,
     &CommandBiasChannelB,
     &CommandGainChannelA,
@@ -253,7 +239,7 @@ static void executeIncomingCommand()
         long newValue;
         auto [cookie_ptr,errc] = std::from_chars(ptr, ptr + strlen(ptr), newValue);
         if (errc != std::errc{}) break;
-        if (command->setValue(newValue, CommandStateNo.getValue()))
+        if (command->setValue(newValue))
         {
             requiresRestart |= command->requires_restart;
             break;

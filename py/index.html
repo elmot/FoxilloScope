@@ -343,7 +343,6 @@
         _values: {},
         _controls: {},
         _debounces: {},
-        _stateNo: 0,
         register(name, el, update, debounceMs) {
             this._controls[name] = { el, update };
             if (debounceMs) this._debounces[name] = this._makeDebouncer(debounceMs);
@@ -360,6 +359,7 @@
             const ctrl = this._controls[name];
             if (ctrl) ctrl.update(ctrl.el, value);
             if (!opts || opts.send !== false) this._send(name, value);
+            this._saveCookie();
         },
         set(name, value, opts) {
             const db = this._debounces[name];
@@ -369,19 +369,34 @@
         get(name) { return this._values[name]; },
         _send(name, value) {
             if (ws && ws.readyState === WebSocket.OPEN) {
-                this._stateNo++;
-                ws.send(`state.no=${this._stateNo}\n${name}=${value}`);
+                ws.send(`${name}=${value}\n`);
             }
         },
         sendAllCommands() {
             if (ws && ws.readyState === WebSocket.OPEN) {
-                let data = `state.no=${this._stateNo}\n`
+                let data = ""
                 for (const k in param._controls) {
                     const val = param._values[k]
-                    if (k !== "state.no" && val !== undefined)
-                        data+=`${k}=${val}\n`
+                    data+=`${k}=${val}\n`
                 }
                 ws.send(data)
+            }
+        },
+        _saveCookie() {
+            const json = JSON.stringify(this._values);
+            document.cookie = "scope_params=" + encodeURIComponent(json) + ";path=/;SameSite=Lax";
+        },
+        _loadCookie() {
+            const match = document.cookie.match(new RegExp('(^| )scope_params=([^;]+)'));
+            if (match) {
+                try {
+                    const saved = JSON.parse(decodeURIComponent(match[2]));
+                    for (const k in saved) {
+                        if (this._controls[k]) {
+                            this.set(k, saved[k], {send: false});
+                        }
+                    }
+                } catch(e) {}
             }
         }
     };
@@ -431,6 +446,8 @@
     selectParam.wire("gain.a");
     selectParam.wire("gain.b");
     selectParam.wire("sampling.ns", v => v / 4, v => v * 4);
+
+    param._loadCookie();
 
     function plot(frame_width, frameColorPairs) {
         if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
@@ -569,19 +586,6 @@
                 .toString(16).padStart(2,"0")
 
             plot(frameWidth, [[frame.samplesA, "#FFD600" + alphaNormal], [keyFrame.samplesA, "#FFF59D" + alphaKeyFrame], [frame.samplesB, "#00E5FF" + alphaNormal], [keyFrame.samplesB, "#84FFFF" + alphaKeyFrame]]);
-            const cn = incomingCommands["state.no"];
-            if (cn !== undefined) {
-                const ncn = Number(cn);
-                if (ncn > param._stateNo) {
-                    param._stateNo = ncn;
-                    for (const k in incomingCommands) {
-                        if (k !== "state.no" && param._controls[k])
-                            param.set(k, incomingCommands[k], {send: false});
-                    }
-                } else if (ncn < param._stateNo) {
-                    param.sendAllCommands()
-                }
-            }
         };
     }
 
