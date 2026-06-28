@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WiFi Config</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; }
+        body {
+            background: #111; color: #0f0;
+            font: 14px monospace; padding: 20px;
+        }
+        h1 { margin-bottom: 16px; }
+        h2 { margin: 20px 0 8px; color: #888; font-size: 14px; }
+        .card {
+            background: #1a1a1a; border: 1px solid #333;
+            border-radius: 6px; padding: 16px; max-width: 480px;
+        }
+        label { display: block; color: #888; margin-top: 10px; }
+        input {
+            width: 100%; background: #222; color: #0f0;
+            border: 1px solid #0f0; padding: 8px; font: inherit;
+            border-radius: 3px; margin-top: 4px;
+        }
+        button {
+            background: #333; color: #0f0; border: 1px solid #0f0;
+            padding: 8px 20px; cursor: pointer; font: inherit;
+            border-radius: 3px; margin-top: 14px;
+        }
+        button:hover { background: #0f0; color: #000; }
+        button:disabled { opacity: 0.4; cursor: default; }
+        #status-box {
+            margin-top: 12px; padding: 8px;
+            border-radius: 3px;
+        }
+        #status-box.connected { background: #0a2a0a; border: 1px solid #0f0; }
+        #status-box.disconnected { background: #2a0a0a; border: 1px solid #f00; }
+        #status-box.connecting { background: #2a2a0a; border: 1px solid #ff0; }
+        #msg { margin-top: 10px; color: #f80; }
+        #msg.ok { color: #0f0; }
+        .stat-row { display: flex; justify-content: space-between; padding: 2px 0; }
+        .stat-label { color: #888; }
+        .back { margin-top: 20px; display: inline-block; color: #0f0; }
+    </style>
+</head>
+<body>
+    <h1>WiFi Client Configuration</h1>
+    <div class="card" id="status-box">
+        <div class="stat-row"><span class="stat-label">Status</span><span id="stat-status">—</span></div>
+        <div class="stat-row"><span class="stat-label">SSID</span><span id="stat-ssid">—</span></div>
+        <div class="stat-row"><span class="stat-label">IP</span><span id="stat-ip">—</span></div>
+        <div class="stat-row"><span class="stat-label">RSSI</span><span id="stat-rssi">—</span></div>
+    </div>
+
+    <h2>Change Network</h2>
+    <div class="card">
+        <label for="ssid">SSID</label>
+        <input type="text" id="ssid" placeholder="Network name">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="WiFi password">
+        <button id="saveBtn">Save &amp; Reconnect</button>
+        <div id="msg"></div>
+    </div>
+
+    <a href="/" class="back">&larr; Back to Oscilloscope</a>
+
+    <script>
+        const $ = id => document.getElementById(id);
+
+        async function fetchStatus() {
+            try {
+                const r = await fetch('/api/wifi/status');
+                const s = await r.json();
+                const sta = s.sta || {};
+                $('stat-status').textContent = sta.status || '—';
+                $('stat-ssid').textContent = sta.ssid || '—';
+                $('stat-ip').textContent = sta.ip || '—';
+                $('stat-rssi').textContent = sta.rssi !== null ? sta.rssi + ' dBm' : '—';
+                const box = $('status-box');
+                box.className = 'card ' + (sta.status || 'disconnected');
+                if (sta.ssid) $('ssid').value = sta.ssid;
+            } catch (e) {
+                $('status-box').className = 'card disconnected';
+            }
+        }
+
+        $('saveBtn').onclick = async () => {
+            const ssid = $('ssid').value.trim();
+            const password = $('password').value.trim();
+            if (!ssid) { $('msg').textContent = 'SSID is required'; $('msg').className = ''; return; }
+            $('saveBtn').disabled = true;
+            $('msg').textContent = 'Saving...';
+            $('msg').className = 'ok';
+            try {
+                const r = await fetch('/api/wifi', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ssid, password })
+                });
+                const result = await r.json();
+                if (result.ok) {
+                    $('msg').innerHTML = 'Saved! Rebooting\u2026<br>Access the oscilloscope at <a href="http://elmot-oscl.local/" style="color:#0f0">http://elmot-oscl.local/</a>';
+                    $('msg').className = 'ok';
+                    $('saveBtn').disabled = true;
+                } else {
+                    $('msg').textContent = 'Error: ' + (result.error || 'unknown');
+                    $('msg').className = '';
+                }
+            } catch (e) {
+                $('msg').textContent = 'Failed to send: ' + e.message;
+                $('msg').className = '';
+            }
+            $('saveBtn').disabled = false;
+        };
+
+        fetchStatus();
+        setInterval(fetchStatus, 5000);
+    </script>
+</body>
+</html>

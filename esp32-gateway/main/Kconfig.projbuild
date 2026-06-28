@@ -4,7 +4,7 @@ menu "Gateway Configuration"
 
         config ESP_WIFI_AP_SSID
             string "WiFi AP SSID"
-            default "ESP32C3-Gateway"
+            default "Elmot-Oscilloscope"
             help
                 SSID of the soft-AP.
 
