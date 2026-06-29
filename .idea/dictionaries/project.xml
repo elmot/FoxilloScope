@@ -7,6 +7,7 @@
       <w>lpuart</w>
       <w>opamp</w>
       <w>vbias</w>
+      <w>vltg</w>
     </words>
   </dictionary>
 </component>

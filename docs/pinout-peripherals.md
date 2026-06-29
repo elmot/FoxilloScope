@@ -43,4 +43,6 @@ Date 06/16/2026
 |             | **Communication**                            |                                                                    |      |                                                 |
 | LPUART1     | Asynchronous TX                              |                                                                    | PA2  |                                                 |
 | LPUART1     | Asynchronous RX                              |                                                                    | PA3  |                                                 |
+|             | **Calibration**                              |                                                                    |      |                                                 |
+| ADC1        |                                              | VRef measured as injected rank 1                                   | -    |                                                 |
 

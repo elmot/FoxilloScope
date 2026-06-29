@@ -90,7 +90,8 @@ namespace trigger
 
         void useNewValue() const override
         {
-            const uint16_t dac_bias = std::ranges::clamp((max - value) * 4'095LL / (max - min), 0LL, 4095LL);
+            constexpr long long dac_max_long_long = DAC_MAX_VALUE;
+            const uint16_t dac_bias = std::ranges::clamp((max - value) * dac_max_long_long / (max - min), 0LL, dac_max_long_long);
             HAL_DAC_SetValue(&hdac1, DAC1_CHANNEL_2,DAC_ALIGN_12B_R, dac_bias);
             HAL_DAC_SetValue(&hdac4, DAC_CHANNEL_2,DAC_ALIGN_12B_R, dac_bias);
         }
@@ -194,7 +195,7 @@ static void startSampling()
         __HAL_COMP_COMP5_EXTI_ENABLE_IT();
         __HAL_COMP_COMP6_EXTI_DISABLE_IT();
     }
-    int arr = trigger::CommandTriggerOffset.timerShiftSamples() + data_frame_size;
+    int arr = trigger::CommandTriggerOffset.timerShiftSamples() + static_cast<int>(data_frame_size);
     if (arr < 0) arr = 0;
     if (CommandTimeResolution.isInterleaveSampling()) arr /= 2;
     arr = std::ranges::clamp(arr, 1, 1000);
@@ -397,12 +398,29 @@ extern "C" [[noreturn]] void keyFramesProcessing([[maybe_unused]] void*)
     }
 }
 
+static std::pair<long, long> calculate_min_max_uV(const CommandGainChannel_t& gain, const CommandBiasChannel_t& bias)
+{
+    const long long amplitude_uV = 1000LL * analog_supply_voltage_mV / gain.getValue();
+    long min_uV = -1000LL * analog_supply_voltage_mV /* amplitude in uV*/
+     * bias.get_12bit_bias() * (gain.getValue() + 1)/gain.getValue() / DAC_MAX_VALUE;
+
+    return {min_uV, min_uV + amplitude_uV};
+}
+
+
 void writeCommands()
 {
     for (auto& command : commands)
     {
         command->write();
     }
+    writeUart("vltg.steps=" ADC_MAX_VALUE_STR "\n");
+    const auto [minA, maxA] = calculate_min_max_uV(CommandGainChannelA, CommandBiasChannelA);
+    const auto [minB, maxB] = calculate_min_max_uV(CommandGainChannelB, CommandBiasChannelB);
+    Command::do_write_value("vltg.min.uv.a", minA);
+    Command::do_write_value("vltg.max.uv.a", maxA);
+    Command::do_write_value("vltg.min.uv.b", minB);
+    Command::do_write_value("vltg.max.uv.b", maxB);
 }
 
 extern "C" void partialFrameSend([[maybe_unused]] void*)

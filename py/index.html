@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Oscilloscope</title>
     <style>
+        :root {
+            --ch-a: #FFD600;
+            --ch-b: #00E5FF;
+            --ch-a-key: #FFF59D;
+            --ch-b-key: #84FFFF;
+        }
         * {
             margin: 0;
             padding: 0;
@@ -219,7 +225,7 @@
         }
 
         .trg-btn.channel-a {
-            color: #FFD600;
+            color: var(--ch-a);
         }
 
         .trg-btn.channel-a:hover {
@@ -228,12 +234,12 @@
         }
 
         .trg-btn.channel-a.active {
-            background: #FFD600;
+            background: var(--ch-a);
             color: #000;
         }
 
         .trg-btn.channel-b {
-            color: #00E5FF;
+            color: var(--ch-b);
         }
 
         .trg-btn.channel-b:hover {
@@ -242,7 +248,7 @@
         }
 
         .trg-btn.channel-b.active {
-            background: #00E5FF;
+            background: var(--ch-b);
             color: #000;
         }
         #trg\.time\.offset {
@@ -348,6 +354,16 @@
     const parameters = {
         "h_grid_steps": 10
     };
+    function cssVar(name) {
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+    const COLORS = {
+        chA: cssVar('--ch-a'),
+        chB: cssVar('--ch-b'),
+        chAKey: cssVar('--ch-a-key'),
+        chBKey: cssVar('--ch-b-key'),
+    };
+    const vltg = {};
     const canvas = document.getElementById("scope");
     const ctx = canvas.getContext("2d");
     let ws = null;
@@ -468,12 +484,15 @@
             canvas.height = canvas.clientHeight;
         }
         const W = canvas.width, H = canvas.height;
+        const ml = 48, mr = 48, mb = 14; // margins: left, right, bottom
+        const gx = ml, gy = 0, gw = W - ml - mr, gh = H - mb; // grid area
         ctx.clearRect(0, 0, W, H);
+
         // grid
         const hDivs = parameters.h_grid_steps;
         const vDivs = 8;
-        const hStep = W / hDivs;
-        const vStep = H / vDivs;
+        const hStep = gw / hDivs;
+        const vStep = gh / vDivs;
         const sub = 5;
 
         // minor grid
@@ -481,35 +500,36 @@
         ctx.lineWidth = 1;
         for (let i = 1; i < hDivs * sub; i++) {
             if (i % sub === 0) continue;
-            const x = (i / sub) * hStep;
-            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+            const x = gx + (i / sub) * hStep;
+            ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x, gy + gh); ctx.stroke();
         }
         for (let i = 1; i < vDivs * sub; i++) {
             if (i % sub === 0) continue;
-            const y = (i / sub) * vStep;
-            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+            const y = gy + (i / sub) * vStep;
+            ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx + gw, y); ctx.stroke();
         }
 
         // major grid
-        ctx.strokeStyle = "#333";
+        ctx.strokeStyle = "#33333";
         for (let i = 0; i <= hDivs; i++) {
-            const x = i * hStep;
-            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+            const x = gx + i * hStep;
+            ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x, gy + gh); ctx.stroke();
         }
         for (let i = 0; i <= vDivs; i++) {
-            const y = i * vStep;
-            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+            const y = gy + i * vStep;
+            ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx + gw, y); ctx.stroke();
         }
 
         // centre line
         ctx.strokeStyle = "#555";
-        ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
+        const midY = gy + gh / 2;
+        ctx.beginPath(); ctx.moveTo(gx, midY); ctx.lineTo(gx + gw, midY); ctx.stroke();
 
         // time labels
         ctx.fillStyle = "#999";
         ctx.font = "10px monospace";
         ctx.textAlign = "center";
-        ctx.textBaseline = "bottom";
+        ctx.textBaseline = "top";
         const sp = parseFloat(param.get("sampling.ns")) || 500000;
         const totalTime = sp * frame_width;
         const timePerDiv = totalTime / hDivs;
@@ -520,40 +540,85 @@
             else if (t >= 1e6) { label = (t / 1e6).toFixed(t >= 10e6 ? 1 : 2); unit = "ms"; }
             else if (t >= 1e3) { label = (t / 1e3).toFixed(t >= 10e3 ? 1 : 2); unit = "µs"; }
             else               { label = t.toFixed(0); unit = "ns"; }
-            ctx.fillText(label + unit, i * hStep, H - 2);
+            ctx.fillText(label + unit, gx + i * hStep, gy + gh + 2);
         }
 
         // voltage labels
-        ctx.textAlign = "right";
-        ctx.textBaseline = "middle";
-        ctx.fillStyle = "#999";
-        for (let i = 1; i < vDivs; i++) {
-            const y = i * vStep;
-            const offset = Math.round(2048 - 4096 * i / vDivs);
-            ctx.fillText((offset > 0 ? "+" : "") + offset, 6, y);
+        ctx.font = "10px monospace";
+        function fmtVoltage(uv) {
+            if (uv === 0) return "0";
+            const abs = Math.abs(uv);
+            let val, suffix;
+            if (abs >= 1e6)      { val = uv / 1e6; suffix = "V";  }
+            else if (abs >= 1e3) { val = uv / 1e3; suffix = "mV"; }
+            else                 { val = uv;        suffix = "µV"; }
+            const p = Math.abs(val) >= 100 ? 1 : Math.abs(val) >= 10 ? 2 : 3;
+            const rounded = Math.round(val * Math.pow(10, p)) / Math.pow(10, p);
+            return String(rounded) + suffix;
+        }
+        if (vltg.minUvA !== undefined && vltg.maxUvA !== undefined && vltg.steps) {
+            ctx.textAlign = "right";
+            ctx.textBaseline = "middle";
+            for (let i = 1; i < vDivs; i++) {
+                const frac = 1 - i / vDivs;
+                const uv = vltg.minUvA + frac * (vltg.maxUvA - vltg.minUvA);
+                ctx.fillStyle = COLORS.chA;
+                ctx.fillText(fmtVoltage(uv), gx - 4, gy + i * vStep);
+            }
+        }
+        if (vltg.minUvB !== undefined && vltg.maxUvB !== undefined && vltg.steps) {
+            ctx.textAlign = "left";
+            ctx.textBaseline = "middle";
+            for (let i = 1; i < vDivs; i++) {
+                const frac = 1 - i / vDivs;
+                const uv = vltg.minUvB + frac * (vltg.maxUvB - vltg.minUvB);
+                ctx.fillStyle = COLORS.chB;
+                ctx.fillText(fmtVoltage(uv), gx + gw + 4, gy + i * vStep);
+            }
         }
 
-
-        const mid = H / 2;
-        const scale = H / 4096;
+        const steps = vltg.steps || 4096;
+        const scale = gh / steps;
         for (const [data, color] of frameColorPairs) {
             if (!data || data.length < 2) continue;
-            // waveform
-            const step = W / frame_width;
-
+            const step = gw / frame_width;
             ctx.strokeStyle = color;
             ctx.lineWidth = 2;
             ctx.beginPath();
             const len = Math.min(frame_width, data.length)
             for (let i = 0; i < len; i++) {
-                const x = i * step;
-                const y = mid - (data[i] - 2048) * scale;
+                const x = gx + i * step;
+                const y = gy + gh / 2 - (data[i] - steps / 2) * scale;
                 i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
             }
             ctx.stroke();
         }
-        ctx.fillStyle = "#f00";
-        ctx.fillRect(0, mid - 2, 6, 4);
+
+        // 0V reference lines
+        ctx.font = "10px monospace";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        if (vltg.minUvA !== undefined && vltg.maxUvA !== undefined) {
+            const adc0v = -vltg.minUvA * steps / (vltg.maxUvA - vltg.minUvA);
+            const y0v = gy + gh / 2 - (adc0v - steps / 2) * scale;
+            ctx.strokeStyle = COLORS.chA;
+            ctx.beginPath(); ctx.moveTo(gx, y0v); ctx.lineTo(gx + gw, y0v); ctx.stroke();
+            ctx.fillStyle = COLORS.chA;
+            ctx.textAlign = "left";
+            ctx.textBaseline = "bottom";
+            ctx.fillText("0V", gx + 4, y0v > 14 ? y0v - 3 : y0v + 12);
+        }
+        if (vltg.minUvB !== undefined && vltg.maxUvB !== undefined) {
+            const adc0v = -vltg.minUvB * steps / (vltg.maxUvB - vltg.minUvB);
+            const y0v = gy + gh / 2 - (adc0v - steps / 2) * scale;
+            ctx.strokeStyle = COLORS.chB;
+            ctx.beginPath(); ctx.moveTo(gx, y0v); ctx.lineTo(gx + gw, y0v); ctx.stroke();
+            ctx.fillStyle = COLORS.chB;
+            ctx.textAlign = "right";
+            ctx.textBaseline = "bottom";
+            ctx.fillText("0V", gx + gw - 4, y0v > 14 ? y0v - 3 : y0v + 12);
+        }
+        ctx.setLineDash([]);
     }
 
     function decode(input) {
@@ -632,6 +697,11 @@
                 samplesA = null
                 samplesB = null
             }
+            if (incomingCommands["vltg.steps"] !== undefined) vltg.steps = parseFloat(incomingCommands["vltg.steps"]);
+            if (incomingCommands["vltg.min.uv.a"] !== undefined) vltg.minUvA = parseFloat(incomingCommands["vltg.min.uv.a"]);
+            if (incomingCommands["vltg.max.uv.a"] !== undefined) vltg.maxUvA = parseFloat(incomingCommands["vltg.max.uv.a"]);
+            if (incomingCommands["vltg.min.uv.b"] !== undefined) vltg.minUvB = parseFloat(incomingCommands["vltg.min.uv.b"]);
+            if (incomingCommands["vltg.max.uv.b"] !== undefined) vltg.maxUvB = parseFloat(incomingCommands["vltg.max.uv.b"]);
             document.getElementById("sampling").textContent = incomingCommands["sampling.ns"] || "-";
             document.getElementById("status").textContent = "streaming";
             let frameWidth = parseInt(incomingCommands["frame.size"]) || 200;
@@ -639,7 +709,11 @@
             const alphaKeyFrame = Math.max(30, 250 -  Math.ceil(50 * (Date.now() - (keyFrame.timestamp || 0 )) /1000))
                 .toString(16).padStart(2,"0")
 
-            plot(frameWidth, [[frame.samplesA, "#FFD600" + alphaNormal], [keyFrame.samplesA, "#FFF59D" + alphaKeyFrame], [frame.samplesB, "#00E5FF" + alphaNormal], [keyFrame.samplesB, "#84FFFF" + alphaKeyFrame]]);
+            plot(frameWidth, [
+                [frame.samplesA, COLORS.chA + alphaNormal],
+                [keyFrame.samplesA, COLORS.chAKey + alphaKeyFrame],
+                [frame.samplesB, COLORS.chB + alphaNormal],
+                [keyFrame.samplesB, COLORS.chBKey + alphaKeyFrame]]);
         };
     }
 

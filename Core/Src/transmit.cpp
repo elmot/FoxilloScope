@@ -25,7 +25,7 @@ static std::span<char> encode_bin_buffer(
     auto textPtr = asciiBuffer.begin();
     for (auto val : samples)
     {
-        val = 4095 - (val & 0x0FFF);
+        val = ADC_MAX_VALUE - (val & 0x0FFF);
 
         // Split the 12 bits into two 6-bit chunks
         // Chunk 1: Bits 0-5 (Lower 6 bits)

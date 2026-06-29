@@ -10,6 +10,10 @@
 #include <string>
 #include <charconv>
 
+#define ADC_MAX_VALUE 4095UL
+#define ADC_MAX_VALUE_STR "4095"
+#define DAC_MAX_VALUE 4095UL
+
 void writeUart(const std::string_view& str);
 
 struct Command
@@ -43,13 +47,18 @@ struct Command
         return true;
     }
 
-    void write() const
+    static void do_write_value(const std::string_view& valueName, const long v)
     {
-        writeUart(name);
+        writeUart(valueName);
         std::array<char,32> buffer{'='};
-        auto [ptr, _] = std::to_chars(&buffer[1], &buffer.back(),value);
+        auto [ptr, _] = std::to_chars(&buffer[1], &buffer.back(),v);
         *ptr++ ='\n';
         writeUart(std::string_view(buffer.data(), ptr - buffer.data()));
+    }
+
+    void write() const
+    {
+        do_write_value(name, value);
     }
 
 protected:
@@ -80,10 +89,16 @@ struct CommandBiasChannel_t : Command
     DAC_HandleTypeDef* dac;
     const uint32_t dac_channel;
 
+    uint16_t get_12bit_bias() const
+    {
+        constexpr long long dac_max_long_long = DAC_MAX_VALUE;
+        return static_cast<uint16_t>(std::ranges::clamp(
+            (max - value) * dac_max_long_long/ (max - min), 0LL, dac_max_long_long));
+    }
+
     void useNewValue() const override
     {
-        const uint16_t dac_bias = std::ranges::clamp(
-            (max - value) * 4'095LL / (max - min), 0LL, 4095LL);
+        const uint16_t dac_bias = get_12bit_bias();
         HAL_DAC_SetValue(dac, dac_channel,DAC_ALIGN_12B_R, dac_bias);
     }
 };
@@ -108,7 +123,10 @@ extern TransmitBuffer_t transmitKeyBuffer; // NOLINT(*-dynamic-static-initialize
 
 extern osMessageQueueId_t cmdRxQueueHandle; // NOLINT(*-dynamic-static-initializers)
 
-extern osTimerId_t partialFrameTimerHandle;
+extern osTimerId_t partialFrameTimerHandle; // NOLINT(*-dynamic-static-initializers)
+
+extern uint16_t analog_supply_voltage_mV; // NOLINT(*-dynamic-static-initializers)
+
 
 void startUartInput();
 
@@ -117,7 +135,7 @@ extern "C" void startMainAdcs(bool interleaveSampling, uint16_t* bufferA, uint16
 extern "C" size_t adcSamplesLeft();
 
 [[maybe_unused]]static uint32_t msec_to_ticks(uint32_t msec) {
-    uint32_t ticks_per_sec = osKernelGetTickFreq(); // Usually 1000 Hz
+    const uint32_t ticks_per_sec = osKernelGetTickFreq(); // Usually 1000 Hz
     return (msec * ticks_per_sec) / 1000U;
 }
 void writeCommands();
