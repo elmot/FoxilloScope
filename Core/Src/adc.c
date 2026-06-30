@@ -75,7 +75,7 @@ void MX_ADC1_Init(void)
 
   /** Configure the ADC multi-mode
   */
-  multimode.Mode = ADC_DUALMODE_INTERL;
+  multimode.Mode = ADC_DUALMODE_REGINTERL_INJECSIMULT;
   multimode.DMAAccessMode = ADC_DMAACCESSMODE_DISABLED;
   multimode.TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_6CYCLES;
   if (HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode) != HAL_OK)

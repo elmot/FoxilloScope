@@ -1,6 +1,6 @@
 Configuration	g4-oscilloscope-b
 STM32CubeMX 	6.17.0
-Date	06/29/2026
+Date	06/30/2026
 MCU	STM32G474RETx
 
 
