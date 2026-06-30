@@ -61,6 +61,7 @@ constexpr auto to_constexpr_string_cr()
 
 static_assert(string_view(to_constexpr_string_cr<182>()) == string_view("182\n"));
 
+std::atomic<bool> transmitKeyBufferReady{false};
 extern "C" [[noreturn]] void startTransmitTask([[maybe_unused]] void* argument)
 {
     static array<char, ascii_buffer_size> asciiBufferA;
@@ -71,7 +72,11 @@ extern "C" [[noreturn]] void startTransmitTask([[maybe_unused]] void* argument)
         osThreadFlagsWait(THREAD_FLAG_READY_TO_TRANSMIT, osFlagsWaitAny, osWaitForever);
         writeUart("[frame]\nframe.size=");
         writeUart(string_view(to_constexpr_string_cr<data_frame_size>()));
-        const bool keyBuffer = transmitKeyBuffer.ready;
+        const bool keyBuffer = transmitKeyBufferReady.exchange(false);
+        if (keyBuffer)
+        {
+            HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+        }
         TransmitBuffer_t* const buffer = keyBuffer ? &transmitKeyBuffer : &transmitBuffer;
         if (keyBuffer)
         {
@@ -88,8 +93,6 @@ extern "C" [[noreturn]] void startTransmitTask([[maybe_unused]] void* argument)
         const auto& encodedB = encode_bin_buffer(span{buffer->samplesB.begin(),buffer->length}, asciiBufferB);
         writeUart("data.b=");
         writeUart(string_view{encodedB});
-        transmitBuffer.ready = false;
-        transmitKeyBuffer.ready = false;
         osSemaphoreRelease(transmitBuffer.semaphore);
         osSemaphoreRelease(transmitKeyBuffer.semaphore);
     }

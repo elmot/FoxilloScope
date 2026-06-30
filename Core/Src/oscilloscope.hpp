@@ -72,7 +72,7 @@ protected:
 
 struct CommandGainChannel_t : Command
 {
-    constexpr CommandGainChannel_t(const char* name, OPAMP_HandleTypeDef * opamp) : Command(name, 15, 1, 63), opamp(opamp){}
+    constexpr CommandGainChannel_t(const char* name, OPAMP_HandleTypeDef * opamp) : Command(name, 1, 1, 63), opamp(opamp){}
     void useNewValue() const override;
 protected:
     OPAMP_HandleTypeDef  * opamp;
@@ -113,13 +113,13 @@ struct TransmitBuffer_t
     alignas(uint32_t) std::array<uint16_t, data_frame_size> samplesA{};
     alignas(uint32_t) std::array<uint16_t, data_frame_size> samplesB{};
     std::atomic<size_t> length{};
-    std::atomic<bool> ready{};
     std::atomic<bool> head{};
     const osSemaphoreId_t& semaphore;
 };
 
 extern TransmitBuffer_t transmitBuffer; // NOLINT(*-dynamic-static-initializers)
 extern TransmitBuffer_t transmitKeyBuffer; // NOLINT(*-dynamic-static-initializers)
+extern std::atomic<bool> transmitKeyBufferReady;
 
 extern osMessageQueueId_t cmdRxQueueHandle; // NOLINT(*-dynamic-static-initializers)
 

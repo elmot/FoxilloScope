@@ -326,7 +326,6 @@ void signalTransmit()
 void dmaMemToMemCallback([[maybe_unused]] DMA_HandleTypeDef* dma_handle_type_def)
 {
     HAL_DMA_PollForTransfer(&hdma_memtomem_dma1_channel6, HAL_DMA_FULL_TRANSFER, 10000);
-    transmitBuffer.ready = true;
     signalTransmit();
 }
 
@@ -347,7 +346,6 @@ void HAL_COMP_TriggerCallback(COMP_HandleTypeDef* hcomp)
     {
         trigger::state = TriggerState::ARMED;
     }
-    HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 }
 
 extern "C" void HAL_TIM_PWM_PulseFinishedCallback([[maybe_unused]] TIM_HandleTypeDef* htim)
@@ -390,7 +388,7 @@ extern "C" [[noreturn]] void keyFramesProcessing([[maybe_unused]] void*)
                    (data_frame_size - first_chunk_len) * sizeof (adcBufferB[0]));
         }
         osThreadFlagsClear(THREAD_FLAG_KEY_FRAME_DETECTED);
-        transmitKeyBuffer.ready = true;
+        transmitKeyBufferReady = true;
         signalTransmit();
         startSampling();
         trigger::enableTrigger();
