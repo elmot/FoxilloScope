@@ -400,13 +400,15 @@ extern "C" [[noreturn]] void keyFramesProcessing([[maybe_unused]] void*)
 
 static std::pair<long, long> calculate_min_max_uV(const CommandGainChannel_t& gain, const CommandBiasChannel_t& bias)
 {
-    const long long amplitude_uV = 1000LL * analog_supply_voltage_mV / gain.getValue();
-    long min_uV = -1000LL * analog_supply_voltage_mV /* amplitude in uV*/
-     * bias.get_12bit_bias() * (gain.getValue() + 1)/gain.getValue() / DAC_MAX_VALUE;
+    const long long D = bias.get_12bit_bias();
+    const long long G = gain.getValue();
+    const long long v_ref = analog_supply_voltage_mV * 1000LL;
+    const long long amplitude_uV = analog_supply_voltage_mV * 1000LL / gain.getValue();
+    const long long vmax_uV = (1LL + G) * D * v_ref / G / DAC_MAX_VALUE - v_ref / 2;
+    const long long vmin_uV = vmax_uV - amplitude_uV;
 
-    return {min_uV, min_uV + amplitude_uV};
+    return {vmin_uV, vmax_uV};
 }
-
 
 void writeCommands()
 {

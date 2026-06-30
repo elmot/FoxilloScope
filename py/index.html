@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Oscilloscope</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot/dist/uPlot.min.css">
     <style>
         :root {
             --ch-a: #FFD600;
@@ -77,7 +78,7 @@
             margin: 4px 8px;
         }
 
-        #canvas-wrap canvas {
+        #canvas-wrap div#scope {
             min-width: 0;
             min-height: 0;
             max-width: 100%;
@@ -285,7 +286,7 @@
             <button class="trg-btn" data-val="-1" title="Falling">↘</button>
         </div>
     </div>
-    <canvas id="scope" width="1200" height="600"></canvas>
+    <div id="scope"></div>
 </div>
 <div id="bottom-controls">
     <div class="switch-control">
@@ -350,10 +351,8 @@
 </div>
 <div id="footer"><span id="status">connecting...</span></div>
 
+<script src="https://cdn.jsdelivr.net/npm/uplot/dist/uPlot.iife.min.js"></script>
 <script>
-    const parameters = {
-        "h_grid_steps": 10
-    };
     function cssVar(name) {
         return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     }
@@ -364,9 +363,9 @@
         chBKey: cssVar('--ch-b-key'),
     };
     const vltg = {};
-    const canvas = document.getElementById("scope");
-    const ctx = canvas.getContext("2d");
-    let ws = null;
+    let ws = null, uplot = null;
+    let frame = { samplesA: [], samplesB: [] };
+    let keyFrame = { samplesA: [], samplesB: [] };
 
     const param = {
         _values: {},
@@ -478,147 +477,126 @@
 
     param._loadCookie();
 
-    function plot(frame_width, frameColorPairs) {
-        if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
-            canvas.width = canvas.clientWidth;
-            canvas.height = canvas.clientHeight;
-        }
-        const W = canvas.width, H = canvas.height;
-        const ml = 48, mr = 48, mb = 14; // margins: left, right, bottom
-        const gx = ml, gy = 0, gw = W - ml - mr, gh = H - mb; // grid area
-        ctx.clearRect(0, 0, W, H);
+    function fmtVoltages(uPlot, splits) {
+        const range = Math.max(...splits) - Math.min(...splits)
+        let mult, sign, decimals
+        [mult, sign, decimals] =
+            range >= 10e6 ? [1e-6,"V",1] :
+            range >= 1e6 ? [1e-6,"V",2] :
+            range >= 10e3 ? [1e-3,"mV",1] :
+            range >= 1e3 ? [1e-3,"mV",2] :
+            range >= 10 ? [1,"µV",1] :
+            range >= 1 ? [1,"µV",2] : [1e3,"nV",0]
+        return splits.map(t => ((t*mult).toFixed(decimals) + sign))
+    }
 
-        // grid
-        const hDivs = parameters.h_grid_steps;
-        const vDivs = 8;
-        const hStep = gw / hDivs;
-        const vStep = gh / vDivs;
-        const sub = 5;
-
-        // minor grid
-        ctx.strokeStyle = "#1a1a1a";
-        ctx.lineWidth = 1;
-        for (let i = 1; i < hDivs * sub; i++) {
-            if (i % sub === 0) continue;
-            const x = gx + (i / sub) * hStep;
-            ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x, gy + gh); ctx.stroke();
-        }
-        for (let i = 1; i < vDivs * sub; i++) {
-            if (i % sub === 0) continue;
-            const y = gy + (i / sub) * vStep;
-            ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx + gw, y); ctx.stroke();
-        }
-
-        // major grid
-        ctx.strokeStyle = "#33333";
-        for (let i = 0; i <= hDivs; i++) {
-            const x = gx + i * hStep;
-            ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x, gy + gh); ctx.stroke();
-        }
-        for (let i = 0; i <= vDivs; i++) {
-            const y = gy + i * vStep;
-            ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx + gw, y); ctx.stroke();
-        }
-
-        // centre line
-        ctx.strokeStyle = "#555";
-        const midY = gy + gh / 2;
-        ctx.beginPath(); ctx.moveTo(gx, midY); ctx.lineTo(gx + gw, midY); ctx.stroke();
-
-        // time labels
-        ctx.fillStyle = "#999";
-        ctx.font = "10px monospace";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "top";
-        const sp = parseFloat(param.get("sampling.ns")) || 500000;
-        const totalTime = sp * frame_width;
-        const timePerDiv = totalTime / hDivs;
-        for (let i = 1; i < hDivs; i++) {
-            const t = i * timePerDiv;
-            let label, unit;
-            if (t >= 1e9)      { label = (t / 1e9).toFixed(t >= 10e9 ? 1 : 2); unit = "s"; }
-            else if (t >= 1e6) { label = (t / 1e6).toFixed(t >= 10e6 ? 1 : 2); unit = "ms"; }
-            else if (t >= 1e3) { label = (t / 1e3).toFixed(t >= 10e3 ? 1 : 2); unit = "µs"; }
-            else               { label = t.toFixed(0); unit = "ns"; }
-            ctx.fillText(label + unit, gx + i * hStep, gy + gh + 2);
-        }
-
-        // voltage labels
-        ctx.font = "10px monospace";
-        function fmtVoltage(uv) {
-            if (uv === 0) return "0";
-            const abs = Math.abs(uv);
-            let val, suffix;
-            if (abs >= 1e6)      { val = uv / 1e6; suffix = "V";  }
-            else if (abs >= 1e3) { val = uv / 1e3; suffix = "mV"; }
-            else                 { val = uv;        suffix = "µV"; }
-            const p = Math.abs(val) >= 100 ? 1 : Math.abs(val) >= 10 ? 2 : 3;
-            const rounded = Math.round(val * Math.pow(10, p)) / Math.pow(10, p);
-            return String(rounded) + suffix;
-        }
-        if (vltg.minUvA !== undefined && vltg.maxUvA !== undefined && vltg.steps) {
-            ctx.textAlign = "right";
-            ctx.textBaseline = "middle";
-            for (let i = 1; i < vDivs; i++) {
-                const frac = 1 - i / vDivs;
-                const uv = vltg.minUvA + frac * (vltg.maxUvA - vltg.minUvA);
-                ctx.fillStyle = COLORS.chA;
-                ctx.fillText(fmtVoltage(uv), gx - 4, gy + i * vStep);
-            }
-        }
-        if (vltg.minUvB !== undefined && vltg.maxUvB !== undefined && vltg.steps) {
-            ctx.textAlign = "left";
-            ctx.textBaseline = "middle";
-            for (let i = 1; i < vDivs; i++) {
-                const frac = 1 - i / vDivs;
-                const uv = vltg.minUvB + frac * (vltg.maxUvB - vltg.minUvB);
-                ctx.fillStyle = COLORS.chB;
-                ctx.fillText(fmtVoltage(uv), gx + gw + 4, gy + i * vStep);
-            }
-        }
-
+    function adcToUv(adc, min, max) {
+        if(adc === undefined) return null
         const steps = vltg.steps || 4096;
-        const scale = gh / steps;
-        for (const [data, color] of frameColorPairs) {
-            if (!data || data.length < 2) continue;
-            const step = gw / frame_width;
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            const len = Math.min(frame_width, data.length)
-            for (let i = 0; i < len; i++) {
-                const x = gx + i * step;
-                const y = gy + gh / 2 - (data[i] - steps / 2) * scale;
-                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-            }
-            ctx.stroke();
+        if (min !== undefined && max !== undefined) {
+            return min + (adc / steps) * (max - min);
+        }
+        return (adc / steps) * 3300000 - 1650000;
+    }
+
+    function initUplot() {
+        const el = document.getElementById("scope");
+        const rect = el.getBoundingClientRect();
+        const w = rect.width || 600, h = rect.height || 400;
+        function seriesColor(u, seriesIdx) {
+            const baseColor = seriesIdx % 2 === 0 ? COLORS.chB : COLORS.chA
+            return baseColor + (param._values["trg.type"] === "0" ? "A0" : "50")
         }
 
-        // 0V reference lines
-        ctx.font = "10px monospace";
-        ctx.lineWidth = 1;
-        ctx.setLineDash([4, 4]);
-        if (vltg.minUvA !== undefined && vltg.maxUvA !== undefined) {
-            const adc0v = -vltg.minUvA * steps / (vltg.maxUvA - vltg.minUvA);
-            const y0v = gy + gh / 2 - (adc0v - steps / 2) * scale;
-            ctx.strokeStyle = COLORS.chA;
-            ctx.beginPath(); ctx.moveTo(gx, y0v); ctx.lineTo(gx + gw, y0v); ctx.stroke();
-            ctx.fillStyle = COLORS.chA;
-            ctx.textAlign = "left";
-            ctx.textBaseline = "bottom";
-            ctx.fillText("0V", gx + 4, y0v > 14 ? y0v - 3 : y0v + 12);
+
+        function keySeriesColor(u, seriesIdx) {
+            const baseColor = seriesIdx % 2 === 0 ? COLORS.chBKey : COLORS.chAKey
+            const alpha = Math.max(30, 250 -  Math.ceil(50 * (Date.now() - (keyFrame.timestamp || 0 )) /1000))
+                .toString(16).padStart(2,"0")
+            return baseColor + alpha
         }
-        if (vltg.minUvB !== undefined && vltg.maxUvB !== undefined) {
-            const adc0v = -vltg.minUvB * steps / (vltg.maxUvB - vltg.minUvB);
-            const y0v = gy + gh / 2 - (adc0v - steps / 2) * scale;
-            ctx.strokeStyle = COLORS.chB;
-            ctx.beginPath(); ctx.moveTo(gx, y0v); ctx.lineTo(gx + gw, y0v); ctx.stroke();
-            ctx.fillStyle = COLORS.chB;
-            ctx.textAlign = "right";
-            ctx.textBaseline = "bottom";
-            ctx.fillText("0V", gx + gw - 4, y0v > 14 ? y0v - 3 : y0v + 12);
+        try {
+            const grid = {show: true, width: 1, size: 20, stroke:"#333333", dash:[3,8]}
+            uplot = new uPlot({
+                width: w, height: h,
+                cursor: { show: true },
+                legend: { show: false },
+                select: { show: true },
+                scales: {
+                    chA: { range: (self, initMin, initMax) => [vltg.minUvA ?? -1650000, vltg.maxUvA ?? 1650000] },
+                    chB: { range: (self, initMin, initMax) => [vltg.minUvB ?? -1650000, vltg.maxUvB ?? 1650000] },
+                },
+                axes: [
+                    {
+                        scale: "x", stroke: "#FFF", grid:grid,
+                        values: (self, splits) => {
+                            const range = Math.max(...splits) - Math.min(...splits)
+                            let mult, sign, decimals
+                            [mult, sign, decimals] =
+                                range >= 10e3 ? [1e-3,"s",0] :
+                                range >= 1e3 ? [1e-3,"s",1] :
+                                range >= 10 ? [1,"ms",0] :
+                                range >= 1 ? [1,"ms",1] :
+                                range >= 10e-3 ? [1e3,"µs",0] :
+                                range >= 1e-3 ? [1e3,"µs",1] : [1e6,"ns",0]
+                            return splits.map(t => ((t*mult).toFixed(decimals) + sign))
+                        },
+                    },
+                    {scale: "chA", side: 3, values: fmtVoltages, stroke: COLORS.chAKey, size:60, grid: grid},
+                    {scale: "chB", side: 1, values: fmtVoltages, stroke: COLORS.chBKey, size:60},
+                ],
+                series: [
+                    {},
+                    { scale: "chA", stroke: seriesColor, width: 2, points: { show: false } },
+                    { scale: "chB", stroke: seriesColor, width: 2, points: { show: false } },
+                    { scale: "chA", stroke: keySeriesColor, width: 2, points: { show: false } },
+                    { scale: "chB", stroke: keySeriesColor, width: 2, points: { show: false } }
+                ],
+                hooks: {
+                    drawAxes: [(self) => {
+                        const ctx = self.ctx;
+                        ctx.save();
+                        ctx.setLineDash([4, 4]);
+                        ctx.lineWidth = 1;
+                        for (const ch of [{a:'chA',c:COLORS.chA },{a:'chB',c:COLORS.chB}]) {
+                            const y = self.valToPos(0, ch.a, true);
+                            if (y < -10 || y > self.height + 10) continue;
+                            const x0 = self.bbox.left, x1 = x0 + self.bbox.width;
+                            ctx.strokeStyle = ch.c;
+                            ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+                        }
+                        ctx.setLineDash([]);
+                        ctx.restore();
+                    }],
+                },
+            }, [[0], [0], [0], [0], [0]], el);
+        } catch (e) { console.error("uPlot init fail:", e); }
+        window.addEventListener("resize", () => {
+            const r = el.getBoundingClientRect();
+            if (uplot) uplot.setSize({ width: r.width, height: r.height });
+        });
+    }
+
+    function updatePlot(frameWidth) {
+        function padArray(arr){
+            return arr.concat(...Array(Math.max(0, frameWidth - arr.length)).fill(null))
         }
-        ctx.setLineDash([]);
+        if (!uplot) return;
+        try {
+            const sp = parseFloat(param.get("sampling.ns")) || 500000;
+            if (Math.min(frame.samplesA.length, frame.samplesB.length) < 2) return;
+            const totalNs = sp * frameWidth;
+            const xs = new Array(frameWidth);
+            const dataA = padArray(frame.samplesA)
+            const dataB = padArray(frame.samplesB)
+            const dataKeyA = padArray(keyFrame.samplesA)
+            const dataKeyB = padArray(keyFrame.samplesB)
+
+            for (let i = 0; i < frameWidth; i++) {
+                xs[i] = i * totalNs / frameWidth / 1e6;
+            }
+            uplot.setData([xs, dataA, dataB, dataKeyA, dataKeyB], true);
+        } catch (e) { console.error("updatePlot:", e); }
     }
 
     function decode(input) {
@@ -644,9 +622,6 @@
 
         return results;
     }
-
-    let keyFrame = { samplesA:[], samplesB:[]}
-    let frame = {samplesA:[], samplesB:[]}
 
     function connect() {
         if (ws) {
@@ -679,6 +654,8 @@
             }
             let samplesA = decode(incomingCommands["data.a"] || "");
             let samplesB = decode(incomingCommands["data.b"] || "");
+            samplesA = samplesA.map(v => adcToUv(v, vltg.minUvA, vltg.maxUvA));
+            samplesB = samplesB.map(v => adcToUv(v, vltg.minUvB, vltg.maxUvB));
             if (incomingCommands["head"] === "1") {
                 frame = {samplesA: samplesA, samplesB: samplesB}
             } else {
@@ -705,21 +682,14 @@
             document.getElementById("sampling").textContent = incomingCommands["sampling.ns"] || "-";
             document.getElementById("status").textContent = "streaming";
             let frameWidth = parseInt(incomingCommands["frame.size"]) || 200;
-            const alphaNormal = param._values["trg.type"] === "0" ? "A0" : "30"
-            const alphaKeyFrame = Math.max(30, 250 -  Math.ceil(50 * (Date.now() - (keyFrame.timestamp || 0 )) /1000))
-                .toString(16).padStart(2,"0")
-
-            plot(frameWidth, [
-                [frame.samplesA, COLORS.chA + alphaNormal],
-                [keyFrame.samplesA, COLORS.chAKey + alphaKeyFrame],
-                [frame.samplesB, COLORS.chB + alphaNormal],
-                [keyFrame.samplesB, COLORS.chBKey + alphaKeyFrame]]);
+            updatePlot(frameWidth);
         };
     }
 
     document.getElementById("refreshBtn").onclick = function () {
         window.location.reload()
     };
+    initUplot();
     connect();
 </script>
 </body>
