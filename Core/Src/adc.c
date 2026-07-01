@@ -76,8 +76,8 @@ void MX_ADC1_Init(void)
   /** Configure the ADC multi-mode
   */
   multimode.Mode = ADC_DUALMODE_REGINTERL_INJECSIMULT;
-  multimode.DMAAccessMode = ADC_DMAACCESSMODE_DISABLED;
-  multimode.TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_6CYCLES;
+  multimode.DMAAccessMode = ADC_DMAACCESSMODE_12_10_BITS;
+  multimode.TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_7CYCLES;
   if (HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode) != HAL_OK)
   {
     Error_Handler();
@@ -214,7 +214,7 @@ void MX_ADC3_Init(void)
   */
   multimode.Mode = ADC_DUALMODE_INTERL;
   multimode.DMAAccessMode = ADC_DMAACCESSMODE_12_10_BITS;
-  multimode.TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_6CYCLES;
+  multimode.TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_7CYCLES;
   if (HAL_ADCEx_MultiModeConfigChannel(&hadc3, &multimode) != HAL_OK)
   {
     Error_Handler();
@@ -222,7 +222,7 @@ void MX_ADC3_Init(void)
 
   /** Configure Regular Channel
   */
-  sConfig.Channel = ADC_CHANNEL_5;
+  sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = ADC_REGULAR_RANK_1;
   sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
@@ -409,12 +409,12 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
 
     __HAL_RCC_GPIOB_CLK_ENABLE();
     /**ADC3 GPIO Configuration
-    PB13     ------> ADC3_IN5
+    PB1     ------> ADC3_IN1
     */
-    GPIO_InitStruct.Pin = SHIFTED_BB13_Pin;
+    GPIO_InitStruct.Pin = SHIFTED_B_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(SHIFTED_BB13_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(SHIFTED_B_GPIO_Port, &GPIO_InitStruct);
 
     /* ADC3 DMA Init */
     /* ADC3 Init */
@@ -531,9 +531,9 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
     }
 
     /**ADC3 GPIO Configuration
-    PB13     ------> ADC3_IN5
+    PB1     ------> ADC3_IN1
     */
-    HAL_GPIO_DeInit(SHIFTED_BB13_GPIO_Port, SHIFTED_BB13_Pin);
+    HAL_GPIO_DeInit(SHIFTED_B_GPIO_Port, SHIFTED_B_Pin);
 
     /* ADC3 DMA DeInit */
     HAL_DMA_DeInit(adcHandle->DMA_Handle);

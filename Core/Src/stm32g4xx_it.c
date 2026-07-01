@@ -57,9 +57,10 @@
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_adc1;
 extern DMA_HandleTypeDef hdma_adc3;
-extern COMP_HandleTypeDef hcomp5;
-extern COMP_HandleTypeDef hcomp6;
+extern COMP_HandleTypeDef hcomp1;
+extern COMP_HandleTypeDef hcomp3;
 extern DMA_HandleTypeDef hdma_dac1_ch1;
+extern DAC_HandleTypeDef hdac2;
 extern DAC_HandleTypeDef hdac4;
 extern DMA_HandleTypeDef hdma_memtomem_dma1_channel2;
 extern DMA_HandleTypeDef hdma_memtomem_dma1_channel6;
@@ -261,6 +262,7 @@ void TIM7_DAC_IRQHandler(void)
 
   /* USER CODE END TIM7_DAC_IRQn 0 */
   HAL_TIM_IRQHandler(&htim7);
+  HAL_DAC_IRQHandler(&hdac2);
   HAL_DAC_IRQHandler(&hdac4);
   /* USER CODE BEGIN TIM7_DAC_IRQn 1 */
 
@@ -268,18 +270,18 @@ void TIM7_DAC_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles COMP4, COMP5 and COMP6 interrupts through EXTI lines 30, 31 and 32.
+  * @brief This function handles COMP1, COMP2 and COMP3 interrupts through EXTI lines 21, 22 and 29.
   */
-void COMP4_5_6_IRQHandler(void)
+void COMP1_2_3_IRQHandler(void)
 {
-  /* USER CODE BEGIN COMP4_5_6_IRQn 0 */
+  /* USER CODE BEGIN COMP1_2_3_IRQn 0 */
 
-  /* USER CODE END COMP4_5_6_IRQn 0 */
-  HAL_COMP_IRQHandler(&hcomp5);
-  HAL_COMP_IRQHandler(&hcomp6);
-  /* USER CODE BEGIN COMP4_5_6_IRQn 1 */
+  /* USER CODE END COMP1_2_3_IRQn 0 */
+  HAL_COMP_IRQHandler(&hcomp1);
+  HAL_COMP_IRQHandler(&hcomp3);
+  /* USER CODE BEGIN COMP1_2_3_IRQn 1 */
 
-  /* USER CODE END COMP4_5_6_IRQn 1 */
+  /* USER CODE END COMP1_2_3_IRQn 1 */
 }
 
 /**

@@ -109,11 +109,11 @@ int main(void)
   MX_DAC3_Init();
   MX_ADC1_Init();
   MX_ADC2_Init();
-  MX_COMP5_Init();
-  MX_COMP6_Init();
-  MX_OPAMP2_Init();
   MX_OPAMP6_Init();
   MX_OPAMP4_Init();
+  MX_COMP1_Init();
+  MX_COMP3_Init();
+  MX_DAC2_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */

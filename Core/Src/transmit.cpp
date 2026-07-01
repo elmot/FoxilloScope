@@ -73,10 +73,6 @@ extern "C" [[noreturn]] void startTransmitTask([[maybe_unused]] void* argument)
         writeUart("[frame]\nframe.size=");
         writeUart(string_view(to_constexpr_string_cr<data_frame_size>()));
         const bool keyBuffer = transmitKeyBufferReady.exchange(false);
-        if (keyBuffer)
-        {
-            HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-        }
         TransmitBuffer_t* const buffer = keyBuffer ? &transmitKeyBuffer : &transmitBuffer;
         if (keyBuffer)
         {
