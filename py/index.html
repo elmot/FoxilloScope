@@ -88,22 +88,63 @@
             flex: 1 1 0;
         }
 
+        .v-controls-a,
+        .v-controls-b {
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+            align-self: stretch;
+            min-height: 0;
+        }
+        .v-controls-a { flex: 0 0 240px; border-right: 1px solid #2a2a2a; }
+        .v-controls-b { flex: 0 0 160px; border-left: 1px solid #2a2a2a; }
+        .v-controls-a .label { color: var(--ch-a); }
+        .v-controls-b .label { color: var(--ch-b); }
+        .v-controls-a .val  { color: var(--ch-a); }
+        .v-controls-b .val  { color: var(--ch-b); }
+        .v-controls-a input { border-color: var(--ch-a); }
+        .v-controls-b input { border-color: var(--ch-b); }
+        .v-controls-a .trglabel { color: #0f0; }
+        .v-controls-a input.trgborder { border-color: #0f0; }
+        .detail {
+            color: #686868;
+            font-size: 9px;
+            line-height: 1;
+        }
+        .trg-btn-sm {
+            background: transparent;
+            color: #0f0;
+            border: 1px solid #555;
+            cursor: pointer;
+            font: inherit;
+            font-size: 9px;
+            padding: 0 3px;
+            border-radius: 2px;
+            line-height: 1.4;
+            min-width: 16px;
+            text-align: center;
+            transition: background 0.15s, color 0.15s;
+        }
+        .trg-btn-sm:hover { background: #0f0; color: #000; }
+        .trg-btn-sm.active { background: #0f0; color: #000; }
         .v-control-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 0 10px;
+            padding: 0 6px;
+            min-height: 0;
         }
 
         .v-control-container input {
             flex: 1;
+            min-height: 20px;
             background: #222;
             color: #0f0;
             border: 1px solid #0f0;
             padding: 5px;
             font: inherit;
-            writing-mode: sideways-lr
+            writing-mode: sideways-lr;
         }
         .h-control-container {
             display: flex;
@@ -144,10 +185,12 @@
         #bottom-controls {
             display: flex;
             justify-content: center;
-            padding: 10px;
+            align-items: flex-start;
+            padding: 6px 10px;
             background: #1a1a1a;
-            gap: 1.5em;
+            gap: 0.8em;
             flex-shrink: 0;
+            flex-wrap: wrap;
             border-top: 1px solid #2a2a2a;
         }
 
@@ -252,9 +295,6 @@
             background: var(--ch-b);
             color: #000;
         }
-        #trg\.time\.offset {
-            width: 50vh;
-        }
     </style>
 </head>
 <body>
@@ -265,54 +305,53 @@
     </div>
 </div>
 <div id="canvas-wrap">
-    <div class="v-control-container">
-        <span class="label"><label for="vbias.a">Bias A</label></span>
-        <input type="range" id="vbias.a" class="param-slider" value="0" min="-1000000" max="1000000">
-    </div>
-    <div class="v-control-container">
-        <span class="label"><label for="vbias.b">Bias B</label></span>
-        <input type="range" id="vbias.b" class="param-slider" value="0" min="-1000000" max="1000000">
-    </div>
-    <div class="v-control-container">
-        <span class="label"><label for="trg.level">TRG lvl</label></span>
-        <input type="range" id="trg.level" class="param-slider" value="0" min="-1000000" max="1000000">
-        <div class="button-switch-block" id="trg.chan">
-            <button class="trg-btn active channel-a" data-val="0" title="Channel A">A</button>
-            <button class="trg-btn  channel-b" data-val="1" title="Channel B">B</button>
+    <div class="v-controls-a">
+        <div class="v-control-container" style="flex:1">
+            <span class="label">Gain A</span>
+            <input type="range" id="gain.a" class="gain-slider"
+                   min="0" max="1000" value="0" step="1">
+            <span id="gain.a.val" class="val" style="font-size:11px">×1.0</span>
+            <span id="gain.a.detail" class="detail">1+1.0</span>
         </div>
-        <div class="button-switch-block" id="trg.type">
-            <button class="trg-btn active" data-val="0" title="None">∅</button>
-            <button class="trg-btn" data-val="1" title="Rising">↗</button>
-            <button class="trg-btn" data-val="-1" title="Falling">↘</button>
+        <div class="v-control-container" style="flex:1">
+            <span class="label">Bias A</span>
+            <input type="range" id="vbias.a" class="bias-slider"
+                   value="0" min="-1000000" max="1000000" step="0.1">
+        </div>
+        <div class="v-control-container" style="flex:1">
+            <span class="label trglabel">TRG</span>
+            <input type="range" id="trg.level" class="trgborder"
+                   value="0" min="-1000000" max="1000000">
+            <div style="display:flex; flex-direction:column; gap:1px; flex-shrink:0;">
+                <div class="button-switch-block" id="trg.chan" style="margin:0;padding:1px;gap:1px">
+                    <button class="trg-btn-sm active channel-a" data-val="0">A</button>
+                    <button class="trg-btn-sm channel-b" data-val="1">B</button>
+                </div>
+                <div class="button-switch-block" id="trg.type" style="margin:0;padding:1px;gap:1px">
+                    <button class="trg-btn-sm active" data-val="0">∅</button>
+                    <button class="trg-btn-sm" data-val="1">↗</button>
+                    <button class="trg-btn-sm" data-val="-1">↘</button>
+                </div>
+            </div>
         </div>
     </div>
     <div id="scope"></div>
+    <div class="v-controls-b">
+        <div class="v-control-container" style="flex:1">
+            <span class="label">Gain B</span>
+            <input type="range" id="gain.b" class="gain-slider"
+                   min="0" max="1000" value="0" step="1">
+            <span id="gain.b.val" class="val" style="font-size:11px">×1.0</span>
+            <span id="gain.b.detail" class="detail">1+1.0</span>
+        </div>
+        <div class="v-control-container" style="flex:1">
+            <span class="label">Bias B</span>
+            <input type="range" id="vbias.b" class="bias-slider"
+                   value="0" min="-1000000" max="1000000" step="0.1">
+        </div>
+    </div>
 </div>
 <div id="bottom-controls">
-    <div class="switch-control">
-        <button>&lt;</button>
-        <select id="gain.a">
-            <option value="1">x1</option>
-            <option value="3">x3</option>
-            <option value="6">x7</option>
-            <option value="15">x15</option>
-            <option value="31">x31</option>
-            <option value="63">x63</option>
-        </select>
-        <button>&gt;</button>
-    </div>
-    <div class="switch-control">
-        <button>&lt;</button>
-        <select id="gain.b">
-            <option value="1">x1</option>
-            <option value="3">x3</option>
-            <option value="6">x7</option>
-            <option value="15">x15</option>
-            <option value="31">x31</option>
-            <option value="63">x63</option>
-        </select>
-        <button>&gt;</button>
-    </div>
     <div class="switch-control">
         <button>&lt;</button>
         <select id="sampling.ns">
@@ -338,15 +377,10 @@
         </select>
         <button>&gt;</button>
     </div>
-    <div class="h-control-container">
+    <div class="h-control-container" style="min-width:130px">
         <span class="label">TRG shift</span>
         <input type="range" id="trg.time.offset" class="param-slider"
-               value="0" min="-1000000" max="1000000" list="trg-shift-ticks">
-        <datalist id="trg-shift-ticks">
-            <option value="0"></option>
-            <option value="1000000"></option>
-            <option value="2000000"></option>
-        </datalist>
+               value="0" min="-1000000" max="1000000" style="width:120px">
     </div>
 </div>
 <div id="footer"><span id="status">connecting...</span></div>
@@ -371,8 +405,8 @@
         _values: {},
         _controls: {},
         _debounces: {},
-        register(name, el, update, debounceMs) {
-            this._controls[name] = { el, update };
+        register(name, el, update, debounceMs, methods) {
+            this._controls[name] = { el, update, methods };
             if (debounceMs) this._debounces[name] = this._makeDebouncer(debounceMs);
         },
         _makeDebouncer(ms) {
@@ -397,15 +431,19 @@
         get(name) { return this._values[name]; },
         _send(name, value) {
             if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(`${name}=${value}\n`);
+                const ctrl = this._controls[name];
+                const val = ctrl && ctrl.methods && ctrl.methods.send ? ctrl.methods.send(value) : String(value);
+                ws.send(`${name}=${val}\n`);
             }
         },
         sendAllCommands() {
             if (ws && ws.readyState === WebSocket.OPEN) {
                 let data = ""
                 for (const k in param._controls) {
-                    const val = param._values[k]
-                    data+=`${k}=${val}\n`
+                    const ctrl = param._controls[k];
+                    const raw = param._values[k];
+                    const val = ctrl && ctrl.methods && ctrl.methods.send ? ctrl.methods.send(raw) : String(raw);
+                    data += `${k}=${val}\n`;
                 }
                 ws.send(data)
             }
@@ -471,11 +509,178 @@
             param._values[id] = el.options[idx].value;
         }
     };
-    selectParam.wire("gain.a");
-    selectParam.wire("gain.b");
     selectParam.wire("sampling.ns", v => v / 4, v => v * 4);
 
     param._loadCookie();
+
+    const HW_GAINS = [63, 31, 15, 6, 3, 1];
+    const rawUvRange = { minA: -1650000, maxA: 1650000, minB: -1650000, maxB: 1650000 };
+    const swState = { a: { zoom: 1, offset: 0 }, b: { zoom: 1, offset: 0 } };
+
+    const _LOG_MAX = Math.log(504);
+
+    function posToGain(pos) {
+      return Math.round(Math.exp(pos / 1000 * _LOG_MAX) * 100) / 100;
+    }
+
+    function gainToPos(gain) {
+      return Math.round(Math.log(Math.max(1, gain)) / _LOG_MAX * 1000);
+    }
+
+    function splitGain(total) {
+      for (const hw of HW_GAINS) {
+        if (hw <= total) {
+          const sw = total / hw;
+          if (sw <= 8) return { hw, sw: Math.round(sw * 100) / 100 };
+        }
+      }
+      return { hw: 63, sw: Math.round(total / 63 * 100) / 100 };
+    }
+
+    function updateDisplayRange() {
+      for (const ch of ['A', 'B']) {
+        const lc = ch.toLowerCase();
+        const zoom = swState[lc].zoom || 1;
+        const offset = swState[lc].offset || 0;
+        const rawMin = rawUvRange['min' + ch];
+        const rawMax = rawUvRange['max' + ch];
+        const center = (rawMin + rawMax) / 2 + offset;
+        const halfRange = (rawMax - rawMin) / 2 / zoom;
+        vltg['minUv' + ch] = center - halfRange;
+        vltg['maxUv' + ch] = center + halfRange;
+      }
+    }
+
+    const _track = { gainPos: {}, biasTotal: {} };
+
+    function setupGainSlider(ch) {
+      const el = document.getElementById('gain.' + ch);
+      const valEl = document.getElementById('gain.' + ch + '.val');
+      const detEl = document.getElementById('gain.' + ch + '.detail');
+      function apply(pos) {
+        const gain = posToGain(pos);
+        const { hw, sw } = splitGain(gain);
+        swState[ch].zoom = sw;
+        _track.gainPos[ch] = pos;
+        if ((ch === 'a' && ((parseFloat(param.get('trg.chan')) || 0) === 0)) ||
+            (ch === 'b' && ((parseFloat(param.get('trg.chan')) || 0) === 1)))
+          param.set('trg.level', param.get('trg.level'));
+        param.set('gain.' + ch, hw);
+        _trackSaveCookie();
+        valEl.textContent = '\u00d7' + gain.toFixed(2);
+        detEl.textContent = hw + '+' + sw.toFixed(1);
+        updateDisplayRange();
+        if (uplot) uplot.redraw();
+      }
+      el.oninput = function () { apply(parseFloat(this.value)); };
+      el.apply = apply;
+    }
+
+    function setupBiasSlider(ch) {
+      const el = document.getElementById('vbias.' + ch);
+      function apply(total) {
+        const hw = Math.trunc(total);
+        const residual = total - hw;
+        const range = (rawUvRange['max' + ch.toUpperCase()] || 1650000) - (rawUvRange['min' + ch.toUpperCase()] || -1650000);
+        const offsetUv = residual * range / 2000000;
+        swState[ch].offset = offsetUv;
+        swState[ch].offsetPpm = residual;
+        _track.biasTotal[ch] = total;
+        param.set('vbias.' + ch, hw);
+        if ((ch === 'a' && ((parseFloat(param.get('trg.chan')) || 0) === 0)) ||
+            (ch === 'b' && ((parseFloat(param.get('trg.chan')) || 0) === 1)))
+          param.set('trg.level', param.get('trg.level'));
+        _trackSaveCookie();
+        updateDisplayRange();
+        if (uplot) uplot.redraw();
+      }
+      el.oninput = function () { apply(parseFloat(this.value)); };
+      el.apply = apply;
+    }
+
+    // Register gain/bias command params (no UI binding — slider handles it)
+    param.register('gain.a', null, () => {}); param._values['gain.a'] = 1;
+    param.register('gain.b', null, () => {}); param._values['gain.b'] = 1;
+    param.register('vbias.a', null, () => {}); param._values['vbias.a'] = 0;
+    param.register('vbias.b', null, () => {}); param._values['vbias.b'] = 0;
+
+    setupGainSlider('a');
+    setupGainSlider('b');
+    setupBiasSlider('a');
+    setupBiasSlider('b');
+
+    (function() {
+      const el = document.getElementById('trg.level');
+      param.register('trg.level', el, (el, v) => el.value = String(v), undefined, {
+        send(value) {
+          const raw = parseFloat(value) || 0;
+          const trgChan = parseFloat(param._values['trg.chan']) || 0;
+          const lc = trgChan === 0 ? 'a' : 'b';
+          const zoom = swState[lc].zoom || 1;
+          const biasPpm = swState[lc].offsetPpm || 0;
+          return String(Math.max(-1000000, Math.min(1000000, Math.round(raw / zoom + biasPpm))));
+        }
+      });
+      param._values['trg.level'] = el.value;
+      el.oninput = function () { param.set('trg.level', this.value); };
+    }());
+
+    // Separate cookie for tracking data (never in param._values)
+    function _trackSaveCookie() {
+      document.cookie = "scope_track=" + encodeURIComponent(JSON.stringify(_track)) + ";path=/;SameSite=Lax";
+    }
+    function _trackLoadCookie() {
+      const m = document.cookie.match(new RegExp('(^| )scope_track=([^;]+)'));
+      if (m) {
+        try {
+          Object.assign(_track, JSON.parse(decodeURIComponent(m[2])));
+          if (!_track.gainPos) _track.gainPos = {};
+          if (!_track.biasTotal) _track.biasTotal = {};
+        } catch(e) {}
+      }
+    }
+
+    // Restore slider positions from scope_params cookie (migrate old values)
+    (function () {
+      const restoreVals = {};
+      const cookieMatch = document.cookie.match(new RegExp('(^| )scope_params=([^;]+)'));
+      if (cookieMatch) {
+        try { Object.assign(restoreVals, JSON.parse(decodeURIComponent(cookieMatch[2]))); }
+        catch (e) {}
+      }
+      // Read from separate track cookie (new), fall back to old scope_params keys (migration)
+      _trackLoadCookie();
+      function restoreGain(ch) {
+        const hw = parseFloat(param.get('gain.' + ch)) || 1;
+        const el = document.getElementById('gain.' + ch);
+        if (_track.gainPos[ch] !== undefined) {
+          el.value = String(Math.min(1000, Math.max(0, _track.gainPos[ch])));
+        } else {
+          const savedTotal = parseFloat(restoreVals['gain.' + ch + '.total']);
+          const pos = !isNaN(savedTotal) ? gainToPos(Math.min(504, Math.max(1, savedTotal))) : gainToPos(hw);
+          el.value = String(pos);
+          _track.gainPos[ch] = pos;
+        }
+        el.apply(_track.gainPos[ch]);
+      }
+      function restoreBias(ch) {
+        const hw = parseFloat(param.get('vbias.' + ch)) || 0;
+        const el = document.getElementById('vbias.' + ch);
+        if (_track.biasTotal[ch] !== undefined) {
+          el.value = String(Math.min(1000000, Math.max(-1000000, _track.biasTotal[ch])));
+        } else {
+          const savedTotal = parseFloat(restoreVals['vbias.' + ch + '.total']);
+          const total = !isNaN(savedTotal) ? savedTotal : hw;
+          el.value = String(Math.min(1000000, Math.max(-1000000, total)));
+          _track.biasTotal[ch] = total;
+        }
+        el.apply(_track.biasTotal[ch]);
+      }
+      restoreGain('a'); restoreGain('b');
+      restoreBias('a'); restoreBias('b');
+      // Save track cookie now that restore is complete
+      _trackSaveCookie();
+    }());
 
     function fmtVoltages(uPlot, splits) {
         const range = Math.max(...splits) - Math.min(...splits)
@@ -542,8 +747,8 @@
                             return splits.map(t => ((t*mult).toFixed(decimals) + sign))
                         },
                     },
-                    {scale: "chA", side: 3, values: fmtVoltages, stroke: COLORS.chAKey, size:60, grid: grid},
-                    {scale: "chB", side: 1, values: fmtVoltages, stroke: COLORS.chBKey, size:60},
+                    {scale: "chA", side: 3, values: fmtVoltages, stroke: COLORS.chAKey, size:90, grid: grid},
+                    {scale: "chB", side: 1, values: fmtVoltages, stroke: COLORS.chBKey, size:90},
                 ],
                 series: [
                     {},
@@ -553,7 +758,7 @@
                     { scale: "chB", stroke: keySeriesColor, width: 2, points: { show: false } }
                 ],
                 hooks: {
-                    drawAxes: [(self) => {
+                     drawAxes: [(self) => {
                         const ctx = self.ctx;
                         ctx.save();
                         ctx.setLineDash([4, 4]);
@@ -565,9 +770,24 @@
                             ctx.strokeStyle = ch.c;
                             ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
                         }
-                        ctx.setLineDash([]);
-                        ctx.restore();
-                    }],
+                         ctx.setLineDash([]);
+                         // Trigger level line — maps slider fraction directly into visible µV range
+                         const trgPpm = parseFloat(param.get('trg.level'));
+                         if (!isNaN(trgPpm)) {
+                            const trgChan = parseFloat(param.get('trg.chan')) || 0;
+                            const scaleName = trgChan === 0 ? 'chA' : 'chB';
+                            const minUv = trgChan === 0 ? (vltg.minUvA ?? -1650000) : (vltg.minUvB ?? -1650000);
+                            const maxUv = trgChan === 0 ? (vltg.maxUvA ??  1650000) : (vltg.maxUvB ??  1650000);
+                            const frac = (trgPpm + 1000000) / 2000000;
+                            const trgUv = minUv + frac * (maxUv - minUv);
+                            const y = self.valToPos(trgUv, scaleName, true);
+                            const x0 = self.bbox.left, x1 = x0 + self.bbox.width;
+                            ctx.strokeStyle = '#ff69b4';
+                            ctx.lineWidth = 1.5;
+                            ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+                         }
+                         ctx.restore();
+                     }],
                 },
             }, [[0], [0], [0], [0], [0]], el);
         } catch (e) { console.error("uPlot init fail:", e); }
@@ -581,16 +801,20 @@
         function padArray(arr){
             return arr.concat(...Array(Math.max(0, frameWidth - arr.length)).fill(null))
         }
+        function clamp(arr, lo, hi) {
+            if (lo === undefined || hi === undefined) return arr;
+            return arr.map(v => v === null ? null : Math.max(lo, Math.min(hi, v)));
+        }
         if (!uplot) return;
         try {
             const sp = parseFloat(param.get("sampling.ns")) || 500000;
             if (Math.min(frame.samplesA.length, frame.samplesB.length) < 2) return;
             const totalNs = sp * frameWidth;
             const xs = new Array(frameWidth);
-            const dataA = padArray(frame.samplesA)
-            const dataB = padArray(frame.samplesB)
-            const dataKeyA = padArray(keyFrame.samplesA)
-            const dataKeyB = padArray(keyFrame.samplesB)
+            const dataA = clamp(padArray(frame.samplesA), vltg.minUvA, vltg.maxUvA)
+            const dataB = clamp(padArray(frame.samplesB), vltg.minUvB, vltg.maxUvB)
+            const dataKeyA = clamp(padArray(keyFrame.samplesA), vltg.minUvA, vltg.maxUvA)
+            const dataKeyB = clamp(padArray(keyFrame.samplesB), vltg.minUvB, vltg.maxUvB)
 
             for (let i = 0; i < frameWidth; i++) {
                 xs[i] = i * totalNs / frameWidth / 1e6;
@@ -654,8 +878,8 @@
             }
             let samplesA = decode(incomingCommands["data.a"] || "");
             let samplesB = decode(incomingCommands["data.b"] || "");
-            samplesA = samplesA.map(v => adcToUv(v, vltg.minUvA, vltg.maxUvA));
-            samplesB = samplesB.map(v => adcToUv(v, vltg.minUvB, vltg.maxUvB));
+            samplesA = samplesA.map(v => adcToUv(v, rawUvRange.minA, rawUvRange.maxA));
+            samplesB = samplesB.map(v => adcToUv(v, rawUvRange.minB, rawUvRange.maxB));
             if (incomingCommands["head"] === "1") {
                 frame = {samplesA: samplesA, samplesB: samplesB}
             } else {
@@ -675,10 +899,11 @@
                 samplesB = null
             }
             if (incomingCommands["vltg.steps"] !== undefined) vltg.steps = parseFloat(incomingCommands["vltg.steps"]);
-            if (incomingCommands["vltg.min.uv.a"] !== undefined) vltg.minUvA = parseFloat(incomingCommands["vltg.min.uv.a"]);
-            if (incomingCommands["vltg.max.uv.a"] !== undefined) vltg.maxUvA = parseFloat(incomingCommands["vltg.max.uv.a"]);
-            if (incomingCommands["vltg.min.uv.b"] !== undefined) vltg.minUvB = parseFloat(incomingCommands["vltg.min.uv.b"]);
-            if (incomingCommands["vltg.max.uv.b"] !== undefined) vltg.maxUvB = parseFloat(incomingCommands["vltg.max.uv.b"]);
+            if (incomingCommands["vltg.min.uv.a"] !== undefined) rawUvRange.minA = parseFloat(incomingCommands["vltg.min.uv.a"]);
+            if (incomingCommands["vltg.max.uv.a"] !== undefined) rawUvRange.maxA = parseFloat(incomingCommands["vltg.max.uv.a"]);
+            if (incomingCommands["vltg.min.uv.b"] !== undefined) rawUvRange.minB = parseFloat(incomingCommands["vltg.min.uv.b"]);
+            if (incomingCommands["vltg.max.uv.b"] !== undefined) rawUvRange.maxB = parseFloat(incomingCommands["vltg.max.uv.b"]);
+            updateDisplayRange();
             document.getElementById("sampling").textContent = incomingCommands["sampling.ns"] || "-";
             document.getElementById("status").textContent = "streaming";
             let frameWidth = parseInt(incomingCommands["frame.size"]) || 200;
