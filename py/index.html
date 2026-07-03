@@ -853,7 +853,10 @@
             ws = null;
         }
         ws = new WebSocket(`ws://${location.host}/ws`);
-        ws.onopen = () => document.getElementById("status").textContent = "connected";
+        ws.onopen = () => {
+            document.getElementById("status").textContent = "connected";
+            param.sendAllCommands();
+        };
         ws.onclose = () => document.getElementById("status").textContent = "disconnected";
         ws.onerror = () => document.getElementById("status").textContent = "error";
 
@@ -874,6 +877,8 @@
                 if (eqIdx !== -1) {
                     const k = line.substring(0, eqIdx).trim();
                     incomingCommands[k] = line.substring(eqIdx + 1).trim();
+                } else if (line.trim() === 'param?') {
+                    param.sendAllCommands();
                 }
             }
             let samplesA = decode(incomingCommands["data.a"] || "");

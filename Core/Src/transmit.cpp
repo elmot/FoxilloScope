@@ -66,10 +66,12 @@ extern "C" [[noreturn]] void startTransmitTask([[maybe_unused]] void* argument)
 {
     static array<char, ascii_buffer_size> asciiBufferA;
     static array<char, ascii_buffer_size> asciiBufferB;
-
+    writeUart("\n[frame]\nparam?\n");
+    osThreadFlagsSet(osThreadGetId(),THREAD_FLAG_READY_TO_TRANSMIT);
     while (true)
     {
         osThreadFlagsWait(THREAD_FLAG_READY_TO_TRANSMIT, osFlagsWaitAny, osWaitForever);
+//
         writeUart("[frame]\nframe.size=");
         writeUart(string_view(to_constexpr_string_cr<data_frame_size>()));
         const bool keyBuffer = transmitKeyBufferReady.exchange(false);
