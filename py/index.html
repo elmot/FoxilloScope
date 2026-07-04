@@ -35,37 +35,6 @@
             flex-direction: column;
         }
 
-        #topbar {
-            display: flex;
-            align-items: center;
-            gap: 1em;
-            padding: 6px 12px;
-            background: #1a1a1a;
-            flex-shrink: 0;
-            border-bottom: 1px solid #2a2a2a;
-        }
-
-        #topbar button {
-            background: #333;
-            color: #0f0;
-            border: 1px solid #0f0;
-            padding: 4px 14px;
-            cursor: pointer;
-            border-radius: 3px;
-            font: inherit;
-            transition: background 0.15s, color 0.15s;
-        }
-
-        #topbar button:hover {
-            background: #0f0;
-            color: #000;
-        }
-
-        #info {
-            display: flex;
-            gap: 2em;
-        }
-
         #canvas-wrap {
             overflow: auto;
             min-width: 0;
@@ -131,7 +100,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             padding: 0 6px;
             min-height: 0;
         }
@@ -153,8 +121,11 @@
             gap: 2px;
         }
 
+        .h-control-container {
+            flex: 1;
+        }
         .h-control-container input {
-            width: 120px;
+            width: 100%;
             background: #222;
             color: #0f0;
             border: 1px solid #0f0;
@@ -163,7 +134,10 @@
         }
 
         #footer {
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1em;
             padding: 4px;
             flex-shrink: 0;
             border-top: 1px solid #2a2a2a;
@@ -172,6 +146,21 @@
         #status {
             color: #888;
         }
+
+        #pauseBtn {
+            background: #333;
+            color: #0f0;
+            border: 1px solid #0f0;
+            cursor: pointer;
+            font: inherit;
+            padding: 1px 10px;
+            border-radius: 3px;
+            width: 10ex;
+            transition: background 0.15s, color 0.15s;
+        }
+        #pauseBtn:hover { background: #0f0; color: #000; }
+        #pauseBtn.paused { border-color: #ff0; color: #ff0; }
+        #pauseBtn.paused:hover { background: #ff0; color: #000; }
 
         .label {
             color: #888;
@@ -298,12 +287,6 @@
     </style>
 </head>
 <body>
-<div id="topbar">
-    <button id="refreshBtn">Reload</button>
-    <div id="info">
-        <span><span class="label">sampling, ns</span> <span class="val" id="sampling">—</span></span>
-    </div>
-</div>
 <div id="canvas-wrap">
     <div class="v-controls-a">
         <div class="v-control-container" style="flex:1">
@@ -319,13 +302,13 @@
                    value="0" min="-1000000" max="1000000" step="0.1">
         </div>
         <div class="v-control-container" style="flex:1">
-            <span class="label trglabel">TRG</span>
+            <span class="label trglabel">Trigger</span>
             <input type="range" id="trg.level" class="trgborder"
                    value="0" min="-1000000" max="1000000">
             <div style="display:flex; flex-direction:column; gap:1px; flex-shrink:0;">
                 <div class="button-switch-block" id="trg.chan" style="margin:0;padding:1px;gap:1px">
-                    <button class="trg-btn-sm active channel-a" data-val="0">A</button>
-                    <button class="trg-btn-sm channel-b" data-val="1">B</button>
+                    <button class="trg-btn active channel-a" data-val="0" style="flex:1">A</button>
+                    <button class="trg-btn channel-b" data-val="1" style="flex:1">B</button>
                 </div>
                 <div class="button-switch-block" id="trg.type" style="margin:0;padding:1px;gap:1px">
                     <button class="trg-btn-sm active" data-val="0">∅</button>
@@ -377,10 +360,13 @@
         </select>
         <button>&gt;</button>
     </div>
-    <div class="h-control-container" style="min-width:130px">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <button id="pauseBtn">Pause</button>
+    </div>
+    <div class="h-control-container">
         <span class="label">TRG shift</span>
         <input type="range" id="trg.time.offset" class="param-slider"
-               value="0" min="-1000000" max="1000000" style="width:120px">
+               value="0" min="-1000000" max="1000000">
     </div>
 </div>
 <div id="footer"><span id="status">connecting...</span></div>
@@ -397,7 +383,7 @@
         chBKey: cssVar('--ch-b-key'),
     };
     const vltg = {};
-    let ws = null, uplot = null;
+    let ws = null, uplot = null, paused = false;
     let frame = { samplesA: [], samplesB: [] };
     let keyFrame = { samplesA: [], samplesB: [] };
 
@@ -716,7 +702,9 @@
 
         function keySeriesColor(u, seriesIdx) {
             const baseColor = seriesIdx % 2 === 0 ? COLORS.chBKey : COLORS.chAKey
-            const alpha = Math.max(30, 250 -  Math.ceil(50 * (Date.now() - (keyFrame.timestamp || 0 )) /1000))
+            const msecPerFrame = parseFloat(param.get("sampling.ns")) * param.frameWidth / 1e6
+            const timeDivider = isFinite(msecPerFrame) ? Math.max(1000, msecPerFrame) : 1000
+            const alpha = Math.max(30, 250 -  Math.ceil(50 * (Date.now() - (keyFrame.timestamp || 0 )) / timeDivider))
                 .toString(16).padStart(2,"0")
             return baseColor + alpha
         }
@@ -797,7 +785,8 @@
         });
     }
 
-    function updatePlot(frameWidth) {
+    function updatePlot() {
+        const frameWidth = param.frameWidth
         function padArray(arr){
             return arr.concat(...Array(Math.max(0, frameWidth - arr.length)).fill(null))
         }
@@ -868,6 +857,7 @@
             }
 
             const lines = payloadText.split("\n");
+            if (paused) return;
             let incomingCommands = {};
 
             for (let rawLine of lines) {
@@ -909,18 +899,21 @@
             if (incomingCommands["vltg.min.uv.b"] !== undefined) rawUvRange.minB = parseFloat(incomingCommands["vltg.min.uv.b"]);
             if (incomingCommands["vltg.max.uv.b"] !== undefined) rawUvRange.maxB = parseFloat(incomingCommands["vltg.max.uv.b"]);
             updateDisplayRange();
-            document.getElementById("sampling").textContent = incomingCommands["sampling.ns"] || "-";
+
             document.getElementById("status").textContent = "streaming";
-            let frameWidth = parseInt(incomingCommands["frame.size"]) || 200;
-            updatePlot(frameWidth);
+            param.frameWidth = parseInt(incomingCommands["frame.size"]) || 200;
+            updatePlot();
         };
     }
 
-    document.getElementById("refreshBtn").onclick = function () {
-        window.location.reload()
-    };
     initUplot();
     connect();
+    const pauseBtn = document.getElementById("pauseBtn");
+    pauseBtn.onclick = function () {
+        paused = !paused;
+        this.textContent = paused ? "Resume" : "Pause";
+        this.classList.toggle("paused", paused);
+    };
 </script>
 </body>
 </html>
