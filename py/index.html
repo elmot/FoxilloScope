@@ -146,6 +146,7 @@
         #status {
             color: #888;
         }
+        #status.error { color: #f00; }
 
         #pauseBtn {
             background: #333;
@@ -383,7 +384,7 @@
         chBKey: cssVar('--ch-b-key'),
     };
     const vltg = {};
-    let ws = null, uplot = null, paused = false;
+    let ws = null, uplot = null, paused = false, staleTimer = null;
     let frame = { samplesA: [], samplesB: [] };
     let keyFrame = { samplesA: [], samplesB: [] };
 
@@ -842,17 +843,27 @@
             ws = null;
         }
         ws = new WebSocket(`ws://${location.host}/ws`);
+        var statusEl = document.getElementById("status");
+        function setStatus(txt, isErr) { statusEl.textContent = txt; statusEl.className = isErr ? 'error' : ''; }
         ws.onopen = () => {
-            document.getElementById("status").textContent = "connected";
+            clearTimeout(staleTimer);
+            setStatus("connected");
             param.sendAllCommands();
         };
-        ws.onclose = () => document.getElementById("status").textContent = "disconnected";
-        ws.onerror = () => document.getElementById("status").textContent = "error";
+        ws.onclose = () => {
+            clearTimeout(staleTimer);
+            setStatus("disconnected");
+        };
+        ws.onerror = () => setStatus("error", true);
 
         ws.onmessage = (e) => {
+            clearTimeout(staleTimer);
+            staleTimer = setTimeout(() => {
+                setStatus("communication stalling", true);
+            }, 1000);
             const payloadText = e.data;
             if (payloadText.startsWith("error: ")) {
-                document.getElementById("status").textContent = "error: " + payloadText.substring(7);
+                setStatus("error: " + payloadText.substring(7), true);
                 return;
             }
 
@@ -900,7 +911,7 @@
             if (incomingCommands["vltg.max.uv.b"] !== undefined) rawUvRange.maxB = parseFloat(incomingCommands["vltg.max.uv.b"]);
             updateDisplayRange();
 
-            document.getElementById("status").textContent = "streaming";
+            setStatus("streaming");
             param.frameWidth = parseInt(incomingCommands["frame.size"]) || 200;
             updatePlot();
         };
