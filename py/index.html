@@ -147,6 +147,11 @@
             color: #888;
         }
         #status.error { color: #f00; }
+        #trgShiftReset {
+            background: none; border: none; color: #666; cursor: pointer; font: inherit; font-size: 11px; padding: 0 2px; vertical-align: middle;
+        }
+        #trgShiftReset:hover { color: #0f0; }
+
 
         #pauseBtn {
             background: #333;
@@ -365,9 +370,10 @@
         <button id="pauseBtn">Pause</button>
     </div>
     <div class="h-control-container">
-        <span class="label">TRG shift</span>
+        <span class="label">TRG shift <button id="trgShiftReset" title="Reset to centre">↺</button></span>
         <input type="range" id="trg.time.offset" class="param-slider"
-               value="0" min="-1000000" max="1000000">
+               value="0" min="-1000000" max="1000000" list="trgMarks">
+        <datalist id="trgMarks"><option value="0"></datalist>
     </div>
 </div>
 <div id="footer"><span id="status">connecting...</span></div>
@@ -455,7 +461,7 @@
     };
 
     document.querySelectorAll('.param-slider').forEach(slider => {
-        slider.oninput = () => param.set(slider.id, slider.value);
+        slider.oninput = () => { param.set(slider.id, slider.value); if (uplot) uplot.redraw(); };
         param._values[slider.id] = slider.value
         param.register(slider.id, slider, (el, v) => el.value = String(v), 20);
     });
@@ -771,11 +777,38 @@
                             const trgUv = minUv + frac * (maxUv - minUv);
                             const y = self.valToPos(trgUv, scaleName, true);
                             const x0 = self.bbox.left, x1 = x0 + self.bbox.width;
-                            ctx.strokeStyle = '#ff69b4';
-                            ctx.lineWidth = 1.5;
-                            ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
-                         }
-                         ctx.restore();
+                             ctx.setLineDash([4, 4]);
+                             ctx.strokeStyle = '#ff69b480';
+                             ctx.lineWidth = 1.5;
+                             ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+                          ctx.setLineDash([]);
+                          }
+                            // Vertical trigger time line
+                            try {
+                              var _trgOff = parseFloat(param.get('trg.time.offset')) || 0;
+                              var _xS = self.scales.x;
+                              var _xV = (_xS.min != null ? _xS.min : 0) + (_trgOff / 1000000) * ((_xS.max != null ? _xS.max : 1) - (_xS.min != null ? _xS.min : 0));
+                              var _xPos = self.valToPos(_xV, 'x', true);
+                              var _pL = self.bbox.left, _pR = self.bbox.left + self.bbox.width;
+                              for (var _i2 = 0; _i2 < self.axes.length; _i2++) {
+                                var _a = self.axes[_i2];
+                                if (_a && _a.bbox) {
+                                  if (_a.side === 1) _pL = Math.max(_pL, _a.bbox.left + _a.bbox.width);
+                                  if (_a.side === 3) _pR = Math.min(_pR, _a.bbox.left);
+                                }
+                              }
+                              if (_xPos >= _pL && _xPos <= _pR && _pR - _pL > 0) {
+                                ctx.save();
+                                ctx.beginPath(); ctx.rect(_pL, self.bbox.top, _pR - _pL, self.bbox.height); ctx.clip();
+                                ctx.setLineDash([4, 4]);
+                                ctx.strokeStyle = '#ff69b480';
+                                ctx.lineWidth = 1.5;
+                                ctx.beginPath(); ctx.moveTo(_xPos, self.bbox.top); ctx.lineTo(_xPos, self.bbox.top + self.bbox.height); ctx.stroke();
+                                ctx.setLineDash([]);
+                                ctx.restore();
+                              }
+                            } catch(_e) {}
+                          ctx.restore();
                      }],
                 },
             }, [[0], [0], [0], [0], [0]], el);
@@ -806,8 +839,10 @@
             const dataKeyA = clamp(padArray(keyFrame.samplesA), vltg.minUvA, vltg.maxUvA)
             const dataKeyB = clamp(padArray(keyFrame.samplesB), vltg.minUvB, vltg.maxUvB)
 
+            const trgOff = parseFloat(param.get('trg.time.offset')) || 0;
+            const triggerTime = (trgOff / 1000000) * totalNs / 1e6;
             for (let i = 0; i < frameWidth; i++) {
-                xs[i] = i * totalNs / frameWidth / 1e6;
+                xs[i] = i * totalNs / frameWidth / 1e6 - triggerTime;
             }
             uplot.setData([xs, dataA, dataB, dataKeyA, dataKeyB], true);
         } catch (e) { console.error("updatePlot:", e); }
@@ -919,6 +954,11 @@
 
     initUplot();
     connect();
+    document.getElementById("trgShiftReset").onclick = function () {
+        var el = document.getElementById("trg.time.offset");
+        el.value = "0";
+        param.set("trg.time.offset", "0");
+    };
     const pauseBtn = document.getElementById("pauseBtn");
     pauseBtn.onclick = function () {
         paused = !paused;
