@@ -35,7 +35,7 @@
             flex-direction: column;
         }
 
-        #canvas-wrap {
+        #scope-wrap {
             overflow: auto;
             min-width: 0;
             min-height: 0;
@@ -47,7 +47,7 @@
             margin: 4px 8px;
         }
 
-        #canvas-wrap div#scope {
+        #scope-wrap div#scope {
             min-width: 0;
             min-height: 0;
             max-width: 100%;
@@ -344,7 +344,7 @@
     </style>
 </head>
 <body>
-<div id="canvas-wrap">
+<div id="scope-wrap">
     <div class="v-controls-a">
         <span class="label">Gain A</span>
         <span class="label">Bias A</span>
@@ -382,6 +382,10 @@
     </div>
 </div>
 <div id="bottom-controls">
+    <select id="commMode" style="margin-right:auto;color:#0f0;background:#222;border:1px solid #0f0;font:inherit;height:1.5em">
+        <option value="web">Web</option>
+        <option value="serial">Serial</option>
+    </select>
     <div class="time-pause-wrap">
         <div class="switch-control">
             <button>&lt;</button>
@@ -433,7 +437,25 @@
         chBKey: cssVar('--ch-b-key'),
     };
     const vltg = {};
-    let ws = null, uplot = null, paused = false, staleTimer = null;
+    let uplot = null, paused = false, staleTimer = null;
+    const comm = {
+        mode: 'web',
+        ws: null,
+        serialPort: null,
+        send(data) {
+            if (this.mode === 'web' && this.ws && this.ws.readyState === WebSocket.OPEN) {
+                this.ws.send(data);
+            } else if (this.mode === 'serial' && this.serialPort && this.serialPort.writable) {
+                const writer = this.serialPort.writable.getWriter();
+                writer.write(new TextEncoder().encode(data));
+                writer.releaseLock();
+            }
+        },
+        close() {
+            if (this.serialPort) { try { this.serialPort.close(); } catch(e) {} this.serialPort = null; }
+            if (this.ws) { this.ws.close(); this.ws = null; }
+        }
+    };
     let frame = { samplesA: [], samplesB: [] };
     let keyFrame = { samplesA: [], samplesB: [] };
 
@@ -466,23 +488,19 @@
         },
         get(name) { return this._values[name]; },
         _send(name, value) {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                const ctrl = this._controls[name];
-                const val = ctrl && ctrl.methods && ctrl.methods.send ? ctrl.methods.send(value) : String(value);
-                ws.send(`${name}=${val}\n`);
-            }
+            const ctrl = this._controls[name];
+            const val = ctrl && ctrl.methods && ctrl.methods.send ? ctrl.methods.send(value) : String(value);
+            comm.send(`${name}=${val}\n`);
         },
         sendAllCommands() {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                let data = ""
-                for (const k in param._controls) {
-                    const ctrl = param._controls[k];
-                    const raw = param._values[k];
-                    const val = ctrl && ctrl.methods && ctrl.methods.send ? ctrl.methods.send(raw) : String(raw);
-                    data += `${k}=${val}\n`;
-                }
-                ws.send(data)
+            let data = ""
+            for (const k in param._controls) {
+                const ctrl = param._controls[k];
+                const raw = param._values[k];
+                const val = ctrl && ctrl.methods && ctrl.methods.send ? ctrl.methods.send(raw) : String(raw);
+                data += `${k}=${val}\n`;
             }
+            comm.send(data)
         },
         _saveCookie() {
             const json = JSON.stringify(this._values);
@@ -963,84 +981,132 @@
         return results;
     }
 
-    function connect() {
-        if (ws) {
-            ws.close();
-            ws = null;
+    function setStatus(txt, isErr) {
+        const el = document.getElementById("status");
+        if (el) { el.textContent = txt; el.className = isErr ? 'error' : ''; }
+    }
+
+    function onFrame(text) {
+        clearTimeout(staleTimer);
+        staleTimer = setTimeout(() => { setStatus("communication stalling", true); }, 1000);
+        if (text.startsWith("error: ")) { setStatus("error: " + text.substring(7), true); return; }
+        if (paused) return;
+        const lines = text.split("\n");
+        let commands = {};
+        for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line) continue;
+            const eqIdx = line.indexOf("=");
+            if (eqIdx !== -1) {
+                commands[line.substring(0, eqIdx).trim()] = line.substring(eqIdx + 1).trim();
+            } else if (line === 'param?') {
+                param.sendAllCommands();
+            }
         }
-        ws = new WebSocket(`ws://${location.host}/ws`);
-        var statusEl = document.getElementById("status");
-        function setStatus(txt, isErr) { statusEl.textContent = txt; statusEl.className = isErr ? 'error' : ''; }
-        ws.onopen = () => {
+        let samplesA = decode(commands["data.a"] || "").map(v => adcToUv(v, rawUvRange.minA, rawUvRange.maxA));
+        let samplesB = decode(commands["data.b"] || "").map(v => adcToUv(v, rawUvRange.minB, rawUvRange.maxB));
+        if (commands["head"] === "1") {
+            frame = {samplesA: samplesA, samplesB: samplesB}
+        } else {
+            frame = {samplesA: frame.samplesA.concat(samplesA), samplesB: frame.samplesB.concat(samplesB)}
+        }
+        if (commands["keyframe"] === "1") {
+            if (commands["head"] === "1") {
+                keyFrame.samplesA = samplesA
+                keyFrame.samplesB = samplesB
+            } else {
+                keyFrame.samplesA = keyFrame.samplesA.concat(samplesA)
+                keyFrame.samplesB = keyFrame.samplesB.concat(samplesB)
+            }
+            keyFrame.timestamp = Date.now()
+            samplesA = null
+            samplesB = null
+        }
+        if (commands["vltg.steps"] !== undefined) vltg.steps = parseFloat(commands["vltg.steps"]);
+        if (commands["vltg.min.uv.a"] !== undefined) rawUvRange.minA = parseFloat(commands["vltg.min.uv.a"]);
+        if (commands["vltg.max.uv.a"] !== undefined) rawUvRange.maxA = parseFloat(commands["vltg.max.uv.a"]);
+        if (commands["vltg.min.uv.b"] !== undefined) rawUvRange.minB = parseFloat(commands["vltg.min.uv.b"]);
+        if (commands["vltg.max.uv.b"] !== undefined) rawUvRange.maxB = parseFloat(commands["vltg.max.uv.b"]);
+        updateDisplayRange();
+        setStatus("streaming");
+        param.frameWidth = parseInt(commands["frame.size"]) || 200;
+        updatePlot();
+    }
+
+    function connect() {
+        comm.close();
+        comm.ws = new WebSocket(`ws://${location.host}/ws`);
+        comm.ws.onopen = () => {
             clearTimeout(staleTimer);
             setStatus("connected");
             param.sendAllCommands();
         };
-        ws.onclose = () => {
+        comm.ws.onclose = () => {
             clearTimeout(staleTimer);
             setStatus("disconnected");
         };
-        ws.onerror = () => setStatus("error", true);
-
-        ws.onmessage = (e) => {
-            clearTimeout(staleTimer);
-            staleTimer = setTimeout(() => {
-                setStatus("communication stalling", true);
-            }, 1000);
-            const payloadText = e.data;
-            if (payloadText.startsWith("error: ")) {
-                setStatus("error: " + payloadText.substring(7), true);
-                return;
-            }
-
-            const lines = payloadText.split("\n");
-            if (paused) return;
-            let incomingCommands = {};
-
-            for (let rawLine of lines) {
-                const line = rawLine.trim();
-                if (!line) continue;
-                const eqIdx = line.indexOf("=");
-                if (eqIdx !== -1) {
-                    const k = line.substring(0, eqIdx).trim();
-                    incomingCommands[k] = line.substring(eqIdx + 1).trim();
-                } else if (line.trim() === 'param?') {
-                    param.sendAllCommands();
-                }
-            }
-            let samplesA = decode(incomingCommands["data.a"] || "");
-            let samplesB = decode(incomingCommands["data.b"] || "");
-            samplesA = samplesA.map(v => adcToUv(v, rawUvRange.minA, rawUvRange.maxA));
-            samplesB = samplesB.map(v => adcToUv(v, rawUvRange.minB, rawUvRange.maxB));
-            if (incomingCommands["head"] === "1") {
-                frame = {samplesA: samplesA, samplesB: samplesB}
-            } else {
-                frame = {samplesA: frame.samplesA.concat(samplesA), samplesB: frame.samplesB.concat(samplesB)}
-
-            }
-                if (incomingCommands["keyframe"] === "1") {
-                if (incomingCommands["head"] === "1") {
-                    keyFrame.samplesA = samplesA
-                    keyFrame.samplesB = samplesB
-                } else {
-                    keyFrame.samplesA = keyFrame.samplesA.concat(samplesA)
-                    keyFrame.samplesB = keyFrame.samplesB.concat(samplesB)
-                }
-                keyFrame.timestamp = Date.now()
-                samplesA = null
-                samplesB = null
-            }
-            if (incomingCommands["vltg.steps"] !== undefined) vltg.steps = parseFloat(incomingCommands["vltg.steps"]);
-            if (incomingCommands["vltg.min.uv.a"] !== undefined) rawUvRange.minA = parseFloat(incomingCommands["vltg.min.uv.a"]);
-            if (incomingCommands["vltg.max.uv.a"] !== undefined) rawUvRange.maxA = parseFloat(incomingCommands["vltg.max.uv.a"]);
-            if (incomingCommands["vltg.min.uv.b"] !== undefined) rawUvRange.minB = parseFloat(incomingCommands["vltg.min.uv.b"]);
-            if (incomingCommands["vltg.max.uv.b"] !== undefined) rawUvRange.maxB = parseFloat(incomingCommands["vltg.max.uv.b"]);
-            updateDisplayRange();
-
-            setStatus("streaming");
-            param.frameWidth = parseInt(incomingCommands["frame.size"]) || 200;
-            updatePlot();
+        comm.ws.onerror = () => setStatus("error", true);
+        comm.ws.onmessage = (e) => {
+            const raw = e.data;
+            if (typeof raw !== "string") return;
+            onFrame(raw);
         };
+    }
+
+    document.getElementById('commMode').onchange = function () {
+        comm.close();
+        if (this.value === 'serial') {
+            switchToSerial();
+        } else {
+            comm.mode = 'web';
+            connect();
+        }
+    };
+
+    async function switchToSerial() {
+        try {
+            const port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 460800 });
+            comm.serialPort = port;
+            comm.mode = 'serial';
+            setStatus("serial connected");
+            param.sendAllCommands();
+            startSerialRead();
+        } catch (e) {
+            setStatus("serial error: " + e.message, true);
+            comm.mode = 'web';
+            document.getElementById('commMode').value = 'web';
+            connect();
+        }
+    }
+
+    async function startSerialRead() {
+        const decoder = new TextDecoder();
+        let buffer = '';
+        try {
+            while (comm.serialPort.readable) {
+                const reader = comm.serialPort.readable.getReader();
+                try {
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+                        buffer += decoder.decode(value, { stream: true });
+                        const parts = buffer.split('[frame]');
+                        buffer = parts.pop();
+                        for (const frame of parts) {
+                            if (frame.trim()) onFrame(frame.trim());
+                        }
+                    }
+                } finally {
+                    reader.releaseLock();
+                }
+            }
+        } catch (e) {
+            setStatus("serial disconnected", true);
+            comm.mode = 'web';
+            document.getElementById('commMode').value = 'web';
+            connect();
+        }
     }
 
     initUplot();
