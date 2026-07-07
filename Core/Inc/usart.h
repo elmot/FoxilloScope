@@ -37,6 +37,7 @@ extern "C" {
 /* USER CODE END Private defines */
 
 void MX_LPUART1_UART_Init(void);
+void MX_UART4_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 

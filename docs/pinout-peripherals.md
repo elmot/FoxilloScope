@@ -34,8 +34,10 @@ Date 06/16/2026
 | TIM2        | *(int)* TRGO->ADC3 trigger                   | Triggers ADC3/4 measurements                                       | -    | Gated by ITR0(TIM1)                             |
 | TIM1        | *(int)* CH A PWM1 -> TRGO -> TIM3 clock gate | Stops TIM2 when keyframe ended                                     | -    | Clocked by ITR1(TIM2)                           |
 |             | **Communication**                            |                                                                    |      |                                                 |
-| LPUART1     | Asynchronous TX                              |                                                                    | PA2  |                                                 |
-| LPUART1     | Asynchronous RX                              |                                                                    | PA3  |                                                 |
+| LPUART1     | Asynchronous TX                              | Data to PC (USB)                                                   | PA2  |                                                 |
+| LPUART1     | Asynchronous RX                              | Data from PC (USB)                                                 | PA3  |                                                 |
+| UART4       | Asynchronous TX                              | Data to ESP32 gateway (parallel with LPUART1)                      | PC10 |                                                 |
+| UART4       | Asynchronous RX                              | Data from ESP32 gateway (parallel with LPUART1)                    | PC11 |                                                 |
 |             | **Calibration**                              |                                                                    |      |                                                 |
 | ADC1        |                                              | VRef measured as injected rank 1                                   | -    |                                                 |
 

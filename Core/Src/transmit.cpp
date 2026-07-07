@@ -3,6 +3,7 @@
 
 #include "cmsis_os.h"
 #include "oscilloscope.hpp"
+#include "stm32g4xx_ll_usart.h"
 #include "string"
 #include "usart.h"
 
@@ -71,7 +72,7 @@ extern "C" [[noreturn]] void startTransmitTask([[maybe_unused]] void* argument)
     while (true)
     {
         osThreadFlagsWait(THREAD_FLAG_READY_TO_TRANSMIT, osFlagsWaitAny, osWaitForever);
-//
+
         writeUart("[frame]\nframe.size=");
         writeUart(string_view(to_constexpr_string_cr<data_frame_size>()));
         const bool keyBuffer = transmitKeyBufferReady.exchange(false);
@@ -104,20 +105,29 @@ void writeUart(const string_view& str)
     if(str.empty()) return;
     transmittingTaskHandle = osThreadGetId();
     // Disable the DMA channel to allow configuration
-    LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_4); // Use your specific DMA and Channel/Stream
+    LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_4);
+    LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_7);
 
     // Clear any prior transfer complete or error flags
     LL_DMA_ClearFlag_TC4(DMA1);
     LL_DMA_ClearFlag_TE4(DMA1);
+    LL_DMA_ClearFlag_TC7(DMA1);
+    LL_DMA_ClearFlag_TE7(DMA1);
 
     LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_4, reinterpret_cast<uint32_t>(str.data()));
+    LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_7, reinterpret_cast<uint32_t>(str.data()));
     LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_4, str.size());
+    LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_7, str.size());
 
     LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_4, reinterpret_cast<uint32_t>(&LPUART1->TDR));
+    LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_7, reinterpret_cast<uint32_t>(&UART4->TDR));
 
     // Clear any pending notifications before starting the hardware
     osThreadFlagsClear(UART_TX_BUSY);
     // Enable the DMA Channel
+    LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_7);
+    LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_7);
+    LL_USART_EnableDMAReq_TX(UART4);
     LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_4);
     LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_4);
     LL_LPUART_EnableDMAReq_TX(LPUART1);
@@ -128,6 +138,17 @@ void writeUart(const string_view& str)
     osThreadFlagsWait(UART_TX_BUSY, osFlagsWaitAny, osWaitForever);
 }
 
+static void uartTransferComplete()
+{
+    if (transmittingTaskHandle != nullptr &&
+        !LL_LPUART_IsEnabledDMAReq_TX(LPUART1)&&
+        !LL_USART_IsEnabledDMAReq_TX(UART4))
+    {
+        // Signal the waiting task directly
+        osThreadFlagsSet(transmittingTaskHandle, UART_TX_BUSY);
+    }
+
+}
 extern "C" void lpuart1TransferComplete()
 {
     if (LL_DMA_IsActiveFlag_TC4(DMA1))
@@ -140,22 +161,34 @@ extern "C" void lpuart1TransferComplete()
 
         // Disable the DMA Channel (required before re-configuring NDTR for the next block)
         LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_4);
-
-        if (transmittingTaskHandle != nullptr)
-        {
-            // Signal the waiting task directly
-            osThreadFlagsSet(transmittingTaskHandle, UART_TX_BUSY);
-        }
+        uartTransferComplete();
     }
 }
 
+extern "C" void uart4TransferComplete()
+{
+    if (LL_DMA_IsActiveFlag_TC7(DMA1))
+    {
+        // Clear the DMA interrupt flag
+        LL_DMA_ClearFlag_TC7(DMA1);
+
+        // Disable the UART DMA TX Request bit
+        LL_USART_DisableDMAReq_TX(UART4);
+
+        // Disable the DMA Channel (required before re-configuring NDTR for the next block)
+        LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_7);
+
+        uartTransferComplete();
+    }
+}
 
 void startUartInput()
 {
     LL_LPUART_EnableIT_RXNE(LPUART1);
+    LL_USART_EnableIT_RXNE(UART4);
 }
 
-extern "C" void lpuart1ReadByte(const uint8_t rxByte)
+extern "C" void uartReadByte(const uint8_t rxByte)
 {
     osMessageQueuePut(cmdRxQueueHandle, &rxByte, 0, 0);
 }

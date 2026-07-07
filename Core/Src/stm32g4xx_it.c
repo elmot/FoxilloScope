@@ -46,7 +46,7 @@
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
-
+extern void uartReadByte(uint8_t);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -240,6 +240,20 @@ void DMA1_Channel5_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles DMA1 channel7 global interrupt.
+  */
+void DMA1_Channel7_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Channel7_IRQn 0 */
+  extern void uart4TransferComplete();
+  uart4TransferComplete();
+  /* USER CODE END DMA1_Channel7_IRQn 0 */
+  /* USER CODE BEGIN DMA1_Channel7_IRQn 1 */
+
+  /* USER CODE END DMA1_Channel7_IRQn 1 */
+}
+
+/**
   * @brief This function handles TIM1 capture compare interrupt.
   */
 void TIM1_CC_IRQHandler(void)
@@ -251,6 +265,31 @@ void TIM1_CC_IRQHandler(void)
   /* USER CODE BEGIN TIM1_CC_IRQn 1 */
 
   /* USER CODE END TIM1_CC_IRQn 1 */
+}
+
+/**
+  * @brief This function handles UART4 global interrupt / UART4 wake-up interrupt through EXTI line 34.
+  */
+void UART4_IRQHandler(void)
+{
+  /* USER CODE BEGIN UART4_IRQn 0 */
+  // Check if RXNE flag is set AND if RXNE interrupt is enabled
+  if (LL_USART_IsActiveFlag_RXNE(UART4) && LL_USART_IsEnabledIT_RXNE(UART4))
+  {
+    uartReadByte(LL_USART_ReceiveData8(UART4));
+  }
+
+  // Optional but recommended: Handle Error Flags (Overrun, Noise, Framing)
+  // If an Overrun error (ORE) occurs, it can freeze the RXNE interrupt until cleared!
+  if (LL_USART_IsActiveFlag_ORE(UART4))
+  {
+    LL_USART_ClearFlag_ORE(UART4); // Clear overrun flag
+  }
+
+  /* USER CODE END UART4_IRQn 0 */
+  /* USER CODE BEGIN UART4_IRQn 1 */
+
+  /* USER CODE END UART4_IRQn 1 */
 }
 
 /**
@@ -293,8 +332,7 @@ void LPUART1_IRQHandler(void)
   // Check if RXNE flag is set AND if RXNE interrupt is enabled
   if (LL_LPUART_IsActiveFlag_RXNE(LPUART1) && LL_LPUART_IsEnabledIT_RXNE(LPUART1))
   {
-    extern void lpuart1ReadByte(uint8_t);
-    lpuart1ReadByte(LL_LPUART_ReceiveData8(LPUART1));
+    uartReadByte(LL_LPUART_ReceiveData8(LPUART1));
   }
 
   // Optional but recommended: Handle Error Flags (Overrun, Noise, Framing)
