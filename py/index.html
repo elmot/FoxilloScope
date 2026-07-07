@@ -85,13 +85,7 @@
         .v-controls-a input.trgborder { border-color: #0f0; }
         .v-controls-a input:not(.trgborder) { border-color: var(--ch-a); }
         .v-controls-b input { border-color: var(--ch-b); }
-        .v-controls-a .slider-cell {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 0 6px;
-            min-height: 0;
-        }
+        .v-controls-a .slider-cell,
         .v-controls-b .slider-cell {
             display: flex;
             flex-direction: column;
@@ -145,9 +139,6 @@
             flex-direction: column;
             align-items: center;
             gap: 2px;
-        }
-
-        .h-control-container {
             flex: 1;
         }
         .h-control-container input {
@@ -241,9 +232,6 @@
             cursor: pointer;
             border-radius: 3px;
             font: inherit;
-        }
-
-        .switch-control button {
             transition: background 0.15s, color 0.15s;
         }
 
@@ -262,6 +250,15 @@
             font: inherit;
             font-weight: bold;
             cursor: pointer;
+        }
+
+        #commMode {
+            margin-right: auto;
+            color: #0f0;
+            background: #222;
+            border: 1px solid #0f0;
+            font: inherit;
+            height: 1.5em;
         }
 
         .button-switch-block {
@@ -305,6 +302,7 @@
             line-height: 1;
             min-width: 20px;
             text-align: center;
+            transition: background 0.15s, color 0.15s;
         }
 
         .trg-btn:hover {
@@ -312,38 +310,25 @@
             color: #fff;
         }
 
-        .trg-btn { transition: background 0.15s, color 0.15s; }
-
         .trg-btn.active {
             background: #0f0;
             color: #000;
         }
 
-        .trg-btn.channel-a {
-            color: var(--ch-a);
-        }
-
-        .trg-btn.channel-a:hover {
-            background: #222;
-            color: #fff;
-        }
-
-        .trg-btn.channel-a.active {
-            background: var(--ch-a);
-            color: #000;
-        }
-
+        .trg-btn.channel-a { --ch: var(--ch-a); }
+        .trg-btn.channel-b { --ch: var(--ch-b); }
+        .trg-btn.channel-a,
         .trg-btn.channel-b {
-            color: var(--ch-b);
+            color: var(--ch);
         }
-
+        .trg-btn.channel-a:hover,
         .trg-btn.channel-b:hover {
             background: #222;
             color: #fff;
         }
-
+        .trg-btn.channel-a.active,
         .trg-btn.channel-b.active {
-            background: var(--ch-b);
+            background: var(--ch);
             color: #000;
         }
     </style>
@@ -387,7 +372,7 @@
     </div>
 </div>
 <div id="bottom-controls">
-    <select id="commMode" style="margin-right:auto;color:#0f0;background:#222;border:1px solid #0f0;font:inherit;height:1.5em">
+    <select id="commMode">
         <option value="web">Web</option>
         <option value="serial">Serial</option>
     </select>
@@ -474,62 +459,71 @@
         },
         _makeDebouncer(ms) {
             let timer;
-            return (name, value, opts) => {
+            return (name, value) => {
                 clearTimeout(timer);
-                timer = setTimeout(() => this._setNow(name, value, opts), ms);
+                timer = setTimeout(() => this._send(name, value), ms);
             };
         },
         _setNow(name, value, opts) {
-            this._values[name] = value;
+            const n = parseFloat(value);
+            this._values[name] = isFinite(n) ? n : value;
             const ctrl = this._controls[name];
             if (ctrl) ctrl.update(ctrl.el, value);
-            if (!opts || opts.send !== false) this._send(name, value);
+            if (!opts || opts.send !== false) {
+                const db = this._debounces[name];
+                if (db) { db(name, value); } else { this._send(name, value); }
+            }
             this._saveCookie();
         },
         set(name, value, opts) {
-            const db = this._debounces[name];
-            if (db) { db(name, value, opts); return; }
             this._setNow(name, value, opts);
         },
-        get(name) { return this._values[name]; },
-        _send(name, value) {
+        get(name, fallback) {
+            const v = this._values[name];
+            return v !== undefined ? v : (fallback !== undefined ? fallback : 0);
+        },
+        _formatValue(name, value) {
             const ctrl = this._controls[name];
-            const val = ctrl && ctrl.methods && ctrl.methods.send ? ctrl.methods.send(value) : String(value);
-            comm.send(`${name}=${val}\n`);
+            return ctrl && ctrl.methods && ctrl.methods.send ? ctrl.methods.send(value) : String(value);
+        },
+        _send(name, value) {
+            comm.send(`${name}=${this._formatValue(name, value)}\n`);
         },
         sendAllCommands() {
             let data = ""
             for (const k in param._controls) {
-                const ctrl = param._controls[k];
-                const raw = param._values[k];
-                const val = ctrl && ctrl.methods && ctrl.methods.send ? ctrl.methods.send(raw) : String(raw);
-                data += `${k}=${val}\n`;
+                data += `${k}=${this._formatValue(k, param._values[k])}\n`;
             }
-            comm.send(data)
+            comm.send(data);
         },
         _saveCookie() {
             const json = JSON.stringify(this._values);
             document.cookie = "scope_params=" + encodeURIComponent(json) + ";path=/;SameSite=Lax";
         },
         _loadCookie() {
-            const match = document.cookie.match(new RegExp('(^| )scope_params=([^;]+)'));
-            if (match) {
-                try {
-                    const saved = JSON.parse(decodeURIComponent(match[2]));
-                    for (const k in saved) {
-                        if (this._controls[k]) {
-                            this.set(k, saved[k], {send: false});
-                        }
+            const saved = _readCookie('scope_params');
+            if (saved) {
+                for (const k in saved) {
+                    if (this._controls[k]) {
+                        this.set(k, saved[k], {send: false});
                     }
-                } catch(e) {}
+                }
             }
         }
     };
 
+    function _readCookie(name) {
+      const m = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+      if (m) {
+        try { return JSON.parse(decodeURIComponent(m[2])); } catch(e) {}
+      }
+      return null;
+    }
+
     document.querySelectorAll('.param-slider').forEach(slider => {
         slider.oninput = () => { param.set(slider.id, slider.value); if (uplot) uplot.redraw(); };
-        param._values[slider.id] = slider.value
-        param.register(slider.id, slider, (el, v) => el.value = String(v));
+        param._values[slider.id] = slider.value;
+        param.register(slider.id, slider, (el, v) => el.value = String(v), 50);
     });
 
     (function() {
@@ -538,7 +532,7 @@
         ctrl.methods = {
           send(value) {
             const raw = parseFloat(value) || 0;
-            const trgChan = parseFloat(param._values['trg.chan']) || 0;
+            const trgChan = param.get('trg.chan');
             const lc = trgChan === 0 ? 'a' : 'b';
             const zoom = swState[lc].zoom || 1;
             const biasPpm = swState[lc].offsetPpm || 0;
@@ -549,11 +543,11 @@
     })();
 
     document.querySelectorAll(".button-switch-block").forEach(block =>{
-        const id = block.id
-        const buttons = block.querySelectorAll("button")
+        const id = block.id;
+        const buttons = block.querySelectorAll("button");
         buttons.forEach(button => {
             button.onclick = () => param.set(id, button.dataset.val);
-            if (button.classList.contains("active")) param._values[id] = button.dataset.val
+            if (button.classList.contains("active")) param._values[id] = button.dataset.val;
         });
         param.register(id, buttons, (els, v) => {
             els.forEach(b => b.classList.toggle('active', b.dataset.val === String(v)));
@@ -628,6 +622,17 @@
 
     const _track = { gainPos: {}, biasTotal: {} };
 
+    function _updateTriggerIfActive(ch) {
+      if ((ch === 'a' && (param.get('trg.chan') === 0)) ||
+          (ch === 'b' && (param.get('trg.chan') === 1)))
+        param.set('trg.level', param.get('trg.level'));
+    }
+    function _finalizeChannel() {
+      _trackSaveCookie();
+      updateDisplayRange();
+      if (uplot) uplot.redraw();
+    }
+
     function setupGainSlider(ch) {
       const el = document.getElementById('gain.' + ch);
       const valEl = document.getElementById('gain.' + ch + '.val');
@@ -637,15 +642,11 @@
         const { hw, sw } = splitGain(gain);
         swState[ch].zoom = sw;
         _track.gainPos[ch] = pos;
-        if ((ch === 'a' && ((parseFloat(param.get('trg.chan')) || 0) === 0)) ||
-            (ch === 'b' && ((parseFloat(param.get('trg.chan')) || 0) === 1)))
-          param.set('trg.level', param.get('trg.level'));
         param.set('gain.' + ch, hw);
-        _trackSaveCookie();
         valEl.textContent = '\u00d7' + gain.toFixed(2);
         detEl.textContent = hw + '+' + sw.toFixed(1);
-        updateDisplayRange();
-        if (uplot) uplot.redraw();
+        _updateTriggerIfActive(ch);
+        _finalizeChannel();
       }
       el.oninput = function () { apply(parseFloat(this.value)); };
       el.apply = apply;
@@ -662,22 +663,18 @@
         swState[ch].offsetPpm = residual;
         _track.biasTotal[ch] = total;
         param.set('vbias.' + ch, hw);
-        if ((ch === 'a' && ((parseFloat(param.get('trg.chan')) || 0) === 0)) ||
-            (ch === 'b' && ((parseFloat(param.get('trg.chan')) || 0) === 1)))
-          param.set('trg.level', param.get('trg.level'));
-        _trackSaveCookie();
-        updateDisplayRange();
-        if (uplot) uplot.redraw();
+        _updateTriggerIfActive(ch);
+        _finalizeChannel();
       }
       el.oninput = function () { apply(parseFloat(this.value)); };
       el.apply = apply;
     }
 
     // Register gain/bias command params (no UI binding — slider handles it)
-    param.register('gain.a', null, () => {}); param._values['gain.a'] = 1;
-    param.register('gain.b', null, () => {}); param._values['gain.b'] = 1;
-    param.register('vbias.a', null, () => {}); param._values['vbias.a'] = 0;
-    param.register('vbias.b', null, () => {}); param._values['vbias.b'] = 0;
+    param.register('gain.a', null, () => {}, 50); param._values['gain.a'] = 1;
+    param.register('gain.b', null, () => {}, 50); param._values['gain.b'] = 1;
+    param.register('vbias.a', null, () => {}, 50); param._values['vbias.a'] = 0;
+    param.register('vbias.b', null, () => {}, 50); param._values['vbias.b'] = 0;
 
     setupGainSlider('a');
     setupGainSlider('b');
@@ -689,28 +686,21 @@
       document.cookie = "scope_track=" + encodeURIComponent(JSON.stringify(_track)) + ";path=/;SameSite=Lax";
     }
     function _trackLoadCookie() {
-      const m = document.cookie.match(new RegExp('(^| )scope_track=([^;]+)'));
-      if (m) {
-        try {
-          Object.assign(_track, JSON.parse(decodeURIComponent(m[2])));
-          if (!_track.gainPos) _track.gainPos = {};
-          if (!_track.biasTotal) _track.biasTotal = {};
-        } catch(e) {}
+      const saved = _readCookie('scope_track');
+      if (saved) {
+        Object.assign(_track, saved);
+        if (!_track.gainPos) _track.gainPos = {};
+        if (!_track.biasTotal) _track.biasTotal = {};
       }
     }
 
     // Restore slider positions from scope_params cookie (migrate old values)
     (function () {
-      const restoreVals = {};
-      const cookieMatch = document.cookie.match(new RegExp('(^| )scope_params=([^;]+)'));
-      if (cookieMatch) {
-        try { Object.assign(restoreVals, JSON.parse(decodeURIComponent(cookieMatch[2]))); }
-        catch (e) {}
-      }
+      const restoreVals = _readCookie('scope_params') || {};
       // Read from separate track cookie (new), fall back to old scope_params keys (migration)
       _trackLoadCookie();
       function restoreGain(ch) {
-        const hw = parseFloat(param.get('gain.' + ch)) || 1;
+        const hw = param.get('gain.' + ch, 1);
         const el = document.getElementById('gain.' + ch);
         if (_track.gainPos[ch] !== undefined) {
           el.value = String(Math.min(1000, Math.max(0, _track.gainPos[ch])));
@@ -723,7 +713,7 @@
         el.apply(_track.gainPos[ch]);
       }
       function restoreBias(ch) {
-        const hw = parseFloat(param.get('vbias.' + ch)) || 0;
+        const hw = param.get('vbias.' + ch);
         const el = document.getElementById('vbias.' + ch);
         if (_track.biasTotal[ch] !== undefined) {
           el.value = String(Math.min(1000000, Math.max(-1000000, _track.biasTotal[ch])));
@@ -767,12 +757,8 @@
         else { m = 1e6; u = 'ns'; d = 0; }
         return (t*m).toFixed(d) + u;
     }
-    function fmtVoltages(uPlot, splits) {
-        return splits.map(t => fmtUv(t));
-    }
-
     function adcToUv(adc, min, max) {
-        if(adc === undefined) return null
+        if(adc === undefined) return null;
         const steps = vltg.steps || 4096;
         if (min !== undefined && max !== undefined) {
             return min + (adc / steps) * (max - min);
@@ -780,7 +766,7 @@
         return (adc / steps) * 3300000 - 1650000;
     }
 
-    var _drag = false;
+    let _drag = false;
     function initUplot() {
         const el = document.getElementById("scope");
         const rect = el.getBoundingClientRect();
@@ -789,18 +775,18 @@
         el.addEventListener('pointerup', () => _drag = false);
         el.addEventListener('pointerleave', () => _drag = false);
         function seriesColor(u, seriesIdx) {
-            const baseColor = seriesIdx % 2 === 0 ? COLORS.chB : COLORS.chA
-            return baseColor + (param._values["trg.type"] === "0" ? "A0" : "50")
+            const baseColor = seriesIdx % 2 === 0 ? COLORS.chB : COLORS.chA;
+            return baseColor + (param._values["trg.type"] === "0" ? "A0" : "50");
         }
 
 
         function keySeriesColor(u, seriesIdx) {
-            const baseColor = seriesIdx % 2 === 0 ? COLORS.chBKey : COLORS.chAKey
-            const msecPerFrame = parseFloat(param.get("sampling.ns")) * param.frameWidth / 1e6
-            const timeDivider = isFinite(msecPerFrame) ? Math.max(1000, msecPerFrame) : 1000
+            const baseColor = seriesIdx % 2 === 0 ? COLORS.chBKey : COLORS.chAKey;
+            const msecPerFrame = param.get("sampling.ns") * param.frameWidth / 1e6;
+            const timeDivider = isFinite(msecPerFrame) ? Math.max(1000, msecPerFrame) : 1000;
             const alpha = Math.max(30, 250 -  Math.ceil(50 * (Date.now() - (keyFrame.timestamp || 0 )) / timeDivider))
-                .toString(16).padStart(2,"0")
-            return baseColor + alpha
+                .toString(16).padStart(2,"0");
+            return baseColor + alpha;
         }
         try {
             const grid = {show: true, width: 1, size: 20, stroke:"#333333", dash:[3,8]}
@@ -818,8 +804,8 @@
                         scale: "x", stroke: "#FFF", grid:grid,
                         values: (self, splits) => splits.map(t => fmtTime(t)),
                     },
-                    {scale: "chA", side: 3, values: fmtVoltages, stroke: COLORS.chAKey, size:90, grid: grid},
-                    {scale: "chB", side: 1, values: fmtVoltages, stroke: COLORS.chBKey, size:90},
+                    {scale: "chA", side: 3, values: (self, splits) => splits.map(fmtUv), stroke: COLORS.chAKey, size:90, grid: grid},
+                    {scale: "chB", side: 1, values: (self, splits) => splits.map(fmtUv), stroke: COLORS.chBKey, size:90},
                 ],
                 series: [
                     {},
@@ -841,11 +827,11 @@
                             ctx.strokeStyle = ch.c;
                             ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
                         }
-                         ctx.setLineDash([]);
-                         // Trigger level line — maps slider fraction directly into visible µV range
-                         const trgPpm = parseFloat(param.get('trg.level'));
-                         if (!isNaN(trgPpm)) {
-                            const trgChan = parseFloat(param.get('trg.chan')) || 0;
+                        ctx.setLineDash([]);
+                        try {
+                          const trgPpm = param.get('trg.level');
+                          if (!isNaN(trgPpm)) {
+                            const trgChan = param.get('trg.chan');
                             const scaleName = trgChan === 0 ? 'chA' : 'chB';
                             const minUv = trgChan === 0 ? (vltg.minUvA ?? -1650000) : (vltg.minUvB ?? -1650000);
                             const maxUv = trgChan === 0 ? (vltg.maxUvA ??  1650000) : (vltg.maxUvB ??  1650000);
@@ -853,38 +839,36 @@
                             const trgUv = minUv + frac * (maxUv - minUv);
                             const y = self.valToPos(trgUv, scaleName, true);
                             const x0 = self.bbox.left, x1 = x0 + self.bbox.width;
-                             ctx.setLineDash([4, 4]);
-                             ctx.strokeStyle = '#ff69b480';
-                             ctx.lineWidth = 1.5;
-                             ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
-                          ctx.setLineDash([]);
+                            ctx.setLineDash([4, 4]);
+                            ctx.strokeStyle = '#ff69b480';
+                            ctx.lineWidth = 1.5;
+                            ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+                            ctx.setLineDash([]);
                           }
-                            // Vertical trigger time line
-                            try {
-                              var _trgOff = parseFloat(param.get('trg.time.offset')) || 0;
-                              var _xS = self.scales.x;
-                              var _xV = (_xS.min != null ? _xS.min : 0) + (_trgOff / 1000000) * ((_xS.max != null ? _xS.max : 1) - (_xS.min != null ? _xS.min : 0));
-                              var _xPos = self.valToPos(_xV, 'x', true);
-                              var _pL = self.bbox.left, _pR = self.bbox.left + self.bbox.width;
-                              for (var _i2 = 0; _i2 < self.axes.length; _i2++) {
-                                var _a = self.axes[_i2];
-                                if (_a && _a.bbox) {
-                                  if (_a.side === 1) _pL = Math.max(_pL, _a.bbox.left + _a.bbox.width);
-                                  if (_a.side === 3) _pR = Math.min(_pR, _a.bbox.left);
-                                }
-                              }
-                              if (_xPos >= _pL && _xPos <= _pR && _pR - _pL > 0) {
-                                ctx.save();
-                                ctx.beginPath(); ctx.rect(_pL, self.bbox.top, _pR - _pL, self.bbox.height); ctx.clip();
-                                ctx.setLineDash([4, 4]);
-                                ctx.strokeStyle = '#ff69b480';
-                                ctx.lineWidth = 1.5;
-                                ctx.beginPath(); ctx.moveTo(_xPos, self.bbox.top); ctx.lineTo(_xPos, self.bbox.top + self.bbox.height); ctx.stroke();
-                                ctx.setLineDash([]);
-                                ctx.restore();
-                              }
-                            } catch(_e) {}
-                           ctx.restore();
+                          const _trgOff = param.get('trg.time.offset');
+                          const _xS = self.scales.x;
+                          const _xV = (_xS.min != null ? _xS.min : 0) + (_trgOff / 1000000) * ((_xS.max != null ? _xS.max : 1) - (_xS.min != null ? _xS.min : 0));
+                          const _xPos = self.valToPos(_xV, 'x', true);
+                          let _pL = self.bbox.left, _pR = self.bbox.left + self.bbox.width;
+                          for (let _i2 = 0; _i2 < self.axes.length; _i2++) {
+                            const _a = self.axes[_i2];
+                            if (_a && _a.bbox) {
+                              if (_a.side === 1) _pL = Math.max(_pL, _a.bbox.left + _a.bbox.width);
+                              if (_a.side === 3) _pR = Math.min(_pR, _a.bbox.left);
+                            }
+                          }
+                          if (_xPos >= _pL && _xPos <= _pR && _pR - _pL > 0) {
+                            ctx.save();
+                            ctx.beginPath(); ctx.rect(_pL, self.bbox.top, _pR - _pL, self.bbox.height); ctx.clip();
+                            ctx.setLineDash([4, 4]);
+                            ctx.strokeStyle = '#ff69b480';
+                            ctx.lineWidth = 1.5;
+                            ctx.beginPath(); ctx.moveTo(_xPos, self.bbox.top); ctx.lineTo(_xPos, self.bbox.top + self.bbox.height); ctx.stroke();
+                            ctx.setLineDash([]);
+                            ctx.restore();
+                          }
+                        } catch(e) { console.error("drawAxes:", e); }
+                        ctx.restore();
                       }],
                       setCursor: [
                          self => {
@@ -892,21 +876,21 @@
 
                              if (cx == null || cy == null || !st) return;
                               try {
-                                  var se = self.root.querySelector('.u-select');
+                                  const se = self.root.querySelector('.u-select');
                                   if (se) se.style.display = _drag ? '' : 'none';
-                                  var s = self.select;
+                                  const s = self.select;
                                   if (_drag && s && s.width > 0 && s.height > 0) {
-                                      var bx = self.bbox.left, by = self.bbox.top;
-                                      var t1 = self.posToVal(s.left + bx, 'x');
-                                      var t2 = self.posToVal(s.left + s.width + bx, 'x');
-                                      var vA1 = self.posToVal(s.top + s.height + by, 'chA');
-                                      var vA2 = self.posToVal(s.top + by, 'chA');
-                                      var vB1 = self.posToVal(s.top + s.height + by, 'chB');
-                                      var vB2 = self.posToVal(s.top + by, 'chB');
-                                      var dt = Math.abs(t2 - t1);
-                                      var dA = Math.abs(vA2 - vA1);
-                                      var dB = Math.abs(vB2 - vB1);
-                                      var parts = [];
+                                      const bx = self.bbox.left, by = self.bbox.top;
+                                      const t1 = self.posToVal(s.left + bx, 'x');
+                                      const t2 = self.posToVal(s.left + s.width + bx, 'x');
+                                      const vA1 = self.posToVal(s.top + s.height + by, 'chA');
+                                      const vA2 = self.posToVal(s.top + by, 'chA');
+                                      const vB1 = self.posToVal(s.top + s.height + by, 'chB');
+                                      const vB2 = self.posToVal(s.top + by, 'chB');
+                                      const dt = Math.abs(t2 - t1);
+                                      const dA = Math.abs(vA2 - vA1);
+                                      const dB = Math.abs(vB2 - vB1);
+                                      const parts = [];
                                       if (!isNaN(dt)) parts.push('\u0394t ' + fmtTime(dt));
                                       if (!isNaN(dA)) parts.push('\u0394A ' + fmtUv(dA));
                                       if (!isNaN(dB)) parts.push('\u0394B ' + fmtUv(dB));
@@ -915,13 +899,13 @@
                                       const t = self.posToVal(cx, 'x');
                                       const vA = self.posToVal(cy, 'chA');
                                       const vB = self.posToVal(cy, 'chB');
-                                      let parts = [];
+                                      const parts = [];
                                       if (!isNaN(t)) parts.push(fmtTime(t));
                                       if (!isNaN(vA)) parts.push('A ' + fmtUv(vA));
                                       if (!isNaN(vB)) parts.push('B ' + fmtUv(vB));
                                       st.textContent = parts.join('  ');
                                   }
-                              } catch(_) {}
+                              } catch(e) { console.error("setCursor:", e); }
                           }
                      ],
                 },
@@ -934,9 +918,9 @@
     }
 
     function updatePlot() {
-        const frameWidth = param.frameWidth
-        function padArray(arr){
-            return arr.concat(...Array(Math.max(0, frameWidth - arr.length)).fill(null))
+        const frameWidth = param.frameWidth;
+        function padArray(arr) {
+            return arr.concat(...Array(Math.max(0, frameWidth - arr.length)).fill(null));
         }
         function clamp(arr, lo, hi) {
             if (lo === undefined || hi === undefined) return arr;
@@ -944,16 +928,16 @@
         }
         if (!uplot) return;
         try {
-            const sp = parseFloat(param.get("sampling.ns")) || 500000;
+            const sp = param.get("sampling.ns", 500000);
             if (Math.min(frame.samplesA.length, frame.samplesB.length) < 2) return;
             const totalNs = sp * frameWidth;
             const xs = new Array(frameWidth);
-            const dataA = clamp(padArray(frame.samplesA), vltg.minUvA, vltg.maxUvA)
-            const dataB = clamp(padArray(frame.samplesB), vltg.minUvB, vltg.maxUvB)
-            const dataKeyA = clamp(padArray(keyFrame.samplesA), vltg.minUvA, vltg.maxUvA)
-            const dataKeyB = clamp(padArray(keyFrame.samplesB), vltg.minUvB, vltg.maxUvB)
+            const dataA = clamp(padArray(frame.samplesA), vltg.minUvA, vltg.maxUvA);
+            const dataB = clamp(padArray(frame.samplesB), vltg.minUvB, vltg.maxUvB);
+            const dataKeyA = clamp(padArray(keyFrame.samplesA), vltg.minUvA, vltg.maxUvA);
+            const dataKeyB = clamp(padArray(keyFrame.samplesB), vltg.minUvB, vltg.maxUvB);
 
-            const trgOff = parseFloat(param.get('trg.time.offset')) || 0;
+            const trgOff = param.get('trg.time.offset');
             const triggerTime = (trgOff / 1000000) * totalNs / 1e6;
             for (let i = 0; i < frameWidth; i++) {
                 xs[i] = i * totalNs / frameWidth / 1e6 - triggerTime;
@@ -962,27 +946,22 @@
         } catch (e) { console.error("updatePlot:", e); }
     }
 
+    const _BASE64_MAP = Object.fromEntries(
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        .split("").map((c, i) => [c, i])
+    );
     function decode(input) {
-        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
         let results = [];
-
         for (let i = 0; i < input.length; i += 2) {
             const char1 = input[i];
             const char2 = input[i + 1];
-
-            if (!char1 || !char2) break; // Handle odd lengths
-
-            const val1 = alphabet.indexOf(char1);
-            const val2 = alphabet.indexOf(char2);
-
-            if (val1 !== -1 && val2 !== -1) {
-                // Shift the first 6-bit value left by 6 bits and add the second
-                // This effectively combines two 6-bit chars into one 12-bit int
-                const combined = (val1 << 6) | val2;
-                results.push(combined);
+            if (!char1 || !char2) break;
+            const val1 = _BASE64_MAP[char1];
+            const val2 = _BASE64_MAP[char2];
+            if (val1 !== undefined && val2 !== undefined) {
+                results.push((val1 << 6) | val2);
             }
         }
-
         return results;
     }
 
@@ -1011,21 +990,22 @@
         let samplesA = decode(commands["data.a"] || "").map(v => adcToUv(v, rawUvRange.minA, rawUvRange.maxA));
         let samplesB = decode(commands["data.b"] || "").map(v => adcToUv(v, rawUvRange.minB, rawUvRange.maxB));
         if (commands["head"] === "1") {
-            frame = {samplesA: samplesA, samplesB: samplesB}
+            frame = {samplesA: samplesA, samplesB: samplesB};
         } else {
-            frame = {samplesA: frame.samplesA.concat(samplesA), samplesB: frame.samplesB.concat(samplesB)}
+            Array.prototype.push.apply(frame.samplesA, samplesA);
+            Array.prototype.push.apply(frame.samplesB, samplesB);
         }
         if (commands["keyframe"] === "1") {
             if (commands["head"] === "1") {
-                keyFrame.samplesA = samplesA
-                keyFrame.samplesB = samplesB
+                keyFrame.samplesA = samplesA;
+                keyFrame.samplesB = samplesB;
             } else {
-                keyFrame.samplesA = keyFrame.samplesA.concat(samplesA)
-                keyFrame.samplesB = keyFrame.samplesB.concat(samplesB)
+                Array.prototype.push.apply(keyFrame.samplesA, samplesA);
+                Array.prototype.push.apply(keyFrame.samplesB, samplesB);
             }
-            keyFrame.timestamp = Date.now()
-            samplesA = null
-            samplesB = null
+            keyFrame.timestamp = Date.now();
+            samplesA = null;
+            samplesB = null;
         }
         if (commands["vltg.steps"] !== undefined) vltg.steps = parseFloat(commands["vltg.steps"]);
         if (commands["vltg.min.uv.a"] !== undefined) rawUvRange.minA = parseFloat(commands["vltg.min.uv.a"]);
@@ -1117,7 +1097,7 @@
     initUplot();
     connect();
     document.getElementById("trgShiftReset").onclick = function () {
-        var el = document.getElementById("trg.time.offset");
+        const el = document.getElementById("trg.time.offset");
         el.value = "0";
         param.set("trg.time.offset", "0");
     };
