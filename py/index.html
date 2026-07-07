@@ -358,7 +358,7 @@
                min="0" max="1000" value="0" step="1"></div>
         <div class="slider-cell"><input type="range" id="vbias.a" class="bias-slider"
                value="0" min="-1000000" max="1000000" step="0.1"></div>
-        <div class="slider-cell"><input type="range" id="trg.level" class="trgborder"
+        <div class="slider-cell"><input type="range" id="trg.level" class="trgborder param-slider"
                value="0" min="-1000000" max="1000000"></div>
         <div class="rdout-cell"><span id="gain.a.val" class="val">×1.0</span><span id="gain.a.detail" class="detail">1+1.0</span></div>
         <div class="rdout-cell"></div>
@@ -529,8 +529,24 @@
     document.querySelectorAll('.param-slider').forEach(slider => {
         slider.oninput = () => { param.set(slider.id, slider.value); if (uplot) uplot.redraw(); };
         param._values[slider.id] = slider.value
-        param.register(slider.id, slider, (el, v) => el.value = String(v), 20);
+        param.register(slider.id, slider, (el, v) => el.value = String(v));
     });
+
+    (function() {
+      const ctrl = param._controls['trg.level'];
+      if (ctrl) {
+        ctrl.methods = {
+          send(value) {
+            const raw = parseFloat(value) || 0;
+            const trgChan = parseFloat(param._values['trg.chan']) || 0;
+            const lc = trgChan === 0 ? 'a' : 'b';
+            const zoom = swState[lc].zoom || 1;
+            const biasPpm = swState[lc].offsetPpm || 0;
+            return String(Math.max(-1000000, Math.min(1000000, Math.round(raw / zoom + biasPpm))));
+          }
+        };
+      }
+    })();
 
     document.querySelectorAll(".button-switch-block").forEach(block =>{
         const id = block.id
@@ -667,22 +683,6 @@
     setupGainSlider('b');
     setupBiasSlider('a');
     setupBiasSlider('b');
-
-    (function() {
-      const el = document.getElementById('trg.level');
-      param.register('trg.level', el, (el, v) => el.value = String(v), undefined, {
-        send(value) {
-          const raw = parseFloat(value) || 0;
-          const trgChan = parseFloat(param._values['trg.chan']) || 0;
-          const lc = trgChan === 0 ? 'a' : 'b';
-          const zoom = swState[lc].zoom || 1;
-          const biasPpm = swState[lc].offsetPpm || 0;
-          return String(Math.max(-1000000, Math.min(1000000, Math.round(raw / zoom + biasPpm))));
-        }
-      });
-      param._values['trg.level'] = el.value;
-      el.oninput = function () { param.set('trg.level', this.value); };
-    }());
 
     // Separate cookie for tracking data (never in param._values)
     function _trackSaveCookie() {
