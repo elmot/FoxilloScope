@@ -59,22 +59,64 @@
 
         .v-controls-a,
         .v-controls-b {
-            display: flex;
-            flex-direction: row;
-            align-items: stretch;
+            display: grid;
             align-self: stretch;
             min-height: 0;
         }
-        .v-controls-a { flex: 0 0 240px; border-right: 1px solid #2a2a2a; }
-        .v-controls-b { flex: 0 0 160px; border-left: 1px solid #2a2a2a; }
-        .v-controls-a .label { color: var(--ch-a); }
-        .v-controls-b .label { color: var(--ch-b); }
+        .v-controls-a {
+            flex: 0 0 240px;
+            border-right: 1px solid #2a2a2a;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: auto 1fr auto;
+        }
+        .v-controls-b {
+            flex: 0 0 160px;
+            border-left: 1px solid #2a2a2a;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto 1fr auto;
+        }
+        .v-controls-a .label { color: var(--ch-a); text-align: center; }
+        .v-controls-b .label { color: var(--ch-b); text-align: center; }
         .v-controls-a .val  { color: var(--ch-a); }
         .v-controls-b .val  { color: var(--ch-b); }
-        .v-controls-a input { border-color: var(--ch-a); }
-        .v-controls-b input { border-color: var(--ch-b); }
         .v-controls-a .trglabel { color: #0f0; }
         .v-controls-a input.trgborder { border-color: #0f0; }
+        .v-controls-a input:not(.trgborder) { border-color: var(--ch-a); }
+        .v-controls-b input { border-color: var(--ch-b); }
+        .v-controls-a .slider-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 6px;
+            min-height: 0;
+        }
+        .v-controls-b .slider-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 6px;
+            min-height: 0;
+        }
+        .v-controls-a .slider-cell input,
+        .v-controls-b .slider-cell input {
+            flex: 1;
+            width: 100%;
+            min-height: 20px;
+            background: #222;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 5px;
+            font: inherit;
+            writing-mode: sideways-lr;
+        }
+        .v-controls-a .rdout-cell,
+        .v-controls-b .rdout-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0 6px;
+        }
         .detail {
             color: #686868;
             font-size: 9px;
@@ -96,24 +138,6 @@
         }
         .trg-btn-sm:hover { background: #0f0; color: #000; }
         .trg-btn-sm.active { background: #0f0; color: #000; }
-        .v-control-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 0 6px;
-            min-height: 0;
-        }
-
-        .v-control-container input {
-            flex: 1;
-            min-height: 20px;
-            background: #222;
-            color: #0f0;
-            border: 1px solid #0f0;
-            padding: 5px;
-            font: inherit;
-            writing-mode: sideways-lr;
-        }
         .h-control-container {
             display: flex;
             flex-direction: column;
@@ -176,6 +200,7 @@
 
         .val {
             color: #0f0;
+            font-size: 11px;
         }
 
         #bottom-controls {
@@ -194,6 +219,12 @@
             display: flex;
             align-items: center;
             gap: 0;
+        }
+        .time-pause-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
         }
 
         .switch-control button {
@@ -236,6 +267,25 @@
             border: 1px solid #0f0;
             border-radius: 3px;
             padding: 2px;
+        }
+        .trg-btn-group {
+            margin: 0;
+            padding: 1px;
+            gap: 1px;
+        }
+        .trg-btn-group > button {
+            flex: 1;
+        }
+        .trg-btns-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+        .pause-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
         }
 
         .trg-btn {
@@ -296,79 +346,71 @@
 <body>
 <div id="canvas-wrap">
     <div class="v-controls-a">
-        <div class="v-control-container" style="flex:1">
-            <span class="label">Gain A</span>
-            <input type="range" id="gain.a" class="gain-slider"
-                   min="0" max="1000" value="0" step="1">
-            <span id="gain.a.val" class="val" style="font-size:11px">×1.0</span>
-            <span id="gain.a.detail" class="detail">1+1.0</span>
-        </div>
-        <div class="v-control-container" style="flex:1">
-            <span class="label">Bias A</span>
-            <input type="range" id="vbias.a" class="bias-slider"
-                   value="0" min="-1000000" max="1000000" step="0.1">
-        </div>
-        <div class="v-control-container" style="flex:1">
-            <span class="label trglabel">Trigger</span>
-            <input type="range" id="trg.level" class="trgborder"
-                   value="0" min="-1000000" max="1000000">
-            <div style="display:flex; flex-direction:column; gap:1px; flex-shrink:0;">
-                <div class="button-switch-block" id="trg.chan" style="margin:0;padding:1px;gap:1px">
-                    <button class="trg-btn active channel-a" data-val="0" style="flex:1">A</button>
-                    <button class="trg-btn channel-b" data-val="1" style="flex:1">B</button>
-                </div>
-                <div class="button-switch-block" id="trg.type" style="margin:0;padding:1px;gap:1px">
-                    <button class="trg-btn-sm active" data-val="0">∅</button>
-                    <button class="trg-btn-sm" data-val="1">↗</button>
-                    <button class="trg-btn-sm" data-val="-1">↘</button>
-                </div>
+        <span class="label">Gain A</span>
+        <span class="label">Bias A</span>
+        <span class="label trglabel">Trigger</span>
+        <div class="slider-cell"><input type="range" id="gain.a" class="gain-slider"
+               min="0" max="1000" value="0" step="1"></div>
+        <div class="slider-cell"><input type="range" id="vbias.a" class="bias-slider"
+               value="0" min="-1000000" max="1000000" step="0.1"></div>
+        <div class="slider-cell"><input type="range" id="trg.level" class="trgborder"
+               value="0" min="-1000000" max="1000000"></div>
+        <div class="rdout-cell"><span id="gain.a.val" class="val">×1.0</span><span id="gain.a.detail" class="detail">1+1.0</span></div>
+        <div class="rdout-cell"></div>
+        <div class="rdout-cell"><div class="trg-btns-wrap">
+            <div class="button-switch-block trg-btn-group" id="trg.chan">
+                <button class="trg-btn active channel-a" data-val="0">A</button>
+                <button class="trg-btn channel-b" data-val="1">B</button>
             </div>
-        </div>
+            <div class="button-switch-block trg-btn-group" id="trg.type">
+                <button class="trg-btn-sm active" data-val="0">∅</button>
+                <button class="trg-btn-sm" data-val="1">↗</button>
+                <button class="trg-btn-sm" data-val="-1">↘</button>
+            </div>
+        </div></div>
     </div>
     <div id="scope"></div>
     <div class="v-controls-b">
-        <div class="v-control-container" style="flex:1">
-            <span class="label">Gain B</span>
-            <input type="range" id="gain.b" class="gain-slider"
-                   min="0" max="1000" value="0" step="1">
-            <span id="gain.b.val" class="val" style="font-size:11px">×1.0</span>
-            <span id="gain.b.detail" class="detail">1+1.0</span>
-        </div>
-        <div class="v-control-container" style="flex:1">
-            <span class="label">Bias B</span>
-            <input type="range" id="vbias.b" class="bias-slider"
-                   value="0" min="-1000000" max="1000000" step="0.1">
-        </div>
+        <span class="label">Gain B</span>
+        <span class="label">Bias B</span>
+        <div class="slider-cell"><input type="range" id="gain.b" class="gain-slider"
+               min="0" max="1000" value="0" step="1"></div>
+        <div class="slider-cell"><input type="range" id="vbias.b" class="bias-slider"
+               value="0" min="-1000000" max="1000000" step="0.1"></div>
+        <div class="rdout-cell"><span id="gain.b.val" class="val">×1.0</span><span id="gain.b.detail" class="detail">1+1.0</span></div>
+        <div class="rdout-cell"></div>
     </div>
 </div>
 <div id="bottom-controls">
-    <div class="switch-control">
-        <button>&lt;</button>
-        <select id="sampling.ns">
-            <option value="500000000">500ms</option>
-            <option value="200000000">200ms</option>
-            <option value="100000000">100ms</option>
-            <option value="50000000">50ms</option>
-            <option value="20000000">20ms</option>
-            <option value="10000000">10ms</option>
-            <option value="5000000">5ms</option>
-            <option value="2000000">2ms</option>
-            <option value="1000000">1ms</option>
-            <option value="500000" selected="selected">500&micro;s</option>
-            <option value="200000">200&micro;s</option>
-            <option value="100000">100&micro;s</option>
-            <option value="50000">50&micro;s</option>
-            <option value="20000">20&micro;s</option>
-            <option value="10000">10&micro;s</option>
-            <option value="5000">5&micro;s</option>
-            <option value="2000">2&micro;s</option>
-            <option value="1000">1&micro;s</option>
-            <option value="500">0.5&micro;s</option>
-        </select>
-        <button>&gt;</button>
-    </div>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-        <button id="pauseBtn">Pause</button>
+    <div class="time-pause-wrap">
+        <div class="switch-control">
+            <button>&lt;</button>
+            <select id="sampling.ns">
+                <option value="500000000">500ms</option>
+                <option value="200000000">200ms</option>
+                <option value="100000000">100ms</option>
+                <option value="50000000">50ms</option>
+                <option value="20000000">20ms</option>
+                <option value="10000000">10ms</option>
+                <option value="5000000">5ms</option>
+                <option value="2000000">2ms</option>
+                <option value="1000000">1ms</option>
+                <option value="500000" selected="selected">500&micro;s</option>
+                <option value="200000">200&micro;s</option>
+                <option value="100000">100&micro;s</option>
+                <option value="50000">50&micro;s</option>
+                <option value="20000">20&micro;s</option>
+                <option value="10000">10&micro;s</option>
+                <option value="5000">5&micro;s</option>
+                <option value="2000">2&micro;s</option>
+                <option value="1000">1&micro;s</option>
+                <option value="500">0.5&micro;s</option>
+            </select>
+            <button>&gt;</button>
+        </div>
+        <div class="pause-wrap">
+            <button id="pauseBtn">Pause</button>
+        </div>
     </div>
     <div class="h-control-container">
         <span class="label">TRG shift <button id="trgShiftReset" title="Reset to centre">↺</button></span>
