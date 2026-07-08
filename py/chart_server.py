@@ -57,7 +57,7 @@ async def ws_handler(request: web.Request) -> web.WebSocketResponse:
 
 
 async def index_handler(request: web.Request) -> web.FileResponse:
-    return web.FileResponse("index.html")
+    return web.FileResponse("../html/index.html")
 
 
 def main():
