@@ -260,6 +260,21 @@
             height: 1.5em;
         }
 
+        #wifiLink {
+            color: #0f0;
+            background: #222;
+            border: 1px solid #0f0;
+            font: inherit;
+            height: 1.5em;
+            padding: 0 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        #wifiLink:hover { background: #0f0; color: #000; }
+
         .button-switch-block {
             display: flex;
             gap: 2px;
@@ -378,7 +393,8 @@
             #bottom-controls { padding: 2px 6px; gap: 4px; }
             .switch-control select,
             .switch-control button,
-            #commMode { height: 1.3em; font-size: 10px; }
+            #commMode,
+            #wifiLink { height: 1.3em; font-size: 10px; }
             #pauseBtn { padding: 0 6px; font-size: 10px; width: auto; }
             .h-control-container input { height: 18px; padding: 0 4px; }
             .h-control-container { gap: 1px; }
@@ -407,7 +423,8 @@
             #bottom-controls { padding: 2px 6px; gap: 4px; }
             .switch-control select,
             .switch-control button,
-            #commMode { height: 1.3em; font-size: 10px; }
+            #commMode,
+            #wifiLink { height: 1.3em; font-size: 10px; }
             #pauseBtn { padding: 0 6px; font-size: 10px; width: auto; }
             .h-control-container input { height: 18px; padding: 0 4px; }
             .h-control-container { gap: 1px; }
@@ -461,6 +478,7 @@
         <option value="web">Web</option>
         <option value="serial">Serial</option>
     </select>
+    <a href="/wifi" id="wifiLink">WiFi</a>
     <div class="time-pause-wrap">
         <div class="switch-control">
             <button>&lt;</button>
