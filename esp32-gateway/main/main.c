@@ -67,15 +67,32 @@ struct async_send_arg {
     int len;
 };
 
-static void ws_async_send(void *arg)
+static void ws_async_send(void* arg)
 {
-    struct async_send_arg *a = arg;
-    httpd_ws_frame_t pkt = {
-        .payload = (uint8_t *)a->data,
-        .len = a->len,
-        .type = HTTPD_WS_TYPE_TEXT
-    };
-    httpd_ws_send_frame_async(s_server, a->fd, &pkt);
+    struct async_send_arg* a = arg;
+    if (httpd_ws_get_fd_info(s_server, a->fd) == HTTPD_WS_CLIENT_WEBSOCKET)
+    {
+        httpd_ws_frame_t pkt = {
+            .payload = (uint8_t*)a->data,
+            .len = a->len,
+            .type = HTTPD_WS_TYPE_TEXT
+        };
+        esp_err_t err = httpd_ws_send_frame_async(s_server, a->fd, &pkt) != ESP_OK;
+        if (err)
+        {
+            ESP_LOGW(TAG, "send fd=%d err=%s", a->fd, esp_err_to_name(err));
+            xSemaphoreTake(s_ws_mutex, portMAX_DELAY);
+            for (int j = 0; j < MAX_WS_CLIENTS; j++)
+            {
+                if (s_ws_fds[j] == a->fd)
+                {
+                    s_ws_fds[j] = -1;
+                    break;
+                }
+            }
+            xSemaphoreGive(s_ws_mutex);
+        }
+    }
     free(a->data);
     free(a);
 }
@@ -91,7 +108,13 @@ static void broadcast_text(const char *text)
                 a->fd = s_ws_fds[i];
                 a->data = strdup(text);
                 a->len = len;
-                httpd_queue_work(s_server, ws_async_send, a);
+                esp_err_t err = httpd_queue_work(s_server, ws_async_send, a);
+                if (err != ESP_OK)
+                {
+                    ESP_LOGW(TAG, "queue_work failed: %s", esp_err_to_name(err));
+                    free(a->data);
+                    free(a);
+                }
             }
         }
     }
@@ -234,6 +257,11 @@ static esp_err_t ws_handler(httpd_req_t *req)
         }
         xSemaphoreGive(s_ws_mutex);
         ESP_LOGI(TAG, "WS connected fd=%d", fd);
+        ESP_LOGI(TAG,
+         "heap=%u min=%u internal=%u",
+         esp_get_free_heap_size(),
+         esp_get_minimum_free_heap_size(),
+         heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
         return ESP_OK;
     }
     httpd_ws_frame_t pkt;
@@ -340,7 +368,6 @@ static esp_err_t wifi_api_handler(httpd_req_t *req)
     fflush(stdout);
     vTaskDelay(pdMS_TO_TICKS(500));
     esp_restart();
-    return ESP_OK;
 }
 
 static httpd_handle_t start_webserver(void)
