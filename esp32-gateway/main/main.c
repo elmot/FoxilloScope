@@ -13,7 +13,6 @@
 #include "esp_mac.h"
 #include "nvs_flash.h"
 #include "esp_http_server.h"
-#include "driver/uart.h"
 #include "lwip/inet.h"
 #include "lwip/sockets.h"
 #include "mdns.h"
@@ -40,16 +39,16 @@ static const char *NVS_NS = "wifi";
 
 volatile int currentClientId = 0;
 volatile int currentClientFd = -1;
-struct async_send_arg {
+typedef struct {
     int fd;
     char *data;
     int len;
     int clentId;
-};
+} async_send_arg_t;
 
 static void ws_async_send(void* arg)
 {
-    struct async_send_arg* a = arg;
+    async_send_arg_t* a = arg;
     if (currentClientId == a->clentId && currentClientFd >=0)
     {
         httpd_ws_frame_t pkt = {
@@ -77,7 +76,7 @@ void broadcast_text(const char *text)
     xSemaphoreTake(s_ws_mutex, portMAX_DELAY);
     if (currentClientFd >= 0)
     {
-        struct async_send_arg* a = malloc(sizeof(*a));
+        async_send_arg_t* a = malloc(sizeof(*a));
         if (a)
         {
             a->fd = currentClientFd;
@@ -126,14 +125,14 @@ static void nvs_load_wifi_creds(void)
     }
 }
 
-static void close_ws(__unused esp_err_t err, int socket,__unused  void *arg)
+static void close_ws(__unused esp_err_t err, const int socket,__unused  void *arg)
 {
     httpd_sess_trigger_close(s_server, socket);
 }
 
 static void close_msg_ws(void *arg)
 {
-    static const char message[] = "error: Another browser has taken over the session.";
+    static constexpr char message[] = "error: Another browser has taken over the session.";
     static const httpd_ws_frame_t frame = {
         .final = true,
         .fragmented = false,
@@ -208,7 +207,7 @@ static esp_err_t wifi_status_handler(httpd_req_t *req)
     } else {
         status = "disconnected";
     }
-    int n = snprintf(buf, sizeof(buf),
+    const int n = snprintf(buf, sizeof(buf),
         "{\"sta\":{\"status\":\"%s\",\"ssid\":\"%s\",\"ip\":\"%s\",\"rssi\":%d}}",
         status, s_sta_ssid, s_sta_ip, s_sta_rssi);
     httpd_resp_set_type(req, "application/json");
@@ -216,10 +215,11 @@ static esp_err_t wifi_status_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
+// ReSharper disable once CppDFAConstantFunctionResult
 static esp_err_t wifi_api_handler(httpd_req_t *req)
 {
     char content[256];
-    int ret = httpd_req_recv(req, content, sizeof(content) - 1);
+    const int ret = httpd_req_recv(req, content, sizeof(content) - 1);
     if (ret <= 0) {
         httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "No data");
         return ESP_FAIL;
@@ -228,7 +228,7 @@ static esp_err_t wifi_api_handler(httpd_req_t *req)
 
     char ssid[32] = {0};
     char password[64] = {0};
-    char *p = content;
+    const char *p = content;
     while (*p) {
         while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') p++;
         if (strncmp(p, "\"ssid\":", 7) == 0) {
@@ -260,7 +260,7 @@ static esp_err_t wifi_api_handler(httpd_req_t *req)
     nvs_save_wifi_creds(ssid, password);
 
     httpd_resp_set_type(req, "application/json");
-    static const char response_json[] = "{\"ok\":true}";
+    static constexpr char response_json[] = "{\"ok\":true}";
     httpd_resp_send(req, response_json, sizeof(response_json) -1);
     fflush(stdout);
     vTaskDelay(pdMS_TO_TICKS(500));
@@ -271,6 +271,7 @@ static httpd_handle_t start_webserver(void)
 {
     httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
     cfg.lru_purge_enable = true;
+    cfg.max_uri_handlers = 20;
     httpd_handle_t hd = NULL;
 
     if (httpd_start(&hd, &cfg) == ESP_OK) {
@@ -294,7 +295,7 @@ bool ws_any_connected()
     return currentClientFd >=0;
 }
 
-static void wifi_event_handler(void *arg, esp_event_base_t base, int32_t id, void *data)
+static void wifi_event_handler(__unused void *arg,const esp_event_base_t base,const  int32_t id,void * data)
 {
     if (base == WIFI_EVENT && id == WIFI_EVENT_AP_STACONNECTED) {
     } else if (base == WIFI_EVENT && id == WIFI_EVENT_AP_STADISCONNECTED) {
@@ -303,7 +304,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
         led_refresh();
         esp_wifi_connect();
     } else if (base == IP_EVENT && id == IP_EVENT_STA_GOT_IP) {
-        ip_event_got_ip_t *e = data;
+        const ip_event_got_ip_t *e = data;
         ESP_LOGI(TAG, "STA got IP: " IPSTR, IP2STR(&e->ip_info.ip));
         s_sta_connected = true;
         snprintf(s_sta_ip, sizeof(s_sta_ip), IPSTR, IP2STR(&e->ip_info.ip));
@@ -311,7 +312,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
         s_retry_num = 0;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     } else if (base == WIFI_EVENT && id == WIFI_EVENT_STA_DISCONNECTED) {
-        wifi_event_sta_disconnected_t *d = data;
+        const wifi_event_sta_disconnected_t *d = data;
         s_sta_connected = false;
         s_sta_ip[0] = '\0';
         ESP_LOGI(TAG, "STA disconnected, reason=%d", d->reason);
@@ -353,6 +354,7 @@ static void wifi_init_apsta(void)
             .channel = CONFIG_ESP_WIFI_AP_CHANNEL,
             .password = CONFIG_ESP_WIFI_AP_PASSWORD,
             .max_connection = CONFIG_ESP_MAX_STA_CONN_AP,
+            // ReSharper disable once CppDFAUnreachableCode
             .authmode = strlen(CONFIG_ESP_WIFI_AP_PASSWORD) ? WIFI_AUTH_WPA2_PSK : WIFI_AUTH_OPEN,
         }
     };
@@ -393,7 +395,7 @@ void app_main(void)
 
     nvs_load_wifi_creds();
 
-    wifi_init_config_t wcfg = WIFI_INIT_CONFIG_DEFAULT();
+    const wifi_init_config_t wcfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&wcfg));
     wifi_init_apsta();
 
@@ -405,9 +407,9 @@ void app_main(void)
 
     ESP_ERROR_CHECK(mdns_init());
     const char *hostname = CONFIG_LWIP_LOCAL_HOSTNAME;
-    const size_t hlen = strlen(hostname);
-    if (hlen > 6 && strcmp(hostname + hlen - 6, ".local") == 0) {
-        char *trimmed = strndup(hostname, hlen - 6);
+    const size_t h_len = strlen(hostname);
+    if (h_len > 6 && strcmp(hostname + h_len - 6, ".local") == 0) {
+        char *trimmed = strndup(hostname, h_len - 6);
         ESP_ERROR_CHECK(mdns_hostname_set(trimmed));
         free(trimmed);
     } else {

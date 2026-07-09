@@ -15,9 +15,9 @@ static void led_set_rgb(uint8_t r, uint8_t g, uint8_t b)
 {
     if (!s_led_chan || !s_led_encoder) return;
     rmt_symbol_word_t sym[25];
-    uint32_t grb = ((uint32_t)g << 16) | ((uint32_t)r << 8) | b;
+    const uint32_t grb = ((uint32_t)g << 16) | ((uint32_t)r << 8) | b;
     for (int i = 0; i < 24; i++) {
-        bool bit = (grb >> (23 - i)) & 1;
+        const bool bit = (grb >> (23 - i)) & 1;
         sym[i] = (rmt_symbol_word_t){
             .duration0 = bit ? LED_T1H : LED_T0H,
             .level0 = 1,
@@ -29,7 +29,7 @@ static void led_set_rgb(uint8_t r, uint8_t g, uint8_t b)
         .duration0 = LED_RESET, .level0 = 0,
         .duration1 = 0, .level1 = 0,
     };
-    rmt_transmit_config_t t = { .loop_count = 0 };
+    const rmt_transmit_config_t t = { .loop_count = 0 };
     rmt_transmit(s_led_chan, s_led_encoder, sym, sizeof(sym), &t);
 }
 
@@ -44,7 +44,7 @@ void led_refresh(void)
 
 void led_init(void)
 {
-    rmt_tx_channel_config_t c = {
+    const rmt_tx_channel_config_t c = {
         .gpio_num = LED_GPIO,
         .clk_src = RMT_CLK_SRC_DEFAULT,
         .resolution_hz = LED_RESOLUTION_HZ,

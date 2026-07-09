@@ -1,6 +1,7 @@
 #include "freertos/FreeRTOS.h"
 #include "gateway.h"
 #include "driver/uart.h"
+// ReSharper disable once CppUnusedIncludeDirective
 #include "soc/gpio_num.h"
 
 #define UART_PORT UART_NUM_1
