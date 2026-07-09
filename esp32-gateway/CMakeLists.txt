@@ -8,4 +8,5 @@ list(PREPEND SDKCONFIG_DEFAULTS
         "sdkconfig.secrets"
         "sdkconfig.defaults")
 
+idf_build_set_property(MINIMAL_BUILD ON)
 project(esp32-gateway)
