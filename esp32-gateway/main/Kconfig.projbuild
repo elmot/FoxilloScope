@@ -59,4 +59,28 @@ menu "Gateway Configuration"
         endchoice
     endmenu
 
+    menu "LED Configuration"
+
+        config LED_GPIO
+            int "RGB LED GPIO pin"
+            default 2
+            range 0 48
+            help
+                GPIO pin connected to the WS2812 RGB LED data line.
+                Common values: 2 (M5Stamp-C3U.
+    endmenu
+
+	menu "UART Configuration"
+
+        config OSC_UART_TX
+            int "External UART TX GPIO pin"
+            default 6
+            range 0 48
+
+        config OSC_UART_RX
+            int "External UART RX GPIO pin"
+            default 7
+            range 0 48
+    endmenu
+
 endmenu

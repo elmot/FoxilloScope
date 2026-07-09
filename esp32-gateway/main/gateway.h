@@ -4,9 +4,20 @@
 
 #ifndef ESP32_GATEWAY_GATEWAY_H
 #define ESP32_GATEWAY_GATEWAY_H
+#include "freertos/FreeRTOS.h"
+
+#define WIFI_FAIL_BIT BIT1
+
+
+extern void led_init(void);
+extern void led_refresh(void);
 
 void uart_init(void);
 void uart_write_str(const char *str);
 void broadcast_text(const char *text);
 
+extern bool ws_any_connected(void);
+volatile extern EventGroupHandle_t s_wifi_event_group;
+
+volatile extern bool s_sta_connected;
 #endif //ESP32_GATEWAY_GATEWAY_H

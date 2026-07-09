@@ -24,7 +24,7 @@
 
 static const char *TAG = "gateway";
 
-static EventGroupHandle_t s_wifi_event_group;
+volatile EventGroupHandle_t s_wifi_event_group;
 static int s_retry_num = 0;
 static httpd_handle_t s_server = NULL;
 
@@ -34,7 +34,7 @@ static char s_sta_ssid[32];
 static char s_sta_password[64];
 static char s_sta_ip[16];
 static int s_sta_rssi;
-static bool s_sta_connected;
+volatile bool s_sta_connected;
 
 static const char *NVS_NS = "wifi";
 
@@ -55,7 +55,7 @@ struct async_send_arg {
 static void ws_async_send(void* arg)
 {
     struct async_send_arg* a = arg;
-    if (currentClientId == a->clentId)
+    if (currentClientId == a->clentId && currentClientFd >=0)
     {
         httpd_ws_frame_t pkt = {
             .payload = (uint8_t*)a->data,
@@ -66,6 +66,10 @@ static void ws_async_send(void* arg)
         if (err)
         {
             ESP_LOGW(TAG, "send fd=%d err=%s", a->fd, esp_err_to_name(err));
+            xSemaphoreTake(s_ws_mutex, portMAX_DELAY);
+            currentClientFd = -1;
+            xSemaphoreGive(s_ws_mutex);
+            led_refresh();
         }
     }
     free(a->data);
@@ -163,6 +167,7 @@ static esp_err_t ws_handler(httpd_req_t *req)
         currentClientFd = newFd;
         xSemaphoreGive(s_ws_mutex);
         ESP_LOGI(TAG, "WS connected fd=%d", currentClientFd);
+        led_refresh();
         ESP_LOGI(TAG,
          "heap=%u min=%u internal=%u",
          esp_get_free_heap_size(),
@@ -175,6 +180,13 @@ static esp_err_t ws_handler(httpd_req_t *req)
     pkt.type = HTTPD_WS_TYPE_TEXT;
     esp_err_t ret = httpd_ws_recv_frame(req, &pkt, 0);
     if (ret != ESP_OK) return ret;
+    if (pkt.type == HTTPD_WS_TYPE_CLOSE) {
+        xSemaphoreTake(s_ws_mutex, portMAX_DELAY);
+        currentClientFd = -1;
+        led_refresh();
+        xSemaphoreGive(s_ws_mutex);
+        return ESP_OK;
+    }
     if (pkt.len) {
         buf = calloc(1, pkt.len + 1);
         if (!buf) return ESP_ERR_NO_MEM;
@@ -269,7 +281,8 @@ static esp_err_t wifi_api_handler(httpd_req_t *req)
     nvs_save_wifi_creds(ssid, password);
 
     httpd_resp_set_type(req, "application/json");
-    httpd_resp_send(req, "{\"ok\":true}", 0);
+    static const char response_json[] = "{\"ok\":true}";
+    httpd_resp_send(req, response_json, sizeof(response_json) -1);
     fflush(stdout);
     vTaskDelay(pdMS_TO_TICKS(500));
     esp_restart();
@@ -301,12 +314,18 @@ static httpd_handle_t start_webserver(void)
     return hd;
 }
 
+bool ws_any_connected()
+{
+    return currentClientFd >=0;
+}
+
 static void wifi_event_handler(void *arg, esp_event_base_t base, int32_t id, void *data)
 {
     if (base == WIFI_EVENT && id == WIFI_EVENT_AP_STACONNECTED) {
     } else if (base == WIFI_EVENT && id == WIFI_EVENT_AP_STADISCONNECTED) {
     } else if (base == WIFI_EVENT && id == WIFI_EVENT_STA_START) {
         s_sta_connected = false;
+        led_refresh();
         esp_wifi_connect();
     } else if (base == IP_EVENT && id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *e = data;
@@ -334,12 +353,15 @@ static void wifi_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
             if (delay_ms > 300000) delay_ms = 300000;
             ESP_LOGI(TAG, "Reconnect in %d ms (attempt %d/%d)",
                      delay_ms, s_retry_num, CONFIG_ESP_MAXIMUM_STA_RETRY);
+            led_refresh();
             vTaskDelay(pdMS_TO_TICKS(delay_ms));
+            led_refresh();
             esp_wifi_connect();
         } else {
             ESP_LOGW(TAG, "Exhausted STA retries");
             xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
         }
+        led_refresh();
     }
 }
 
@@ -377,6 +399,7 @@ static void wifi_init_apsta(void)
 
 void app_main(void)
 {
+    led_init();
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
