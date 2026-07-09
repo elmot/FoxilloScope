@@ -14,9 +14,7 @@
 #include "nvs_flash.h"
 #include "esp_http_server.h"
 #include "driver/uart.h"
-#include "soc/gpio_num.h"
 #include "lwip/inet.h"
-#include "lwip/netdb.h"
 #include "lwip/sockets.h"
 #include "mdns.h"
 #include "gateway.h"
@@ -24,15 +22,12 @@
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT BIT1
 
-#define MAX_WS_CLIENTS 8
-
 static const char *TAG = "gateway";
 
 static EventGroupHandle_t s_wifi_event_group;
 static int s_retry_num = 0;
 static httpd_handle_t s_server = NULL;
 
-static int s_ws_fds[MAX_WS_CLIENTS];
 static SemaphoreHandle_t s_ws_mutex;
 
 static char s_sta_ssid[32];
@@ -48,36 +43,29 @@ extern const uint8_t _binary_index_html_end[];
 extern const uint8_t _binary_wifi_html_start[];
 extern const uint8_t _binary_wifi_html_end[];
 
+volatile int currentClientId = 0;
+volatile int currentClientFd = -1;
 struct async_send_arg {
     int fd;
     char *data;
     int len;
+    int clentId;
 };
 
 static void ws_async_send(void* arg)
 {
     struct async_send_arg* a = arg;
-    if (httpd_ws_get_fd_info(s_server, a->fd) == HTTPD_WS_CLIENT_WEBSOCKET)
+    if (currentClientId == a->clentId)
     {
         httpd_ws_frame_t pkt = {
             .payload = (uint8_t*)a->data,
             .len = a->len,
             .type = HTTPD_WS_TYPE_TEXT
         };
-        esp_err_t err = httpd_ws_send_frame_async(s_server, a->fd, &pkt) != ESP_OK;
+        const esp_err_t err = httpd_ws_send_frame_async(s_server, a->fd, &pkt) != ESP_OK;
         if (err)
         {
             ESP_LOGW(TAG, "send fd=%d err=%s", a->fd, esp_err_to_name(err));
-            xSemaphoreTake(s_ws_mutex, portMAX_DELAY);
-            for (int j = 0; j < MAX_WS_CLIENTS; j++)
-            {
-                if (s_ws_fds[j] == a->fd)
-                {
-                    s_ws_fds[j] = -1;
-                    break;
-                }
-            }
-            xSemaphoreGive(s_ws_mutex);
         }
     }
     free(a->data);
@@ -88,20 +76,21 @@ void broadcast_text(const char *text)
 {
     int len = strlen(text);
     xSemaphoreTake(s_ws_mutex, portMAX_DELAY);
-    for (int i = 0; i < MAX_WS_CLIENTS; i++) {
-        if (s_ws_fds[i] >= 0) {
-            struct async_send_arg *a = malloc(sizeof(*a));
-            if (a) {
-                a->fd = s_ws_fds[i];
-                a->data = strdup(text);
-                a->len = len;
-                esp_err_t err = httpd_queue_work(s_server, ws_async_send, a);
-                if (err != ESP_OK)
-                {
-                    ESP_LOGW(TAG, "queue_work failed: %s", esp_err_to_name(err));
-                    free(a->data);
-                    free(a);
-                }
+    if (currentClientFd >= 0)
+    {
+        struct async_send_arg* a = malloc(sizeof(*a));
+        if (a)
+        {
+            a->fd = currentClientFd;
+            a->clentId = currentClientId;
+            a->data = strdup(text);
+            a->len = len;
+            const esp_err_t err = httpd_queue_work(s_server, ws_async_send, a);
+            if (err != ESP_OK)
+            {
+                ESP_LOGW(TAG, "queue_work failed: %s", esp_err_to_name(err));
+                free(a->data);
+                free(a);
             }
         }
     }
@@ -138,16 +127,42 @@ static void nvs_load_wifi_creds(void)
     }
 }
 
+static void close_ws(__unused esp_err_t err, int socket,__unused  void *arg)
+{
+    httpd_sess_trigger_close(s_server, socket);
+}
+
+static void close_msg_ws(void *arg)
+{
+    static const char message[] = "error: Another browser has taken over the session.";
+    static const httpd_ws_frame_t frame = {
+        .final = true,
+        .fragmented = false,
+        .type = HTTPD_WS_TYPE_TEXT,
+        .payload = (uint8_t*)&message[0],
+        .len = sizeof(message) - 1
+    };
+    const int fd = (int)arg;
+    const esp_err_t res = httpd_ws_send_data_async(s_server, fd, (httpd_ws_frame_t*)&frame, close_ws, nullptr);
+    if (res!= ESP_OK)
+    {
+        ESP_LOGW(TAG, "Closing message fail: %d", res);
+    }
+}
+
 static esp_err_t ws_handler(httpd_req_t *req)
 {
     if (req->method == HTTP_GET) {
-        int fd = httpd_req_to_sockfd(req);
+        const int newFd = httpd_req_to_sockfd(req);
         xSemaphoreTake(s_ws_mutex, portMAX_DELAY);
-        for (int i = 0; i < MAX_WS_CLIENTS; i++) {
-            if (s_ws_fds[i] < 0) { s_ws_fds[i] = fd; break; }
+        if (currentClientFd >= 0)
+        {
+            httpd_queue_work(s_server, close_msg_ws, (void*)currentClientFd);
         }
+        currentClientId++;
+        currentClientFd = newFd;
         xSemaphoreGive(s_ws_mutex);
-        ESP_LOGI(TAG, "WS connected fd=%d", fd);
+        ESP_LOGI(TAG, "WS connected fd=%d", currentClientFd);
         ESP_LOGI(TAG,
          "heap=%u min=%u internal=%u",
          esp_get_free_heap_size(),
@@ -155,9 +170,8 @@ static esp_err_t ws_handler(httpd_req_t *req)
          heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
         return ESP_OK;
     }
-    httpd_ws_frame_t pkt;
+    httpd_ws_frame_t pkt={0};
     uint8_t *buf = NULL;
-    memset(&pkt, 0, sizeof(pkt));
     pkt.type = HTTPD_WS_TYPE_TEXT;
     esp_err_t ret = httpd_ws_recv_frame(req, &pkt, 0);
     if (ret != ESP_OK) return ret;
@@ -169,8 +183,8 @@ static esp_err_t ws_handler(httpd_req_t *req)
         if (ret != ESP_OK) { free(buf); return ret; }
         uart_write_str((const char *)buf);
         uart_write_str("\n");
+        free(buf);
     }
-    free(buf);
     return ESP_OK;
 }
 
@@ -374,7 +388,6 @@ void app_main(void)
 
     s_wifi_event_group = xEventGroupCreate();
     s_ws_mutex = xSemaphoreCreateMutex();
-    for (int i = 0; i < MAX_WS_CLIENTS; i++) s_ws_fds[i] = -1;
 
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, wifi_event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, wifi_event_handler, NULL));

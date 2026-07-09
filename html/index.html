@@ -1073,10 +1073,17 @@
         if (el) { el.textContent = txt; el.className = isErr ? 'error' : ''; }
     }
 
+    function appendStatus(txt) {
+        const el = document.getElementById("status");
+        if (el) {
+            el.textContent += " " + txt;
+        }
+    }
+
     function onFrame(text) {
         clearTimeout(staleTimer);
-        staleTimer = setTimeout(() => { setStatus("communication stalling", true); }, 1000);
         if (text.startsWith("error: ")) { setStatus("error: " + text.substring(7), true); return; }
+        staleTimer = setTimeout(() => { setStatus("communication stalling", true); }, 1000);
         if (paused) return;
         const lines = text.split("\n");
         let commands = {};
@@ -1126,12 +1133,12 @@
         comm.ws = new WebSocket(`ws://${location.host}/ws`);
         comm.ws.onopen = () => {
             clearTimeout(staleTimer);
-            setStatus("connected");
+            setStatus("Connected");
             param.sendAllCommands();
         };
         comm.ws.onclose = () => {
             clearTimeout(staleTimer);
-            setStatus("disconnected");
+            appendStatus("Oscilloscope disconnected.");
         };
         comm.ws.onerror = () => setStatus("error", true);
         comm.ws.onmessage = (e) => {
