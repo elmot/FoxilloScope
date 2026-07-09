@@ -71,7 +71,7 @@ __noreturn static void uart_event_task(__unused void *arg)
                     char c = data[i];
                     if (c == '\n') {
                         s_line_buf[s_line_pos] = '\0';
-                        if (strcmp(s_line_buf, "[frame]") == 0) {
+                        if (strcmp(s_line_buf, "#") == 0) {
                             flush_frame();
                         } else if (s_line_buf[0] != '\0') {
                             if (s_frame_count < MAX_FRAME_LINES) {

@@ -19,7 +19,7 @@ async def serial_reader(reader: asyncio.StreamReader) -> None:
                 await asyncio.sleep(0.001)
                 continue
             line = raw.decode("utf-8", errors="replace").strip()
-            if line == "[frame]":
+            if line == "#":
                 if buf is not None:
                     block_text = "\n".join(buf)
                     for ws in WS_CLIENTS.copy():
@@ -59,6 +59,14 @@ async def ws_handler(request: web.Request) -> web.WebSocketResponse:
 async def index_handler(request: web.Request) -> web.FileResponse:
     return web.FileResponse("../html/index.html")
 
+async def css_handler(request: web.Request) -> web.FileResponse:
+    return web.FileResponse("../html/uPlot.min.css")
+
+async def js_handler(request: web.Request) -> web.FileResponse:
+    return web.FileResponse("../html/uPlot.iife.min.js")
+
+async def icon_handler(request: web.Request) -> web.FileResponse:
+    return web.FileResponse("../html/favicon.png")
 
 def main():
     global serial_writer
@@ -81,7 +89,10 @@ def main():
 
     app = web.Application()
     app.router.add_get("/", index_handler)
+    app.router.add_get("/uPlot.min.css", css_handler)
+    app.router.add_get("/uPlot.iife.min.js", js_handler)
     app.router.add_get("/ws", ws_handler)
+    app.router.add_get("/favicon.png", icon_handler)
     app.on_startup.append(on_startup)
     app.on_shutdown.append(on_shutdown)
     web.run_app(app, host="127.0.0.1", port=8000)

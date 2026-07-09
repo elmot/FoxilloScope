@@ -38,11 +38,6 @@ volatile bool s_sta_connected;
 
 static const char *NVS_NS = "wifi";
 
-extern const uint8_t _binary_index_html_start[];
-extern const uint8_t _binary_index_html_end[];
-extern const uint8_t _binary_wifi_html_start[];
-extern const uint8_t _binary_wifi_html_end[];
-
 volatile int currentClientId = 0;
 volatile int currentClientFd = -1;
 struct async_send_arg {
@@ -200,22 +195,6 @@ static esp_err_t ws_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
-static esp_err_t index_handler(httpd_req_t *req)
-{
-    size_t len = _binary_index_html_end - _binary_index_html_start;
-    httpd_resp_set_type(req, "text/html");
-    httpd_resp_send(req, (const char *)_binary_index_html_start, len);
-    return ESP_OK;
-}
-
-static esp_err_t wifi_config_handler(httpd_req_t *req)
-{
-    httpd_resp_set_type(req, "text/html");
-    httpd_resp_send(req, (const char *)_binary_wifi_html_start,
-                    _binary_wifi_html_end - _binary_wifi_html_start);
-    return ESP_OK;
-}
-
 static esp_err_t wifi_status_handler(httpd_req_t *req)
 {
     char buf[256];
@@ -293,15 +272,11 @@ static httpd_handle_t start_webserver(void)
     httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
     cfg.lru_purge_enable = true;
     httpd_handle_t hd = NULL;
+
     if (httpd_start(&hd, &cfg) == ESP_OK) {
-        httpd_register_uri_handler(hd, &(const httpd_uri_t){
-            .uri = "/", .method = HTTP_GET, .handler = index_handler
-        });
+        register_http_static_resources(hd);
         httpd_register_uri_handler(hd, &(const httpd_uri_t){
             .uri = "/ws", .method = HTTP_GET, .handler = ws_handler, .is_websocket = true
-        });
-        httpd_register_uri_handler(hd, &(const httpd_uri_t){
-            .uri = "/wifi", .method = HTTP_GET, .handler = wifi_config_handler
         });
         httpd_register_uri_handler(hd, &(const httpd_uri_t){
             .uri = "/api/wifi/status", .method = HTTP_GET, .handler = wifi_status_handler
@@ -361,12 +336,13 @@ static void wifi_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
             ESP_LOGW(TAG, "Exhausted STA retries");
             xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
         }
-        led_refresh();
     }
+    led_refresh();
 }
 
 static void wifi_init_apsta(void)
 {
+
     esp_netif_create_default_wifi_ap();
     esp_netif_create_default_wifi_sta();
 

@@ -39,7 +39,7 @@ void led_refresh(void)
     if (ws_any_connected()) { led_set_rgb(0, 0, 32); return; }
     if (xEventGroupGetBits(s_wifi_event_group) & WIFI_FAIL_BIT) { led_set_rgb(32, 24, 0); return; }
     if (s_sta_connected) { led_set_rgb(0, 32, 0); return; }
-    led_set_rgb(0, 0, 0);
+    led_set_rgb(20,10,10);
 }
 
 void led_init(void)

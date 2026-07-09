@@ -1,0 +1,14 @@
+<component name="DebugServers">
+  <generic-debug-target name="ESP" uniqueID="dc65228b-0e2f-487f-b221-3c0bbb8b9195">
+    <debugger version="1">
+      <debugger kind="GDB">C:\Espressif\tools\riscv32-esp-elf-gdb\16.3_20250913\riscv32-esp-elf-gdb\bin\riscv32-esp-elf-gdb-3.13.exe</debugger>
+      <env />
+    </debugger>
+    <gdbserver exe="C:/Espressif/tools/openocd-esp32/v0.12.0-esp32-20260304/openocd-esp32/bin/openocd.exe" args="-s C:/Espressif/tools/openocd-esp32/v0.12.0-esp32-20260304/openocd-esp32/share/openocd/ -f board/esp32c3-builtin.cfg">
+      <env />
+    </gdbserver>
+    <console enabled="true" port="4444" />
+    <target download-type="NONE" reset-command="monitor reset init" reset-before="false" />
+    <connection extended-remote="false" use-custom-script="true" remote-string="tcp::3333" custom-script="source D:/projects/g4-oscilloscope-b/esp32-gateway/cmake-build-release-esp-idf-6/gdbinit/symbols&#10;source D:/projects/g4-oscilloscope-b/esp32-gateway/cmake-build-release-esp-idf-6/gdbinit/connect&#10;echo Connected to target!\n" warmup-ms="2000" />
+  </generic-debug-target>
+</component>

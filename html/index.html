@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/png" href="favicon.png" />
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Oscilloscope</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot/dist/uPlot.min.css">
+    <link rel="stylesheet" href="uPlot.min.css">
     <style>
         :root {
             --ch-a: #FFD600;
@@ -518,7 +519,7 @@
 </div>
 <div id="footer"><span id="status">connecting...</span></div>
 
-<script src="https://cdn.jsdelivr.net/npm/uplot/dist/uPlot.iife.min.js"></script>
+<script src="uPlot.iife.min.js"></script>
 <script>
     function cssVar(name) {
         return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -1186,7 +1187,7 @@
                         const { value, done } = await reader.read();
                         if (done) break;
                         buffer += decoder.decode(value, { stream: true });
-                        const parts = buffer.split('[frame]');
+                        const parts = buffer.split('#');
                         buffer = parts.pop();
                         for (const frame of parts) {
                             if (frame.trim()) onFrame(frame.trim());
