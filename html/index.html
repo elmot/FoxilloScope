@@ -153,8 +153,6 @@
         #footer {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 1em;
             padding: 4px;
             flex-shrink: 0;
             border-top: 1px solid #2a2a2a;
@@ -163,8 +161,16 @@
             flex-basis: 20px;
         }
 
-        #status {
+        #footer-left, #cursor-info, #status{
+            flex: 1;
             color: #888;
+            font-size: 13px;
+        }
+        #cursor-info {
+            text-align: center;
+        }
+        #status {
+            text-align: right;
         }
         #status.error { color: #f00; }
         .u-select { background: rgba(0, 255, 0, 0.15) !important; }
@@ -517,7 +523,7 @@
         <datalist id="trgMarks"><option value="0"></datalist>
     </div>
 </div>
-<div id="footer"><span id="status">connecting...</span></div>
+<div id="footer"><span id="footer-left"></span><span id="cursor-info"></span><span id="status">connecting...</span></div>
 
 <script src="uPlot.iife.min.js"></script>
 <script>
@@ -976,9 +982,9 @@
                       }],
                       setCursor: [
                          self => {
-                              const cx = self.cursor.left, cy = self.cursor.top, st = document.getElementById('status');
+                              const cx = self.cursor.left, cy = self.cursor.top, ci = document.getElementById('cursor-info');
 
-                             if (cx == null || cy == null || !st) return;
+                              if (cx == null || cy == null || !ci) return;
                               try {
                                   const se = self.root.querySelector('.u-select');
                                   if (se) se.style.display = _drag ? '' : 'none';
@@ -998,16 +1004,16 @@
                                       if (!isNaN(dt)) parts.push('\u0394t ' + fmtTime(dt));
                                       if (!isNaN(dA)) parts.push('\u0394A ' + fmtUv(dA));
                                       if (!isNaN(dB)) parts.push('\u0394B ' + fmtUv(dB));
-                                      st.textContent = parts.join('  ');
-                                  } else {
-                                      const t = self.posToVal(cx, 'x');
-                                      const vA = self.posToVal(cy, 'chA');
-                                      const vB = self.posToVal(cy, 'chB');
-                                      const parts = [];
-                                      if (!isNaN(t)) parts.push(fmtTime(t));
-                                      if (!isNaN(vA)) parts.push('A ' + fmtUv(vA));
-                                      if (!isNaN(vB)) parts.push('B ' + fmtUv(vB));
-                                      st.textContent = parts.join('  ');
+                                       ci.textContent = parts.join('  ');
+                                   } else {
+                                       const t = self.posToVal(cx, 'x');
+                                       const vA = self.posToVal(cy, 'chA');
+                                       const vB = self.posToVal(cy, 'chB');
+                                       const parts = [];
+                                       if (!isNaN(t)) parts.push(fmtTime(t));
+                                       if (!isNaN(vA)) parts.push('A ' + fmtUv(vA));
+                                       if (!isNaN(vB)) parts.push('B ' + fmtUv(vB));
+                                       ci.textContent = parts.join('  ');
                                   }
                               } catch(e) { console.error("setCursor:", e); }
                           }
