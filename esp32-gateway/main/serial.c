@@ -1,3 +1,4 @@
+#include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "gateway.h"
 #include "driver/uart.h"
@@ -9,15 +10,8 @@
 #define UART_TX_PIN CONFIG_OSC_UART_TX
 #define UART_RX_PIN CONFIG_OSC_UART_RX
 
-#define UART_BUF_SIZE 10240
+#define BUF_SIZE 20000
 
-#define LINE_BUF_SIZE 2000
-#define MAX_FRAME_LINES 128
-
-static char s_line_buf[LINE_BUF_SIZE];
-static int s_line_pos = 0;
-static char *s_frame_lines[MAX_FRAME_LINES];
-static int s_frame_count = 0;
 static QueueHandle_t s_uart_queue = NULL;
 
 void uart_write_str(const char *str)
@@ -33,59 +27,48 @@ static void broadcast_error(const char *msg)
     if (n > 0) broadcast_text(buf);
 }
 
-
-static void flush_frame(void)
-{
-    if (s_frame_count == 0) return;
-    int total = 0;
-    for (int i = 0; i < s_frame_count; i++) {
-        total += strlen(s_frame_lines[i]) + 1;
-    }
-    char *block = malloc(total + 1);
-    if (!block) return;
-    int pos = 0;
-    for (int i = 0; i < s_frame_count; i++) {
-        int l = strlen(s_frame_lines[i]);
-        memcpy(block + pos, s_frame_lines[i], l);
-        pos += l;
-        block[pos++] = '\n';
-        free(s_frame_lines[i]);
-        s_frame_lines[i] = NULL;
-    }
-    block[pos] = '\0';
-    s_frame_count = 0;
-    broadcast_text(block);
-    free(block);
-}
-
 __noreturn static void uart_event_task(__unused void *arg)
 {
+    static char buf[BUF_SIZE];
+    static int len = 0;
+    static bool discard = true;
     uart_event_t event;
-    static char data[UART_BUF_SIZE];
 
     for (;;) {
         if (xQueueReceive(s_uart_queue, &event, portMAX_DELAY)) {
             switch (event.type) {
-            case UART_DATA:
-                uart_read_bytes(UART_PORT, data, event.size, 0);
-                for (int i = 0; i < event.size; i++) {
-                    char c = data[i];
-                    if (c == '\n') {
-                        s_line_buf[s_line_pos] = '\0';
-                        if (strcmp(s_line_buf, "#") == 0) {
-                            flush_frame();
-                        } else if (s_line_buf[0] != '\0') {
-                            if (s_frame_count < MAX_FRAME_LINES) {
-                                s_frame_lines[s_frame_count] = strdup(s_line_buf);
-                                if (s_frame_lines[s_frame_count]) s_frame_count++;
-                            }
-                        }
-                        s_line_pos = 0;
-                    } else if (c != '\r') {
-                        if (s_line_pos < LINE_BUF_SIZE - 1) s_line_buf[s_line_pos++] = c;
+            case UART_DATA: {
+                const int room = BUF_SIZE - 1 - len;
+                const int n = event.size < room ? event.size : room;
+                uart_read_bytes(UART_PORT, buf + len, n, 0);
+                len += n;
+
+                if (discard) {
+                    const char *hash = memchr(buf, '#', len);
+                    if (hash) {
+                        discard = false;
+                        const int after = len - (hash - buf) - 1;
+                        memmove(buf, hash + 1, after);
+                        len = after;
+                    } else {
+                        len = 0;
                     }
                 }
+
+                if (!discard) {
+                    char *hash;
+                    while ((hash = memchr(buf, '#', len)) != NULL) {
+                        const int idx = hash - buf;
+                        *hash = '\0';
+                        if (idx > 0) broadcast_text(buf);
+                        const int after = len - idx - 1;
+                        memmove(buf, hash + 1, after);
+                        len = after;
+                    }
+                }
+                buf[len] = '\0';
                 break;
+            }
             case UART_FRAME_ERR:
                 broadcast_error("UART frame error");
                 break;
