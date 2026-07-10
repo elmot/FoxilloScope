@@ -24,4 +24,6 @@ volatile extern bool s_sta_connected;
 
 void register_http_static_resources(const httpd_handle_t hd);
 
+void start_dns_server(void);
+
 #endif //ESP32_GATEWAY_GATEWAY_H

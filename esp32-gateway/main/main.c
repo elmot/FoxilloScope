@@ -277,11 +277,20 @@ static esp_err_t wifi_api_handler(httpd_req_t *req)
     esp_restart();
 }
 
+static esp_err_t redirect_handler(httpd_req_t *req, [[maybe_unused]] httpd_err_code_t)
+{
+    httpd_resp_set_status(req, "302 Found");
+    httpd_resp_set_hdr(req, "Location", "/wifi");
+    httpd_resp_send(req, NULL, 0);
+    return ESP_OK;
+}
+
 static httpd_handle_t start_webserver(void)
 {
     httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
     cfg.lru_purge_enable = true;
     cfg.max_uri_handlers = 20;
+    cfg.max_open_sockets = 20;
     httpd_handle_t hd = NULL;
 
     if (httpd_start(&hd, &cfg) == ESP_OK) {
@@ -295,6 +304,7 @@ static httpd_handle_t start_webserver(void)
         httpd_register_uri_handler(hd, &(const httpd_uri_t){
             .uri = "/api/wifi", .method = HTTP_POST, .handler = wifi_api_handler
         });
+        httpd_register_err_handler(hd, HTTPD_404_NOT_FOUND, redirect_handler);
         ESP_LOGI(TAG, "Web server started on port %d", cfg.server_port);
     }
     return hd;
@@ -473,5 +483,5 @@ void app_main(void)
 #ifdef CONFIG_OSC_TX_POWER_TASK
     xTaskCreate(tx_power_task, "tx_pwr", 2048, NULL, 5, NULL);
 #endif
-
+    start_dns_server();
 }

@@ -46,7 +46,18 @@
     </style>
 </head>
 <body>
-    <h1>WiFi Client Configuration</h1>
+    <h1>Elmot Oscilloscope Wi-Fi Configuration</h1>
+    <div class="card" style="margin-bottom:16px;font-size:13px;line-height:1.5;color:#aaa">
+        <p style="margin-bottom:8px">The oscilloscope may use your existing WiFi network,
+            or run its own access point (without internet access).
+            To use the oscilloscope, either:</p>
+        <ol style="padding-left:1.2em">
+            <li>Keep this network, acknowledge "no internet" on your device, and open the oscilloscope directly.</li>
+            <li>Configure WiFi client below &mdash; then reconnect to your normal WiFi network and open the oscilloscope.</li>
+        </ol>
+        <p style="margin-top:8px">Better copy the URL to open later:<br>
+        <code style="user-select:all;color:#0f0;font-size:15px">http://elmot-oscl.local/</code></p>
+    </div>
     <div class="card" id="status-box">
         <div class="stat-row"><span class="stat-label">Status</span><span id="stat-status">—</span></div>
         <div class="stat-row"><span class="stat-label">SSID</span><span id="stat-ssid">—</span></div>
@@ -76,7 +87,7 @@
                 const sta = s.sta || {};
                 $('stat-status').textContent = sta.status || '—';
                 $('stat-ssid').textContent = sta.ssid || '—';
-                $('stat-ip').textContent = sta.ip || '—';
+                $('stat-ip').innerHTML = sta.ip ? `<a href="http://${sta.ip}/" style="color:#0f0">${sta.ip}</a>` : '—';
                 $('stat-rssi').textContent = sta.rssi !== null ? sta.rssi + ' dBm' : '—';
                 const box = $('status-box');
                 box.className = 'card ' + (sta.status || 'disconnected');
