@@ -375,6 +375,27 @@ static void wifi_init_apsta(void)
     ESP_LOGI(TAG, "STA connecting to: %s", CONFIG_ESP_WIFI_REMOTE_AP_SSID);
 }
 
+__noreturn __unused static void tx_power_task(__unused void *arg)
+{
+    int8_t last_power = 0;
+    for (;;) {
+        vTaskDelay(pdMS_TO_TICKS(5000));
+        if (!s_sta_connected) continue;
+        int rssi;
+        if (esp_wifi_sta_get_rssi(&rssi) != ESP_OK) continue;
+        int8_t power;
+        if (rssi > -50)      power = 48;
+        else if (rssi > -65) power = 60;
+        else if (rssi > -75) power = 72;
+        else                 power = 80;
+        if (power != last_power) {
+            esp_wifi_set_max_tx_power(power);
+            ESP_LOGI(TAG, "tx_power=%d (rssi=%d)", power / 4, rssi);
+            last_power = power;
+        }
+    }
+}
+
 void app_main(void)
 {
     led_init();
@@ -424,4 +445,8 @@ void app_main(void)
     mdns_service_txt_item_set("_http", "_tcp", "mac", mac_str);
     mdns_service_txt_item_set("_http", "_tcp", "model", "v1.0");
     ESP_LOGI(TAG, "mDNS advertising as " CONFIG_LWIP_LOCAL_HOSTNAME);
+#ifdef CONFIG_OSC_TX_POWER_TASK
+    xTaskCreate(tx_power_task, "tx_pwr", 2048, NULL, 5, NULL);
+#endif
+
 }

@@ -57,6 +57,12 @@ menu "Gateway Configuration"
             config ESP_WIFI_AUTH_WPA2_WPA3_PSK
                 bool "WPA2/WPA3 PSK"
         endchoice
+        config OSC_TX_POWER_TASK
+            bool "Adjust TX power by RSSI"
+            default y
+            help
+                Periodically read STA RSSI and reduce WiFi transmit power
+                when signal is strong (to save power and reduce interference).
     endmenu
 
     menu "LED Configuration"
