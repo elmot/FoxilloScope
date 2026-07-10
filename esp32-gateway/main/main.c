@@ -17,13 +17,19 @@
 #include "lwip/sockets.h"
 #include "mdns.h"
 #include "gateway.h"
+#include "cJSON.h"
 
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT BIT1
+#define STA_CONNECT_TIMEOUT_MS  10000
 
 static const char *TAG = "gateway";
 
-volatile EventGroupHandle_t s_wifi_event_group;
+static TaskHandle_t s_reconnect_task = NULL;
+static SemaphoreHandle_t s_reconnect_sem = NULL;
+static volatile int s_reconnect_delay;
+
+EventGroupHandle_t s_wifi_event_group;
 static int s_retry_num = 0;
 static httpd_handle_t s_server = NULL;
 
@@ -32,7 +38,7 @@ static SemaphoreHandle_t s_ws_mutex;
 static char s_sta_ssid[32];
 static char s_sta_password[64];
 static char s_sta_ip[16];
-static int s_sta_rssi;
+static volatile int s_sta_rssi;
 volatile bool s_sta_connected;
 
 static const char *NVS_NS = "wifi";
@@ -56,8 +62,8 @@ static void ws_async_send(void* arg)
             .len = a->len,
             .type = HTTPD_WS_TYPE_TEXT
         };
-        const esp_err_t err = httpd_ws_send_frame_async(s_server, a->fd, &pkt) != ESP_OK;
-        if (err)
+        const esp_err_t err = httpd_ws_send_frame_async(s_server, a->fd, &pkt);
+        if (err != ESP_OK)
         {
             ESP_LOGW(TAG, "send fd=%d err=%s", a->fd, esp_err_to_name(err));
             xSemaphoreTake(s_ws_mutex, portMAX_DELAY);
@@ -83,6 +89,9 @@ void broadcast_text(const char *text)
             a->clentId = currentClientId;
             a->data = strdup(text);
             a->len = len;
+        }
+        if (a && a->data)
+        {
             const esp_err_t err = httpd_queue_work(s_server, ws_async_send, a);
             if (err != ESP_OK)
             {
@@ -90,6 +99,9 @@ void broadcast_text(const char *text)
                 free(a->data);
                 free(a);
             }
+        } else
+        {
+            ESP_LOGE(TAG, "Out Of Memory!!!");
         }
     }
     xSemaphoreGive(s_ws_mutex);
@@ -98,12 +110,15 @@ void broadcast_text(const char *text)
 static void nvs_save_wifi_creds(const char *ssid, const char *password)
 {
     nvs_handle_t h;
-    if (nvs_open(NVS_NS, NVS_READWRITE, &h) == ESP_OK) {
-        nvs_set_str(h, "ssid", ssid);
-        nvs_set_str(h, "password", password);
-        nvs_commit(h);
-        nvs_close(h);
+    if (nvs_open(NVS_NS, NVS_READWRITE, &h) != ESP_OK) {
+        ESP_LOGE(TAG, "nvs_open failed while saving wifi creds");
+        return;
     }
+    esp_err_t err = nvs_set_str(h, "ssid", ssid);
+    if (err == ESP_OK) err = nvs_set_str(h, "password", password);
+    if (err == ESP_OK) err = nvs_commit(h);
+    if (err != ESP_OK) ESP_LOGE(TAG, "nvs write failed: %s", esp_err_to_name(err));
+    nvs_close(h);
 }
 
 static void nvs_load_wifi_creds(void)
@@ -112,26 +127,27 @@ static void nvs_load_wifi_creds(void)
     if (nvs_open(NVS_NS, NVS_READONLY, &h) == ESP_OK) {
         size_t len = sizeof(s_sta_ssid);
         if (nvs_get_str(h, "ssid", s_sta_ssid, &len) != ESP_OK) {
-            strncpy(s_sta_ssid, CONFIG_ESP_WIFI_REMOTE_AP_SSID, sizeof(s_sta_ssid));
+            snprintf(s_sta_ssid, sizeof(s_sta_ssid), "%s", CONFIG_ESP_WIFI_REMOTE_AP_SSID);
         }
         len = sizeof(s_sta_password);
         if (nvs_get_str(h, "password", s_sta_password, &len) != ESP_OK) {
-            strncpy(s_sta_password, CONFIG_ESP_WIFI_REMOTE_AP_PASSWORD, sizeof(s_sta_password));
+            snprintf(s_sta_password, sizeof(s_sta_password), "%s", CONFIG_ESP_WIFI_REMOTE_AP_PASSWORD);
         }
         nvs_close(h);
     } else {
-        strncpy(s_sta_ssid, CONFIG_ESP_WIFI_REMOTE_AP_SSID, sizeof(s_sta_ssid));
-        strncpy(s_sta_password, CONFIG_ESP_WIFI_REMOTE_AP_PASSWORD, sizeof(s_sta_password));
+        snprintf(s_sta_ssid, sizeof(s_sta_ssid), "%s", CONFIG_ESP_WIFI_REMOTE_AP_SSID);
+        snprintf(s_sta_password, sizeof(s_sta_password), "%s", CONFIG_ESP_WIFI_REMOTE_AP_PASSWORD);
     }
 }
 
-static void close_ws(__unused esp_err_t err, const int socket,__unused  void *arg)
+static void close_ws([[maybe_unused]] esp_err_t err, const int socket,[[maybe_unused]]  void *arg)
 {
     httpd_sess_trigger_close(s_server, socket);
 }
 
 static void close_msg_ws(void *arg)
 {
+    // keep this in ROM memory
     static constexpr char message[] = "error: Another browser has taken over the session.";
     static const httpd_ws_frame_t frame = {
         .final = true,
@@ -141,6 +157,7 @@ static void close_msg_ws(void *arg)
         .len = sizeof(message) - 1
     };
     const int fd = (int)arg;
+    // The cast ditches *const* qualifier, it  is safe because httpd_ws_send_data_async does not modify the data
     const esp_err_t res = httpd_ws_send_data_async(s_server, fd, (httpd_ws_frame_t*)&frame, close_ws, nullptr);
     if (res!= ESP_OK)
     {
@@ -196,7 +213,7 @@ static esp_err_t ws_handler(httpd_req_t *req)
 
 static esp_err_t wifi_status_handler(httpd_req_t *req)
 {
-    char buf[256];
+    static char buf[1024];
     const char *status;
     if (s_sta_connected) {
         status = "connected";
@@ -226,36 +243,29 @@ static esp_err_t wifi_api_handler(httpd_req_t *req)
     }
     content[ret] = '\0';
 
-    char ssid[32] = {0};
-    char password[64] = {0};
-    const char *p = content;
-    while (*p) {
-        while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') p++;
-        if (strncmp(p, "\"ssid\":", 7) == 0) {
-            p += 7;
-            while (*p && *p != '"') p++;
-            if (*p == '"') {
-                p++;
-                int i = 0;
-                while (*p && *p != '"' && i < (int)sizeof(ssid) - 1) ssid[i++] = *p++;
-            }
-        } else if (strncmp(p, "\"password\":", 11) == 0) {
-            p += 11;
-            while (*p && *p != '"') p++;
-            if (*p == '"') {
-                p++;
-                int i = 0;
-                while (*p && *p != '"' && i < (int)sizeof(password) - 1) password[i++] = *p++;
-            }
-        } else {
-            p++;
-        }
+    cJSON *json = cJSON_Parse(content);
+    if (!json) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid JSON");
+        return ESP_FAIL;
     }
 
-    if (ssid[0] == '\0') {
+    cJSON *ssid_item = cJSON_GetObjectItem(json, "ssid");
+    if (!cJSON_IsString(ssid_item) || ssid_item->valuestring[0] == '\0') {
+        cJSON_Delete(json);
         httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "SSID required");
         return ESP_FAIL;
     }
+
+    char ssid[32] = {0};
+    char password[64] = {0};
+    snprintf(ssid, sizeof(ssid), "%s", ssid_item->valuestring);
+
+    cJSON *pwd_item = cJSON_GetObjectItem(json, "password");
+    if (cJSON_IsString(pwd_item)) {
+        snprintf(password, sizeof(password), "%s", pwd_item->valuestring);
+    }
+
+    cJSON_Delete(json);
 
     nvs_save_wifi_creds(ssid, password);
 
@@ -295,7 +305,7 @@ bool ws_any_connected()
     return currentClientFd >=0;
 }
 
-static void wifi_event_handler(__unused void *arg,const esp_event_base_t base,const  int32_t id,void * data)
+static void wifi_event_handler([[maybe_unused]] void *arg,const esp_event_base_t base,const  int32_t id,void * data)
 {
     if (base == WIFI_EVENT && id == WIFI_EVENT_AP_STACONNECTED) {
     } else if (base == WIFI_EVENT && id == WIFI_EVENT_AP_STADISCONNECTED) {
@@ -308,7 +318,9 @@ static void wifi_event_handler(__unused void *arg,const esp_event_base_t base,co
         ESP_LOGI(TAG, "STA got IP: " IPSTR, IP2STR(&e->ip_info.ip));
         s_sta_connected = true;
         snprintf(s_sta_ip, sizeof(s_sta_ip), IPSTR, IP2STR(&e->ip_info.ip));
-        esp_wifi_sta_get_rssi(&s_sta_rssi);
+        int rssi;
+        esp_wifi_sta_get_rssi(&rssi);
+        s_sta_rssi = rssi;
         s_retry_num = 0;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     } else if (base == WIFI_EVENT && id == WIFI_EVENT_STA_DISCONNECTED) {
@@ -330,9 +342,8 @@ static void wifi_event_handler(__unused void *arg,const esp_event_base_t base,co
             ESP_LOGI(TAG, "Reconnect in %d ms (attempt %d/%d)",
                      delay_ms, s_retry_num, CONFIG_ESP_MAXIMUM_STA_RETRY);
             led_refresh();
-            vTaskDelay(pdMS_TO_TICKS(delay_ms));
-            led_refresh();
-            esp_wifi_connect();
+            s_reconnect_delay = delay_ms;
+            xSemaphoreGive(s_reconnect_sem);
         } else {
             ESP_LOGW(TAG, "Exhausted STA retries");
             xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
@@ -363,8 +374,8 @@ static void wifi_init_apsta(void)
             .threshold.authmode = WIFI_AUTH_WPA2_PSK,
         }
     };
-    strncpy((char *)sta_cfg.sta.ssid, s_sta_ssid, sizeof(sta_cfg.sta.ssid));
-    strncpy((char *)sta_cfg.sta.password, s_sta_password, sizeof(sta_cfg.sta.password));
+    snprintf((char *)sta_cfg.sta.ssid, sizeof(sta_cfg.sta.ssid), "%s", s_sta_ssid);
+    snprintf((char *)sta_cfg.sta.password, sizeof(sta_cfg.sta.password), "%s", s_sta_password);
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &ap_cfg));
@@ -375,7 +386,17 @@ static void wifi_init_apsta(void)
     ESP_LOGI(TAG, "STA connecting to: %s", CONFIG_ESP_WIFI_REMOTE_AP_SSID);
 }
 
-__noreturn __unused static void tx_power_task(__unused void *arg)
+static void reconnect_task(void *arg)
+{
+    for (;;) {
+        xSemaphoreTake(s_reconnect_sem, portMAX_DELAY);
+        while (xSemaphoreTake(s_reconnect_sem, 0) == pdTRUE) {}
+        vTaskDelay(pdMS_TO_TICKS(s_reconnect_delay));
+        esp_wifi_connect();
+    }
+}
+
+[[noreturn]] [[maybe_unused]] static void tx_power_task([[maybe_unused]] void *arg)
 {
     int8_t last_power = 0;
     for (;;) {
@@ -411,6 +432,9 @@ void app_main(void)
     s_wifi_event_group = xEventGroupCreate();
     s_ws_mutex = xSemaphoreCreateMutex();
 
+    s_reconnect_sem = xSemaphoreCreateBinary();
+    xTaskCreate(reconnect_task, "reconnect", 2048, NULL, 5, &s_reconnect_task);
+
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, wifi_event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, wifi_event_handler, NULL));
 
@@ -421,7 +445,8 @@ void app_main(void)
     wifi_init_apsta();
 
     xEventGroupWaitBits(s_wifi_event_group,
-        WIFI_CONNECTED_BIT | WIFI_FAIL_BIT, pdFALSE, pdFALSE, 10000 / portTICK_PERIOD_MS);
+        WIFI_CONNECTED_BIT | WIFI_FAIL_BIT, pdFALSE, pdFALSE,
+        pdMS_TO_TICKS(STA_CONNECT_TIMEOUT_MS));
 
     uart_init();
     s_server = start_webserver();

@@ -27,7 +27,7 @@ static void broadcast_error(const char *msg)
     if (n > 0) broadcast_text(buf);
 }
 
-__noreturn static void uart_event_task(__unused void *arg)
+[[noreturn]] static void uart_event_task([[maybe_unused]] void *arg)
 {
     static char buf[BUF_SIZE];
     static int len = 0;
@@ -94,6 +94,6 @@ void uart_init(void)
     };
     ESP_ERROR_CHECK(uart_param_config(UART_PORT, &cfg));
     ESP_ERROR_CHECK(uart_set_pin(UART_PORT, UART_TX_PIN, UART_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
-    ESP_ERROR_CHECK(uart_driver_install(UART_PORT, 256, 256, 20, &s_uart_queue, 0));
+    ESP_ERROR_CHECK(uart_driver_install(UART_PORT, 4096, 256, 20, &s_uart_queue, 0));
     xTaskCreate(uart_event_task, "uart_evt", 4096, NULL, 10, NULL);
 }

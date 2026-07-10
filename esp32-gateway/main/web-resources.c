@@ -44,7 +44,7 @@ const static_resource_t static_resources[] = {
     },
     {
         "/uPlot.iife.min.js", .data_start = (const char*)_binary_uPlot_iife_min_js_start,
-        .data_end = (const char*)_binary_uPlot_iife_min_js_end, .type = "text/css"
+        .data_end = (const char*)_binary_uPlot_iife_min_js_end, .type = "text/javascript"
     },
     {
         "/favicon.png", .data_start = (const char*)_binary_favicon_png_start,

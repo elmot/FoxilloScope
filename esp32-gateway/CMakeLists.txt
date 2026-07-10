@@ -4,6 +4,9 @@ cmake_minimum_required(VERSION 3.22)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
 list(PREPEND SDKCONFIG_DEFAULTS
         "sdkconfig.secrets"
         "sdkconfig.defaults")

@@ -18,7 +18,7 @@ void uart_write_str(const char *str);
 void broadcast_text(const char *text);
 
 extern bool ws_any_connected(void);
-volatile extern EventGroupHandle_t s_wifi_event_group;
+extern EventGroupHandle_t s_wifi_event_group;
 
 volatile extern bool s_sta_connected;
 
