@@ -214,7 +214,7 @@ static void executeIncomingCommand()
     cmdBuffer[0] = 0;
     for (size_t i = 0; true; i = (i + 1) % sizeof(cmdBuffer))
     {
-        osMessageQueueGet(cmdRxQueueHandle, &cmdBuffer[i], nullptr,osWaitForever);
+        osMessageQueueGet(cmdRxQueue, &cmdBuffer[i], nullptr,osWaitForever);
         if (cmdBuffer[i] == '\n' || cmdBuffer[i] == '\r')
         {
             cmdBuffer[i] = 0;
@@ -248,7 +248,7 @@ static void executeIncomingCommand()
     }
 }
 
-[[noreturn]] void run_oscilloscope()
+[[noreturn]] void run_oscilloscope([[maybe_unused]] void*)
 {
     initialize_test_signal();
     adcCalibration();
@@ -276,7 +276,7 @@ static void executeIncomingCommand()
         command->useNewValue();
     }
     startUartInput();
-    osTimerStart(partialFrameTimerHandle, msec_to_ticks(50));
+    xTimerChangePeriod (partialFrameTimer, pdMS_TO_TICKS(50), pdMS_TO_TICKS(150));
     while (true)
     {
         executeIncomingCommand();
@@ -420,7 +420,7 @@ void writeCommands()
     Command::do_write_value("vltg.max.uv.b", maxB);
 }
 
-extern "C" void partialFrameSend([[maybe_unused]] void*)
+extern "C" void partialFrameSend([[maybe_unused]] TimerHandle_t)
 {
     if (partialSamplesSent < 0)
     {

@@ -9,11 +9,11 @@
 
 using namespace std;
 
-extern osSemaphoreId_t transmitBufferBusyHandle; // NOLINT(*-dynamic-static-initializers)
-extern osSemaphoreId_t transmitKeyBufferBusyHandle; // NOLINT(*-dynamic-static-initializers)
+extern SemaphoreHandle_t transmitBufferBusy; // NOLINT(*-dynamic-static-initializers)
+extern SemaphoreHandle_t transmitKeyBufferBusy; // NOLINT(*-dynamic-static-initializers)
 
-TransmitBuffer_t transmitBuffer{transmitBufferBusyHandle};
-TransmitBuffer_t transmitKeyBuffer{transmitKeyBufferBusyHandle};
+TransmitBuffer_t transmitBuffer{transmitBufferBusy};
+TransmitBuffer_t transmitKeyBuffer{transmitKeyBufferBusy};
 
 static constexpr char BASE64_CHARS[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -190,5 +190,5 @@ void startUartInput()
 
 extern "C" void uartReadByte(const uint8_t rxByte)
 {
-    osMessageQueuePut(cmdRxQueueHandle, &rxByte, 0, 0);
+    osMessageQueuePut(cmdRxQueue, &rxByte, 0, 0);
 }

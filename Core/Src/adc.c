@@ -21,10 +21,10 @@
 #include "adc.h"
 
 /* USER CODE BEGIN 0 */
-#include "cmsis_os2.h"
 #include "tim.h"
 #include "stdbool.h"
-
+#include "FreeRTOS.h"
+#include "task.h"
 /* USER CODE END 0 */
 
 ADC_HandleTypeDef hadc1;
@@ -589,7 +589,7 @@ void adcCalibration()
   HAL_ADCEx_InjectedStart(&hadc1);
   while (HAL_ADCEx_InjectedPollForConversion(&hadc1,0) != HAL_OK)
   {
-    osThreadYield();
+    taskYIELD();
   }
   uint32_t vRefReading = HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
   analog_supply_voltage_mV = __LL_ADC_CALC_VREFANALOG_VOLTAGE(vRefReading , LL_ADC_RESOLUTION_12B);

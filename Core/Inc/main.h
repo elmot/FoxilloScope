@@ -66,7 +66,7 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-[[noreturn]] void run_oscilloscope(void);
+[[noreturn]] void run_oscilloscope(void *);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

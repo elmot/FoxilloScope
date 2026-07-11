@@ -27,13 +27,12 @@
 /* USER CODE BEGIN Includes */
 #include "tim.h"
 #include "dac.h"
+#include "semphr.h"
+#include "timers.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 typedef StaticTask_t osStaticThreadDef_t;
-typedef StaticQueue_t osStaticMessageQDef_t;
-typedef StaticTimer_t osStaticTimerDef_t;
-typedef StaticSemaphore_t osStaticSemaphoreDef_t;
 /* USER CODE BEGIN PTD */
 
 /* USER CODE END PTD */
@@ -50,6 +49,17 @@ typedef StaticSemaphore_t osStaticSemaphoreDef_t;
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+StaticSemaphore_t transmitBufferCB;
+StaticSemaphore_t transmitKeyBufferCB;
+SemaphoreHandle_t transmitBufferBusy;
+SemaphoreHandle_t transmitKeyBufferBusy;
+
+QueueHandle_t cmdRxQueue;
+uint8_t cmdRxQueueBuffer[ 128 * sizeof( uint8_t ) ];
+StaticQueue_t cmdRxQueueCB;
+
+TimerHandle_t partialFrameTimer;
+StaticTimer_t partialFrameTimerCB;
 
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
@@ -88,52 +98,19 @@ const osThreadAttr_t keyFrameTask_attributes = {
   .cb_size = sizeof(keyFrameTaskControlBlock),
   .priority = (osPriority_t) osPriorityHigh,
 };
-/* Definitions for cmdRxQueue */
-osMessageQueueId_t cmdRxQueueHandle;
-uint8_t cmdRxQueueBuffer[ 128 * sizeof( uint8_t ) ];
-osStaticMessageQDef_t cmdRxQueueControlBlock;
-const osMessageQueueAttr_t cmdRxQueue_attributes = {
-  .name = "cmdRxQueue",
-  .cb_mem = &cmdRxQueueControlBlock,
-  .cb_size = sizeof(cmdRxQueueControlBlock),
-  .mq_mem = &cmdRxQueueBuffer,
-  .mq_size = sizeof(cmdRxQueueBuffer)
-};
-/* Definitions for partialFrameTimer */
-osTimerId_t partialFrameTimerHandle;
-osStaticTimerDef_t partialFrameTimerControlBlock;
-const osTimerAttr_t partialFrameTimer_attributes = {
-  .name = "partialFrameTimer",
-  .cb_mem = &partialFrameTimerControlBlock,
-  .cb_size = sizeof(partialFrameTimerControlBlock),
-};
-/* Definitions for transmitBufferBusy */
-osSemaphoreId_t transmitBufferBusyHandle;
-osStaticSemaphoreDef_t transmitBufferBusyControlBlock;
-const osSemaphoreAttr_t transmitBufferBusy_attributes = {
-  .name = "transmitBufferBusy",
-  .cb_mem = &transmitBufferBusyControlBlock,
-  .cb_size = sizeof(transmitBufferBusyControlBlock),
-};
-/* Definitions for transmitKeyBufferBusy */
-osSemaphoreId_t transmitKeyBufferBusyHandle;
-osStaticSemaphoreDef_t transmitKeyBufferBusyControlBlock;
-const osSemaphoreAttr_t transmitKeyBufferBusy_attributes = {
-  .name = "transmitKeyBufferBusy",
-  .cb_mem = &transmitKeyBufferBusyControlBlock,
-  .cb_size = sizeof(transmitKeyBufferBusyControlBlock),
-};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 void initialize_test_signal(void);
+extern void startTransmitTask(void *argument);
+extern void keyFramesProcessing(void *argument);
+extern void partialFrameSend(TimerHandle_t *);
 
 /* USER CODE END FunctionPrototypes */
 
-void startDefaultTask(void *argument);
+void run_oscilloscope(void *argument);
 extern void startTransmitTask(void *argument);
 extern void keyFramesProcessing(void *argument);
-extern void partialFrameSend(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -168,36 +145,23 @@ void MX_FREERTOS_Init(void) {
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
-  /* Create the semaphores(s) */
-  /* creation of transmitBufferBusy */
-  transmitBufferBusyHandle = osSemaphoreNew(1, 1, &transmitBufferBusy_attributes);
-
-  /* creation of transmitKeyBufferBusy */
-  transmitKeyBufferBusyHandle = osSemaphoreNew(1, 1, &transmitKeyBufferBusy_attributes);
-
   /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
+  transmitBufferBusy = xSemaphoreCreateBinaryStatic (&transmitBufferCB);
+
+  transmitKeyBufferBusy = xSemaphoreCreateBinaryStatic (&transmitKeyBufferCB);
   /* USER CODE END RTOS_SEMAPHORES */
 
-  /* Create the timer(s) */
-  /* creation of partialFrameTimer */
-  partialFrameTimerHandle = osTimerNew(partialFrameSend, osTimerPeriodic, NULL, &partialFrameTimer_attributes);
-
   /* USER CODE BEGIN RTOS_TIMERS */
-  /* start timers, add new ones, ... */
+  partialFrameTimer = xTimerCreateStatic ("partialFrameTimer", 1, pdTRUE, NULL, partialFrameSend, &partialFrameTimerCB);
   /* USER CODE END RTOS_TIMERS */
 
-  /* Create the queue(s) */
-  /* creation of cmdRxQueue */
-  cmdRxQueueHandle = osMessageQueueNew (128, sizeof(uint8_t), &cmdRxQueue_attributes);
-
   /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
+  cmdRxQueue = xQueueCreateStatic(sizeof(cmdRxQueueBuffer), sizeof(uint8_t), cmdRxQueueBuffer, &cmdRxQueueCB);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(startDefaultTask, NULL, &defaultTask_attributes);
+  defaultTaskHandle = osThreadNew(run_oscilloscope, NULL, &defaultTask_attributes);
 
   /* creation of transmitTask */
   transmitTaskHandle = osThreadNew(startTransmitTask, NULL, &transmitTask_attributes);
@@ -215,18 +179,22 @@ void MX_FREERTOS_Init(void) {
 
 }
 
-/* USER CODE BEGIN Header_startDefaultTask */
+/* USER CODE BEGIN Header_run_oscilloscope */
 /**
   * @brief  Function implementing the defaultTask thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_startDefaultTask */
-void startDefaultTask(void *argument)
+/* USER CODE END Header_run_oscilloscope */
+__weak void run_oscilloscope(void *argument)
 {
-  /* USER CODE BEGIN startDefaultTask */
-  run_oscilloscope();
-  /* USER CODE END startDefaultTask */
+  /* USER CODE BEGIN run_oscilloscope */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END run_oscilloscope */
 }
 
 /* Private application code --------------------------------------------------*/

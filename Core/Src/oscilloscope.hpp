@@ -4,11 +4,13 @@
 #include <algorithm>
 
 #include "main.h"
-#include "cmsis_os2.h"
 #include <array>
 #include <atomic>
 #include <string>
 #include <charconv>
+#include <FreeRTOS.h>
+#include "semphr.h"
+#include "timers.h"
 
 #define ADC_MAX_VALUE 4095UL
 #define ADC_MAX_VALUE_STR "4095"
@@ -109,21 +111,21 @@ constexpr uint32_t THREAD_FLAG_KEY_FRAME_DETECTED = 0x40;
 constexpr size_t data_frame_size = 200;
 
 struct TransmitBuffer_t
-{   constexpr TransmitBuffer_t(osSemaphoreId_t& a_semaphore): semaphore(a_semaphore){}
+{   constexpr TransmitBuffer_t(SemaphoreHandle_t& a_semaphore): semaphore(a_semaphore){}
     alignas(uint32_t) std::array<uint16_t, data_frame_size> samplesA{};
     alignas(uint32_t) std::array<uint16_t, data_frame_size> samplesB{};
     std::atomic<size_t> length{};
     std::atomic<bool> head{};
-    const osSemaphoreId_t& semaphore;
+    const SemaphoreHandle_t& semaphore;
 };
 
 extern TransmitBuffer_t transmitBuffer; // NOLINT(*-dynamic-static-initializers)
 extern TransmitBuffer_t transmitKeyBuffer; // NOLINT(*-dynamic-static-initializers)
 extern std::atomic<bool> transmitKeyBufferReady;
 
-extern osMessageQueueId_t cmdRxQueueHandle; // NOLINT(*-dynamic-static-initializers)
+extern QueueHandle_t cmdRxQueue; // NOLINT(*-dynamic-static-initializers)
 
-extern osTimerId_t partialFrameTimerHandle; // NOLINT(*-dynamic-static-initializers)
+extern TimerHandle_t partialFrameTimer; // NOLINT(*-dynamic-static-initializers)
 
 extern uint16_t analog_supply_voltage_mV; // NOLINT(*-dynamic-static-initializers)
 
@@ -134,10 +136,6 @@ extern "C" void adcCalibration();
 extern "C" void startMainAdcs(bool interleaveSampling, uint16_t* bufferA, uint16_t* bufferB, size_t bufferLength);
 extern "C" size_t adcSamplesLeft();
 
-[[maybe_unused]]static uint32_t msec_to_ticks(uint32_t msec) {
-    const uint32_t ticks_per_sec = osKernelGetTickFreq(); // Usually 1000 Hz
-    return (msec * ticks_per_sec) / 1000U;
-}
 void writeCommands();
 
 enum class TriggerState
