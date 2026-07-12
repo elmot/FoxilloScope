@@ -433,10 +433,10 @@ static esp_err_t ws_close_fn(httpd_handle_t hd, int sockfd)
 static httpd_handle_t start_webserver(void)
 {
     httpd_ssl_config_t ssl_cfg = HTTPD_SSL_CONFIG_DEFAULT();
-    ssl_cfg.servercert = (const uint8_t *)server_cert_pem;
-    ssl_cfg.servercert_len = sizeof(server_cert_pem) - 1;
-    ssl_cfg.prvtkey_pem = (const uint8_t *)server_key_pem;
-    ssl_cfg.prvtkey_len = sizeof(server_key_pem) - 1;
+    ssl_cfg.servercert = server_cert_pem;
+    ssl_cfg.servercert_len = sizeof(server_cert_pem);
+    ssl_cfg.prvtkey_pem = server_key_pem;
+    ssl_cfg.prvtkey_len = sizeof(server_key_pem);
     ssl_cfg.httpd.close_fn = ws_close_fn;
     httpd_handle_t hd = NULL;
     esp_err_t err = httpd_ssl_start(&hd, &ssl_cfg);
