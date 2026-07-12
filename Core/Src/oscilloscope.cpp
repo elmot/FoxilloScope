@@ -204,7 +204,7 @@ static void startSampling()
     __HAL_TIM_SET_COUNTER(&htim2, 0);
     HAL_TIM_Base_Start(&htim2);
     HAL_NVIC_ClearPendingIRQ(COMP1_2_3_IRQn);
-    trigger::pre_arming = trigger::CommandTriggerOffset.timerShiftSamples() < 0 ? 1 : 0;
+    trigger::pre_arming = trigger::CommandTriggerOffset.timerShiftSamples() < 0 ? 2 : 0;
     trigger::enableTrigger();
 }
 
