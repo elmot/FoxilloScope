@@ -15,7 +15,7 @@ extern void led_refresh(void);
 
 void uart_init(void);
 void uart_write_str(const char *str);
-void broadcast_text(const char *text);
+void ws_transmit(const char *text, int len);
 
 extern bool ws_any_connected(void);
 extern EventGroupHandle_t s_wifi_event_group;

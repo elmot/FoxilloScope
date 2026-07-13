@@ -25,8 +25,8 @@
 
 static const char *TAG = "gateway";
 
-static TaskHandle_t s_reconnect_task = NULL;
-static SemaphoreHandle_t s_reconnect_sem = NULL;
+static TaskHandle_t s_reconnect_task = nullptr;
+static SemaphoreHandle_t s_reconnect_sem = nullptr;
 static volatile int s_reconnect_delay;
 
 EventGroupHandle_t s_wifi_event_group;
@@ -76,9 +76,8 @@ static void ws_async_send(void* arg)
     free(a);
 }
 
-void broadcast_text(const char *text)
+void ws_transmit(const char *text, const int len)
 {
-    int len = strlen(text);
     xSemaphoreTake(s_ws_mutex, portMAX_DELAY);
     if (currentClientFd >= 0)
     {
@@ -148,7 +147,7 @@ static void close_ws([[maybe_unused]] esp_err_t err, const int socket,[[maybe_un
 static void close_msg_ws(void *arg)
 {
     // keep this in ROM memory
-    static constexpr char message[] = "error: Another browser has taken over the session.";
+    static constexpr char message[] = "error: Session taken by another client.";
     static const httpd_ws_frame_t frame = {
         .final = true,
         .fragmented = false,
@@ -157,7 +156,7 @@ static void close_msg_ws(void *arg)
         .len = sizeof(message) - 1
     };
     const int fd = (int)arg;
-    // The cast ditches *const* qualifier, it  is safe because httpd_ws_send_data_async does not modify the data
+    // The cast ditches *const* qualifier, it is safe because httpd_ws_send_data_async does not modify the data
     const esp_err_t res = httpd_ws_send_data_async(s_server, fd, (httpd_ws_frame_t*)&frame, close_ws, nullptr);
     if (res!= ESP_OK)
     {
@@ -187,7 +186,7 @@ static esp_err_t ws_handler(httpd_req_t *req)
         return ESP_OK;
     }
     httpd_ws_frame_t pkt={0};
-    uint8_t *buf = NULL;
+
     pkt.type = HTTPD_WS_TYPE_TEXT;
     esp_err_t ret = httpd_ws_recv_frame(req, &pkt, 0);
     if (ret != ESP_OK) return ret;
@@ -199,7 +198,7 @@ static esp_err_t ws_handler(httpd_req_t *req)
         return ESP_OK;
     }
     if (pkt.len) {
-        buf = calloc(1, pkt.len + 1);
+        uint8_t *buf = calloc(1, pkt.len + 1);
         if (!buf) return ESP_ERR_NO_MEM;
         pkt.payload = buf;
         ret = httpd_ws_recv_frame(req, &pkt, pkt.len);
@@ -219,7 +218,7 @@ static esp_err_t wifi_status_handler(httpd_req_t *req)
         status = "connected";
         wifi_ap_record_t ap;
         if (esp_wifi_sta_get_ap_info(&ap) == ESP_OK) {
-            s_sta_rssi = ap.rssi;
+            s_sta_rssi = (uint8_t)ap.rssi;
         }
     } else {
         status = "disconnected";
@@ -249,7 +248,7 @@ static esp_err_t wifi_api_handler(httpd_req_t *req)
         return ESP_FAIL;
     }
 
-    cJSON *ssid_item = cJSON_GetObjectItem(json, "ssid");
+    const cJSON *ssid_item = cJSON_GetObjectItem(json, "ssid");
     if (!cJSON_IsString(ssid_item) || ssid_item->valuestring[0] == '\0') {
         cJSON_Delete(json);
         httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "SSID required");
@@ -260,7 +259,7 @@ static esp_err_t wifi_api_handler(httpd_req_t *req)
     char password[64] = {0};
     snprintf(ssid, sizeof(ssid), "%s", ssid_item->valuestring);
 
-    cJSON *pwd_item = cJSON_GetObjectItem(json, "password");
+    const cJSON *pwd_item = cJSON_GetObjectItem(json, "password");
     if (cJSON_IsString(pwd_item)) {
         snprintf(password, sizeof(password), "%s", pwd_item->valuestring);
     }
@@ -281,7 +280,7 @@ static esp_err_t redirect_handler(httpd_req_t *req, [[maybe_unused]] httpd_err_c
 {
     httpd_resp_set_status(req, "302 Found");
     httpd_resp_set_hdr(req, "Location", "/wifi");
-    httpd_resp_send(req, NULL, 0);
+    httpd_resp_send(req, nullptr, 0);
     return ESP_OK;
 }
 
@@ -315,10 +314,10 @@ bool ws_any_connected()
     return currentClientFd >=0;
 }
 
+// ReSharper disable once CppParameterMayBeConstPtrOrRef
 static void wifi_event_handler([[maybe_unused]] void *arg,const esp_event_base_t base,const  int32_t id,void * data)
 {
     if (base == WIFI_EVENT && id == WIFI_EVENT_AP_STACONNECTED) {
-    } else if (base == WIFI_EVENT && id == WIFI_EVENT_AP_STADISCONNECTED) {
     } else if (base == WIFI_EVENT && id == WIFI_EVENT_STA_START) {
         s_sta_connected = false;
         led_refresh();
@@ -396,7 +395,7 @@ static void wifi_init_apsta(void)
     ESP_LOGI(TAG, "STA connecting to: %s", CONFIG_ESP_WIFI_REMOTE_AP_SSID);
 }
 
-static void reconnect_task(void *arg)
+[[noreturn]]static void reconnect_task([[maybe_unused]]void*)
 {
     for (;;) {
         xSemaphoreTake(s_reconnect_sem, portMAX_DELAY);
@@ -472,7 +471,7 @@ void app_main(void)
         ESP_ERROR_CHECK(mdns_hostname_set(hostname));
     }
     ESP_ERROR_CHECK(mdns_instance_name_set("ESP32 Elmot Oscilloscope(" CONFIG_LWIP_LOCAL_HOSTNAME ")"));
-    ESP_ERROR_CHECK(mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0));
+    ESP_ERROR_CHECK(mdns_service_add(nullptr, "_http", "_tcp", 80, nullptr, 0));
     uint8_t mac[6];
     esp_read_mac(mac, ESP_MAC_WIFI_STA);
     char mac_str[18];
@@ -481,7 +480,7 @@ void app_main(void)
     mdns_service_txt_item_set("_http", "_tcp", "model", "v1.0");
     ESP_LOGI(TAG, "mDNS advertising as " CONFIG_LWIP_LOCAL_HOSTNAME);
 #ifdef CONFIG_OSC_TX_POWER_TASK
-    xTaskCreate(tx_power_task, "tx_pwr", 2048, NULL, 5, NULL);
+    xTaskCreate(tx_power_task, "tx_pwr", 2048, NULL, 5, nullptr);
 #endif
     start_dns_server();
 }

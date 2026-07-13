@@ -1,445 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!--
+      Icons by Lucide (https://lucide.dev)
+      License: ISC (https://github.com)
+      Copyright (c) 2026 Lucide Contributors
+    -->
     <link rel="icon" type="image/png" href="favicon.png" />
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Oscilloscope</title>
     <link rel="stylesheet" href="uPlot.min.css">
     <style>
-        :root {
-            --ch-a: #FFD600;
-            --ch-b: #00E5FF;
-            --ch-a-key: #FFF59D;
-            --ch-b-key: #84FFFF;
-        }
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            display: flex;
-        }
-
-        body {
-            margin: 0;
-            background: #111;
-            color: #0f0;
-            font: 14px monospace;
-            display: flex;
-            flex-direction: column;
-        }
-
-        #scope-wrap {
-            overflow: auto;
-            min-width: 0;
-            min-height: 0;
-            display: flex;
-            flex: 1;
-            background: #0d0d0d;
-            border: 1px solid #2a2a2a;
-            border-radius: 4px;
-            margin: 0;
-            height: 100%;
-            flex-basis: 0;
-        }
-
-        #scope-wrap div#scope {
-            min-width: 0;
-            min-height: 0;
-            max-width: 100%;
-            max-height: 100%;
-            width: 100%;
-            height: 100%;
-            flex: 1 1 0;
-        }
-
-        .v-controls-a,
-        .v-controls-b {
-            display: grid;
-            align-self: stretch;
-            min-height: 0;
-        }
-        .v-controls-a {
-            flex: 0 0 240px;
-            border-right: 1px solid #2a2a2a;
-            grid-template-columns: 1fr 1fr 1fr;
-            grid-template-rows: auto 1fr auto;
-        }
-        .v-controls-b {
-            flex: 0 0 160px;
-            border-left: 1px solid #2a2a2a;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: auto 1fr auto;
-        }
-        .v-controls-a .label { color: var(--ch-a); text-align: center; }
-        .v-controls-b .label { color: var(--ch-b); text-align: center; }
-        .v-controls-a .val  { color: var(--ch-a); }
-        .v-controls-b .val  { color: var(--ch-b); }
+        :root { --ch-a: #FFD600; --ch-b: #00E5FF; --ch-a-key: #FFF59D; --ch-b-key: #84FFFF; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; display: flex; }
+        body { margin: 0; background: #111; color: #0f0; font: 14px monospace; flex-direction: column; }
+        #scope-wrap { overflow: auto; min-width: 0; min-height: 0; display: flex; flex: 1; background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 4px; }
+        #scope-wrap div#scope { min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; width: 100%; height: 100%; flex: 1 1 0; }
+        .v-controls-a, .v-controls-b { display: grid; align-self: stretch; min-height: 0; }
+        .v-controls-a { flex: 0 0 240px; border-right: 1px solid #2a2a2a; grid: auto 1fr auto / 1fr 1fr 1fr; }
+        .v-controls-b { flex: 0 0 160px; border-left: 1px solid #2a2a2a; grid: auto 1fr auto / 1fr 1fr; }
+        .v-controls-a .label, .v-controls-b .label { text-align: center; }
+        .v-controls-a .label { color: var(--ch-a); }
+        .v-controls-b .label { color: var(--ch-b); }
+        .v-controls-a .val { color: var(--ch-a); }
+        .v-controls-b .val { color: var(--ch-b); }
         .v-controls-a .trglabel { color: #0f0; }
         .v-controls-a input.trgborder { border-color: #0f0; }
         .v-controls-a input:not(.trgborder) { border-color: var(--ch-a); }
         .v-controls-b input { border-color: var(--ch-b); }
-        .v-controls-a .slider-cell,
-        .v-controls-b .slider-cell {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 0 6px;
-            min-height: 0;
-        }
-        .v-controls-a .slider-cell input,
-        .v-controls-b .slider-cell input {
-            flex: 1;
-            width: 100%;
-            min-height: 20px;
-            background: #222;
-            color: #0f0;
-            border: 1px solid #0f0;
-            padding: 5px;
-            font: inherit;
-            writing-mode: sideways-lr;
-        }
-        .v-controls-a .rdout-cell,
-        .v-controls-b .rdout-cell {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 0 6px;
-        }
-        .detail {
-            color: #686868;
-            font-size: 9px;
-            line-height: 1;
-        }
-        .trg-btn-sm {
-            background: transparent;
-            color: #0f0;
-            border: 1px solid #555;
-            cursor: pointer;
-            font: inherit;
-            font-size: 9px;
-            padding: 0 3px;
-            border-radius: 2px;
-            line-height: 1.4;
-            min-width: 16px;
-            text-align: center;
-            transition: background 0.15s, color 0.15s;
-        }
-        .trg-btn-sm:hover { background: #0f0; color: #000; }
-        .trg-btn-sm.active { background: #0f0; color: #000; }
-        .h-control-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
-            flex: 1;
-        }
-        .h-control-container input {
-            width: 100%;
-            background: #222;
-            color: #0f0;
-            border: 1px solid #0f0;
-            padding: 2px 5px;
-            font: inherit;
-        }
+        .v-controls-a .slider-cell, .v-controls-b .slider-cell,
+        .v-controls-a .rdout-cell, .v-controls-b .rdout-cell { display: flex; flex-direction: column; align-items: center; padding: 0 6px; }
+        .v-controls-a .slider-cell { min-height: 0; }
+        .v-controls-a .slider-cell input, .v-controls-b .slider-cell input { flex: 1; width: 100%; min-height: 20px; background: #222; color: #0f0; border: 1px solid #0f0; padding: 5px; font: inherit; writing-mode: sideways-lr; }
+        .v-controls-b .rdout-cell { justify-content: center; }
+        .detail { color: #686868; font-size: 9px; line-height: 1; }
+        .trg-btn-sm { background: transparent; color: #0f0; border: 1px solid #555; cursor: pointer; font: inherit; font-size: 9px; padding: 0 3px; border-radius: 2px; line-height: 1.4; min-width: 16px; text-align: center; transition: background 0.15s, color 0.15s; }
+        .trg-btn-sm:hover, .trg-btn-sm.active { background: #0f0; color: #000; }
+        .h-control-container { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; }
+        .h-control-container input { width: 100%; background: #222; color: #0f0; border: 1px solid #0f0; padding: 2px 5px; font: inherit; }
 
-        #footer {
-            display: flex;
-            align-items: center;
-            padding: 4px;
-            flex-shrink: 0;
-            border-top: 1px solid #2a2a2a;
-            height: 20px;
-            min-height: 20px;
-            flex-basis: 20px;
-        }
+        #footer { display: flex; align-items: center; padding: 4px; flex-shrink: 0; border-top: 1px solid #2a2a2a; height: 20px; min-height: 20px; flex-basis: 20px; }
 
-        #footer-left, #cursor-info, #status{
-            flex: 1;
-            color: #888;
-            font-size: 13px;
-        }
-        #cursor-info {
-            text-align: center;
-        }
-        #status {
-            text-align: right;
-        }
+        #footer-left, #cursor-info { flex: 1; color: #888; font-size: 13px; }
+        #footer-left { display: flex; }
+        #cursor-info { text-align: center; }
         #status.error { color: #f00; }
         .u-select { background: rgba(0, 255, 0, 0.15) !important; }
-        #trgShiftReset {
-            background: none; border: none; color: #666; cursor: pointer; font: inherit; font-size: 11px; padding: 0 2px; vertical-align: middle;
-        }
+        #trgShiftReset { background: none; border: none; color: #666; cursor: pointer; font: inherit; font-size: 11px; padding: 0 2px; vertical-align: middle; }
         #trgShiftReset:hover { color: #0f0; }
 
-
-        #pauseBtn {
-            background: #333;
-            color: #0f0;
-            border: 1px solid #0f0;
-            cursor: pointer;
-            font: inherit;
-            padding: 1px 10px;
-            border-radius: 3px;
-            width: 10ex;
-            transition: background 0.15s, color 0.15s;
-        }
+        #pauseBtn { background: #333; color: #0f0; border: 1px solid #0f0; cursor: pointer; font: inherit; padding: 1px 10px; border-radius: 3px; width: 10ex; transition: background 0.15s, color 0.15s; }
         #pauseBtn:hover { background: #0f0; color: #000; }
         #pauseBtn.paused { border-color: #ff0; color: #ff0; }
         #pauseBtn.paused:hover { background: #ff0; color: #000; }
 
-        .label {
-            color: #888;
-            text-wrap: nowrap
-        }
+        .label { color: #888; text-wrap: nowrap; }
+        .val { color: #0f0; font-size: 11px; }
 
-        .val {
-            color: #0f0;
-            font-size: 11px;
-        }
+        #bottom-controls { display: flex; justify-content: center; align-items: flex-start; padding: 2px 10px; background: #1a1a1a; gap: 0.8em; flex-shrink: 0; flex-wrap: wrap; border-top: 1px solid #2a2a2a; }
 
-        #bottom-controls {
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 2px 10px;
-            background: #1a1a1a;
-            gap: 0.8em;
-            flex-shrink: 0;
-            flex-wrap: wrap;
-            border-top: 1px solid #2a2a2a;
-        }
+        .switch-control { display: flex; align-items: center; gap: 0; }
+        .time-pause-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .switch-control select { min-width: 3em; height: 1.5em; text-align: center; color: #0f0; background: #222; border: 1px solid #0f0; font: inherit; font-weight: bold; cursor: pointer; }
+        .switch-control button { width: 1.5em; height: 1.5em; background: #222; border: 1px solid #0f0; color: #0f0; font: inherit; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; }
+        .switch-control button:hover { background: #0f0; color: #000; }
 
-        .switch-control {
-            display: flex;
-            align-items: center;
-            gap: 0;
-        }
-        .time-pause-wrap {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-        }
+        #transport-widget { display: flex; gap: 3px; align-items: center; margin-right: auto; }
+        .transport-btn { width: 28px; height: 28px; background: #222; border: 1px solid #0f0; color: #0f0; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 3px; position: relative; transition: background 0.15s, color 0.15s, border-color 0.15s; padding: 0; }
+        .transport-btn:hover { border-color: #5f5; color: #5f5; }
+        .transport-btn.active { background: #0f0; color: #000; }
+        .transport-btn.insecure { border-color: #555; color: #555; cursor: default; }
+        .transport-btn.insecure:hover { background: #222; color: #555; border-color: #555; }
+        .transport-btn .icon { width: 16px; height: 16px; display: block; }
+        .transport-btn .hint { display: none; position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); white-space: nowrap; background: #333; color: #f66; border: 1px solid #f66; padding: 3px 8px; border-radius: 3px; font-size: 10px; pointer-events: none; z-index: 100; }
+        .transport-btn.insecure:hover .hint { display: block; }
 
-        .switch-control button {
-            background: #333;
-            height: 1.5em;
-            color: #0f0;
-            border: 1px solid #0f0;
-            padding: 0 4px;
-            cursor: pointer;
-            border-radius: 3px;
-            font: inherit;
-            transition: background 0.15s, color 0.15s;
-        }
+        .button-switch-block { display: flex; gap: 2px; margin-top: 8px; background: #222; border: 1px solid #0f0; border-radius: 3px; padding: 2px; }
+        .trg-btn-group { margin: 0; padding: 1px; gap: 1px; }
+        .trg-btn-group > button { flex: 1; }
+        .trg-btns-wrap { display: flex; flex-direction: column; gap: 1px; }
+        .pause-wrap { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 
-        .switch-control button:hover {
-            background: #0f0;
-            color: #000;
-        }
-
-        .switch-control select {
-            min-width: 3em;
-            height: 1.5em;
-            text-align: center;
-            color: #0f0;
-            background: #222;
-            border: 1px solid #0f0;
-            font: inherit;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        #commMode {
-            margin-right: auto;
-            color: #0f0;
-            background: #222;
-            border: 1px solid #0f0;
-            font: inherit;
-            height: 1.5em;
-        }
-
-        #wifiLink {
-            color: #0f0;
-            background: #222;
-            border: 1px solid #0f0;
-            font: inherit;
-            height: 1.5em;
-            padding: 0 6px;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-        #wifiLink:hover { background: #0f0; color: #000; }
-
-        .button-switch-block {
-            display: flex;
-            gap: 2px;
-            margin-top: 8px;
-            background: #222;
-            border: 1px solid #0f0;
-            border-radius: 3px;
-            padding: 2px;
-        }
-        .trg-btn-group {
-            margin: 0;
-            padding: 1px;
-            gap: 1px;
-        }
-        .trg-btn-group > button {
-            flex: 1;
-        }
-        .trg-btns-wrap {
-            display: flex;
-            flex-direction: column;
-            gap: 1px;
-        }
-        .pause-wrap {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
-        }
-
-        .trg-btn {
-            background: transparent;
-            color: #0f0;
-            border: none;
-            cursor: pointer;
-            font: inherit;
-            font-size: 11px;
-            padding: 2px 6px;
-            border-radius: 2px;
-            line-height: 1;
-            min-width: 20px;
-            text-align: center;
-            transition: background 0.15s, color 0.15s;
-        }
-
-        .trg-btn:hover {
-            background: #222;
-            color: #fff;
-        }
-
-        .trg-btn.active {
-            background: #0f0;
-            color: #000;
-        }
-
+        .trg-btn { background: transparent; color: #0f0; border: none; cursor: pointer; font: inherit; font-size: 11px; padding: 2px 6px; border-radius: 2px; line-height: 1; min-width: 20px; text-align: center; transition: background 0.15s, color 0.15s; }
+        .trg-btn:hover { background: #222; color: #fff; }
+        .trg-btn.active { background: #0f0; color: #000; }
         .trg-btn.channel-a { --ch: var(--ch-a); }
         .trg-btn.channel-b { --ch: var(--ch-b); }
-        .trg-btn.channel-a,
-        .trg-btn.channel-b {
-            color: var(--ch);
-        }
-        .trg-btn.channel-a:hover,
-        .trg-btn.channel-b:hover {
-            background: #222;
-            color: #fff;
-        }
-        .trg-btn.channel-a.active,
-        .trg-btn.channel-b.active {
-            background: var(--ch);
-            color: #000;
+        .trg-btn.channel-a, .trg-btn.channel-b { color: var(--ch); }
+        .trg-btn.channel-a:hover, .trg-btn.channel-b:hover { background: #222; color: #fff; }
+        .trg-btn.channel-a.active, .trg-btn.channel-b.active { background: var(--ch); color: #000; }
+
+        @media ((orientation: portrait) and (max-width: 900px)), ((orientation: landscape) and (max-height: 500px)) {
+            #footer { display: none; }
+            .v-controls-a .label, .v-controls-b .label { font-size: 8px; }
+            .v-controls-a .rdout-cell, .v-controls-b .rdout-cell, .v-controls-a .slider-cell, .v-controls-b .slider-cell { padding: 0 2px; }
+            .val, .detail { font-size: 8px; }
+            .detail { font-size: 6px; }
+            #bottom-controls { padding: 2px 6px; gap: 4px; }
+            .switch-control select, .switch-control button, #pauseBtn { font-size: 10px; width: auto; }
+            .h-control-container input { height: 18px; padding: 0 4px; }
+            .h-control-container { gap: 1px; }
+            .trg-btn { font-size: 8px; padding: 1px 3px; min-width: 14px; }
+            .trg-btn-sm { font-size: 7px; padding: 0 2px; min-width: 12px; }
+            .button-switch-block { margin-top: 0; padding: 1px; }
+            .trg-btns-wrap { gap: 0; }
+            .transport-btn { width: 1.5em; height: 1.3em; font-size: 10px; }
+            .transport-btn .icon { width: 12px; height: 12px; }
         }
 
         @media (orientation: portrait) and (max-width: 900px) {
-            #scope-wrap {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                grid-template-rows: 1fr auto;
+            #scope-wrap { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr auto; }
+            #scope-wrap div#scope { grid-column: 1 / -1; grid-row: 1 / 2; }
+            .v-controls-a { grid-column: 1 / 2; grid-row: 2 / 3; border: none; border-top: 1px solid #2a2a2a; border-right: 1px solid #2a2a2a; height: 130px; }
+            .v-controls-b { grid-column: 2 / 3; grid-row: 2 / 3; border: none; border-top: 1px solid #2a2a2a; height: 130px; }
             }
 
-            #scope-wrap div#scope {
-                grid-column: 1 / -1;
-                grid-row: 1 / 2;
-                width: auto;
-                height: auto;
-            }
-
-            .v-controls-a {
-                grid-column: 1 / 2;
-                grid-row: 2 / 3;
-                width: auto;
-                border: none;
-                border-top: 1px solid #2a2a2a;
-                border-right: 1px solid #2a2a2a;
-                height: 130px;
-            }
-
-            .v-controls-b {
-                grid-column: 2 / 3;
-                grid-row: 2 / 3;
-                width: auto;
-                border: none;
-                border-top: 1px solid #2a2a2a;
-                height: 130px;
-            }
-
-            #footer { display: none; }
-
-            .v-controls-a .label,
-            .v-controls-b .label { font-size: 8px; }
-            .v-controls-a .rdout-cell,
-            .v-controls-b .rdout-cell { padding: 0 2px; }
-            .v-controls-a .slider-cell,
-            .v-controls-b .slider-cell { padding: 0 2px; }
-            .val, .detail { font-size: 8px; }
-            .detail { font-size: 6px; }
-
-            #bottom-controls { padding: 2px 6px; gap: 4px; }
-            .switch-control select,
-            .switch-control button,
-            #commMode,
-            #wifiLink { height: 1.3em; font-size: 10px; }
-            #pauseBtn { padding: 0 6px; font-size: 10px; width: auto; }
-            .h-control-container input { height: 18px; padding: 0 4px; }
-            .h-control-container { gap: 1px; }
-            .trg-btn { font-size: 8px; padding: 1px 3px; min-width: 14px; }
-            .trg-btn-sm { font-size: 7px; padding: 0 2px; min-width: 12px; }
-            .button-switch-block { margin-top: 0; padding: 1px; }
-            .trg-btns-wrap { gap: 0; }
-        }
-
-        @media (orientation: landscape) and (max-height: 500px) {
-            .v-controls-a {
-                flex: 0 0 95px;
-            }
-            .v-controls-b {
-                flex: 0 0 70px;
-            }
-            .v-controls-a .label,
-            .v-controls-b .label { font-size: 8px; }
-            .v-controls-a .rdout-cell,
-            .v-controls-b .rdout-cell { padding: 0 2px; }
-            .v-controls-a .slider-cell,
-            .v-controls-b .slider-cell { padding: 0 2px; }
-            .val, .detail { font-size: 8px; }
-            .detail { font-size: 6px; }
-            #footer { display: none; }
-            #bottom-controls { padding: 2px 6px; gap: 4px; }
-            .switch-control select,
-            .switch-control button,
-            #commMode,
-            #wifiLink { height: 1.3em; font-size: 10px; }
-            #pauseBtn { padding: 0 6px; font-size: 10px; width: auto; }
-            .h-control-container input { height: 18px; padding: 0 4px; }
-            .h-control-container { gap: 1px; }
-            .trg-btn { font-size: 8px; padding: 1px 3px; min-width: 14px; }
-            .trg-btn-sm { font-size: 7px; padding: 0 2px; min-width: 12px; }
-            .button-switch-block { margin-top: 0; padding: 1px; }
-            .trg-btns-wrap { gap: 0; }
-        }
+        @media (orientation: landscape) and (max-height: 500px) { .v-controls-a { flex: 0 0 95px; } .v-controls-b { flex: 0 0 70px; } }
     </style>
 </head>
 <body>
@@ -481,11 +159,21 @@
     </div>
 </div>
 <div id="bottom-controls">
-    <select id="commMode">
-        <option value="web">Web</option>
-        <option value="serial">Serial</option>
-    </select>
-    <a href="/wifi" id="wifiLink">WiFi</a>
+    <div id="transport-widget">
+<!--
+        <button id="btn-ble" class="transport-btn" data-mode="ble">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></svg>
+            <span class="hint">You're viewing an unsecured page. Click here to switch to the secure version.</span>
+        </button>
+-->
+        <button id="btn-wifi" class="transport-btn" data-mode="wifi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01M2 8.82a15 15 0 0 1 20 0M5 12.86a10 10 0 0 1 14 0M8.5 16.43a5 5 0 0 1 7 0"/></svg>
+        </button>
+        <button id="btn-serial" class="transport-btn" data-mode="serial">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="1"/><circle cx="4" cy="20" r="1"/><path d="M4.7 19.3 19 5m2-2-3 1 2 2Z M9.26 7.68 5 12l2 5M10 14l5 2 3.5-3.5M18 12l1-1 1 1-1 1Z"/></svg>
+            <span class="hint">You're viewing an unsecured page. Click here to switch to the secure version.</span>
+        </button>
+    </div>
     <div class="time-pause-wrap">
         <div class="switch-control">
             <button>&lt;</button>
@@ -523,7 +211,7 @@
         <datalist id="trgMarks"><option value="0"></datalist>
     </div>
 </div>
-<div id="footer"><span id="footer-left"></span><span id="cursor-info"></span><span id="status">connecting...</span></div>
+<div id="footer"><span id="footer-left"><span id="status">connecting...</span></span><span id="cursor-info"></span></div>
 
 <script src="uPlot.iife.min.js"></script>
 <script>
@@ -538,97 +226,96 @@
     };
     const vltg = {};
     let uplot = null, paused = false, staleTimer = null;
+    function createFrameReader(onFrame) {
+        let buffer = '';
+        return (chunk) => {
+            buffer += chunk;
+            const parts = buffer.split('#');
+            buffer = parts.pop();
+            for (const f of parts) if (f.trim()) onFrame(f.trim());
+        };
+    }
+
+    const transports = {
+        web: {
+            async connect(onFrame, onDisconnect) {
+                const ws = new WebSocket(`ws://${location.host}/ws`); this.ws = ws;
+                await new Promise((resolve, reject) => {
+                    ws.onopen = () => { clearTimeout(staleTimer); resolve(); };
+                    ws.onerror = () => reject(new Error("WebSocket connection failed"));
+                    ws.onclose = () => { clearTimeout(staleTimer); if (!this._intentionalClose && ws === this.ws) onDisconnect(); };
+                    ws.onmessage = (e) => { if (typeof e.data === 'string') onFrame(e.data); };
+                });
+            },
+            disconnect() { if (this.ws) { this.ws.close(); this.ws = null; } },
+            send(data) { if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(data); },
+            statusText: "Connected",
+        },
+        wifi: null,
+        serial: {
+            async connect(onFrame, onDisconnect) {
+                const port = await navigator.serial.requestPort(); await port.open({ baudRate: 460800 });
+                this.serialPort = port;
+                const feed = createFrameReader(onFrame), dec = new TextDecoder();
+                this._readLoop(port, feed, dec, onDisconnect);
+            },
+            async _readLoop(port, feed, dec, onDisconnect) {
+                try { while (port.readable) { const r = port.readable.getReader(); try { while (true) { const { value, done } = await r.read(); if (done) break; feed(dec.decode(value, { stream: true })); } } finally { r.releaseLock(); } } }
+                catch (e) { if (!this._intentionalClose && port === this.serialPort) onDisconnect(); }
+            },
+            disconnect() { if (this.serialPort) { try { this.serialPort.close(); } catch(e) {} this.serialPort = null; } },
+            send(data) { const w = this.serialPort?.writable?.getWriter(); if (w) { w.write(new TextEncoder().encode(data)); w.releaseLock(); } },
+            statusText: "serial connected", errorLabel: "serial error",
+        },
+    };
+    transports.wifi = transports.web;
+
+    function resetTransport() { document.querySelectorAll('.transport-btn').forEach(b => b.classList.remove('active')); }
+    function activateTransport(mode) { resetTransport(); const b = document.querySelector(`.transport-btn[data-mode="${mode}"]`); if (b) b.classList.add('active'); }
+
     const comm = {
-        mode: 'web',
-        ws: null,
-        serialPort: null,
-        send(data) {
-            if (this.mode === 'web' && this.ws && this.ws.readyState === WebSocket.OPEN) {
-                this.ws.send(data);
-            } else if (this.mode === 'serial' && this.serialPort && this.serialPort.writable) {
-                const writer = this.serialPort.writable.getWriter();
-                writer.write(new TextEncoder().encode(data));
-                writer.releaseLock();
+        mode: 'web', _transport: null,
+        async switchTo(mode) {
+            this.close(); this.mode = mode;
+            const t = transports[mode]; if (!t) return;
+            if (mode === 'web') resetTransport(); else activateTransport(mode);
+            this._transport = t; t._intentionalClose = false;
+            const self = this;
+            try {
+                await t.connect(d => onFrame(d), () => {
+                    clearTimeout(staleTimer);
+                    appendStatus("Disconnected.");
+                    resetTransport();
+                    self.mode = 'web';
+                    self._transport = null;
+                });
+                clearTimeout(staleTimer); setStatus("Connected"); param.sendAllCommands();
+            } catch (e) {
+                setStatus("Error: " + e.message, true);
+                self.mode = 'web'; self._transport = null; resetTransport();
             }
         },
-        close() {
-            if (this.serialPort) { try { this.serialPort.close(); } catch(e) {} this.serialPort = null; }
-            if (this.ws) { this.ws.close(); this.ws = null; }
-        }
+        close() { if (this._transport) { this._transport._intentionalClose = true; this._transport.disconnect(); this._transport = null; } },
+        send(data) { if (this._transport) this._transport.send(data); },
     };
     let frame = { samplesA: [], samplesB: [] };
     let keyFrame = { samplesA: [], samplesB: [] };
 
     const param = {
-        _values: {},
-        _controls: {},
-        _debounces: {},
-        register(name, el, update, debounceMs, methods) {
-            this._controls[name] = { el, update, methods };
-            if (debounceMs) this._debounces[name] = this._makeDebouncer(debounceMs);
-        },
-        _makeDebouncer(ms) {
-            let timer;
-            return (name, value) => {
-                clearTimeout(timer);
-                timer = setTimeout(() => this._send(name, value), ms);
-            };
-        },
-        _setNow(name, value, opts) {
-            const n = parseFloat(value);
-            this._values[name] = isFinite(n) ? n : value;
-            const ctrl = this._controls[name];
-            if (ctrl) ctrl.update(ctrl.el, value);
-            if (!opts || opts.send !== false) {
-                const db = this._debounces[name];
-                if (db) { db(name, value); } else { this._send(name, value); }
-            }
-            this._saveCookie();
-        },
-        set(name, value, opts) {
-            this._setNow(name, value, opts);
-        },
-        get(name, fallback) {
-            const v = this._values[name];
-            return v !== undefined ? v : (fallback !== undefined ? fallback : 0);
-        },
-        _formatValue(name, value) {
-            const ctrl = this._controls[name];
-            return ctrl && ctrl.methods && ctrl.methods.send ? ctrl.methods.send(value) : String(value);
-        },
-        _send(name, value) {
-            comm.send(`${name}=${this._formatValue(name, value)}\n`);
-        },
-        sendAllCommands() {
-            let data = ""
-            for (const k in param._controls) {
-                data += `${k}=${this._formatValue(k, param._values[k])}\n`;
-            }
-            comm.send(data);
-        },
-        _saveCookie() {
-            const json = JSON.stringify(this._values);
-            document.cookie = "scope_params=" + encodeURIComponent(json) + ";path=/;SameSite=Lax";
-        },
-        _loadCookie() {
-            const saved = _readCookie('scope_params');
-            if (saved) {
-                for (const k in saved) {
-                    if (this._controls[k]) {
-                        this.set(k, saved[k], {send: false});
-                    }
-                }
-            }
-        }
+        _values: {}, _controls: {}, _debounces: {},
+        register(n, el, update, dbMs, m) { this._controls[n] = { el, update, methods: m }; if (dbMs) this._debounces[n] = this._mkDb(dbMs); },
+        _mkDb(ms) { let t; return (n, v) => { clearTimeout(t); t = setTimeout(() => this._send(n, v), ms); }; },
+        _setNow(n, v, o) { const f = parseFloat(v); this._values[n] = isFinite(f) ? f : v; const c = this._controls[n]; if (c) c.update(c.el, v); if (o?.send !== false) { const d = this._debounces[n]; d ? d(n, v) : this._send(n, v); } this._saveCookie(); },
+        set(n, v, o) { this._setNow(n, v, o); },
+        get(n, fb) { const v = this._values[n]; return v !== undefined ? v : (fb !== undefined ? fb : 0); },
+        _fmt(n, v) { const c = this._controls[n]; return c?.methods?.send ? c.methods.send(v) : String(v); },
+        _send(n, v) { comm.send(`${n}=${this._fmt(n, v)}\n`); },
+        sendAllCommands() { let d = ""; for (const k in this._controls) d += `${k}=${this._fmt(k, this._values[k])}\n`; comm.send(d); },
+        _saveCookie() { document.cookie = "scope_params=" + encodeURIComponent(JSON.stringify(this._values)) + ";path=/;SameSite=Lax"; },
+        _loadCookie() { const s = _readCookie('scope_params'); if (s) for (const k in s) { if (this._controls[k]) this.set(k, s[k], {send: false}); } }
     };
 
-    function _readCookie(name) {
-      const m = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-      if (m) {
-        try { return JSON.parse(decodeURIComponent(m[2])); } catch(e) {}
-      }
-      return null;
-    }
+    function _readCookie(name) { const m = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)')); if (m) { try { return JSON.parse(decodeURIComponent(m[2])); } catch(e) {} } return null; }
 
     document.querySelectorAll('.param-slider').forEach(slider => {
         slider.oninput = () => { param.set(slider.id, slider.value); if (uplot) uplot.redraw(); };
@@ -636,21 +323,7 @@
         param.register(slider.id, slider, (el, v) => el.value = String(v), 50);
     });
 
-    (function() {
-      const ctrl = param._controls['trg.level'];
-      if (ctrl) {
-        ctrl.methods = {
-          send(value) {
-            const raw = parseFloat(value) || 0;
-            const trgChan = param.get('trg.chan');
-            const lc = trgChan === 0 ? 'a' : 'b';
-            const zoom = swState[lc].zoom || 1;
-            const biasPpm = swState[lc].offsetPpm || 0;
-            return String(Math.max(-1000000, Math.min(1000000, Math.round(raw / zoom + biasPpm))));
-          }
-        };
-      }
-    })();
+    (function() { const c = param._controls['trg.level']; if (c) c.methods = { send(v) { const r = parseFloat(v) || 0, tc = param.get('trg.chan'), lc = tc === 0 ? 'a' : 'b'; return String(Math.max(-1e6, Math.min(1e6, Math.round(r / (swState[lc].zoom || 1) + (swState[lc].offsetPpm || 0))))); } }; })();
 
     document.querySelectorAll(".button-switch-block").forEach(block =>{
         const id = block.id;
@@ -664,32 +337,16 @@
         });
     });
 
-    const selectParam = {
-        wire(id, toWire, fromWire) {
-            toWire = toWire || (v => v);
-            fromWire = fromWire || (v => v);
+    const selectParam = { wire(id, tw, fw) {
+        tw = tw || (v=>v); fw = fw || (v=>v);
             const el = document.getElementById(id);
-            param.register(id, el, (el, v) => {
-                const sv = fromWire(v);
-                for (let opt of el.options) {
-                    if (Number(opt.value) === Number(sv)) { el.value = opt.value; return; }
-                }
-            });
-            const btns = el.parentElement.getElementsByTagName("button");
-            const step = (d) => {
-                const idx = Math.max(0, Math.min(el.options.length - 1, el.selectedIndex + d));
-                el.value = el.options[idx].value;
-                param.set(id, toWire(el.value));
-            };
-            btns[0].onclick = () => step(-1);
-            btns[1].onclick = () => step(1);
-            el.onchange = () => param.set(id, toWire(el.value));
-            const idx = Math.max(0, Math.min(el.options.length - 1, el.selectedIndex));
-            param._values[id] = el.options[idx].value;
-        }
-    };
+        param.register(id, el, (el, v) => { const sv = fw(v); for (const o of el.options) { if (Number(o.value) === Number(sv)) { el.value = o.value; return; } } });
+        const btns = el.parentElement.getElementsByTagName("button"), step = (d) => { const i = Math.max(0, Math.min(el.options.length - 1, el.selectedIndex + d)); el.value = el.options[i].value; param.set(id, tw(el.value)); };
+        btns[0].onclick = () => step(-1); btns[1].onclick = () => step(1);
+        el.onchange = () => param.set(id, tw(el.value));
+        param._values[id] = el.options[Math.max(0, Math.min(el.options.length - 1, el.selectedIndex))].value;
+    }};
     selectParam.wire("sampling.ns", v => v / 4, v => v * 4);
-
     param._loadCookie();
 
     const HW_GAINS = [63, 31, 15, 6, 3, 1];
@@ -698,183 +355,53 @@
 
     const _LOG_MAX = Math.log(504);
 
-    function posToGain(pos) {
-      return Math.round(Math.exp(pos / 1000 * _LOG_MAX) * 100) / 100;
-    }
+    function posToGain(pos) { return Math.round(Math.exp(pos / 1000 * _LOG_MAX) * 100) / 100; }
+    function gainToPos(gain) { return Math.round(Math.log(Math.max(1, gain)) / _LOG_MAX * 1000); }
+    function splitGain(total) { for (const hw of HW_GAINS) { if (hw <= total) { const sw = total / hw; if (sw <= 8) return { hw, sw: Math.round(sw * 100) / 100 }; } } return { hw: 63, sw: Math.round(total / 63 * 100) / 100 }; }
 
-    function gainToPos(gain) {
-      return Math.round(Math.log(Math.max(1, gain)) / _LOG_MAX * 1000);
-    }
-
-    function splitGain(total) {
-      for (const hw of HW_GAINS) {
-        if (hw <= total) {
-          const sw = total / hw;
-          if (sw <= 8) return { hw, sw: Math.round(sw * 100) / 100 };
-        }
-      }
-      return { hw: 63, sw: Math.round(total / 63 * 100) / 100 };
-    }
-
-    function updateDisplayRange() {
-      for (const ch of ['A', 'B']) {
-        const lc = ch.toLowerCase();
-        const zoom = swState[lc].zoom || 1;
-        const offset = swState[lc].offset || 0;
-        const rawMin = rawUvRange['min' + ch];
-        const rawMax = rawUvRange['max' + ch];
-        const center = (rawMin + rawMax) / 2 + offset;
-        const halfRange = (rawMax - rawMin) / 2 / zoom;
-        vltg['minUv' + ch] = center - halfRange;
-        vltg['maxUv' + ch] = center + halfRange;
-      }
-    }
+    function updateDisplayRange() { for (const ch of ['A','B']) { const lc = ch.toLowerCase(), z = swState[lc].zoom || 1, o = swState[lc].offset || 0, mn = rawUvRange['min'+ch], mx = rawUvRange['max'+ch], mid = (mn+mx)/2+o, hf = (mx-mn)/2/z; vltg['minUv'+ch] = mid-hf; vltg['maxUv'+ch] = mid+hf; } }
 
     const _track = { gainPos: {}, biasTotal: {} };
 
-    function _updateTriggerIfActive(ch) {
-      if ((ch === 'a' && (param.get('trg.chan') === 0)) ||
-          (ch === 'b' && (param.get('trg.chan') === 1)))
-        param.set('trg.level', param.get('trg.level'));
-    }
-    function _finalizeChannel() {
-      _trackSaveCookie();
-      updateDisplayRange();
-      if (uplot) uplot.redraw();
-    }
+    function _updateTriggerIfActive(ch) { if ((ch === 'a' && param.get('trg.chan') === 0) || (ch === 'b' && param.get('trg.chan') === 1)) param.set('trg.level', param.get('trg.level')); }
+    function _finalizeChannel() { _trackSaveCookie(); updateDisplayRange(); if (uplot) uplot.redraw(); }
 
     function setupGainSlider(ch) {
-      const el = document.getElementById('gain.' + ch);
-      const valEl = document.getElementById('gain.' + ch + '.val');
-      const detEl = document.getElementById('gain.' + ch + '.detail');
-      function apply(pos) {
-        const gain = posToGain(pos);
-        const { hw, sw } = splitGain(gain);
-        swState[ch].zoom = sw;
-        _track.gainPos[ch] = pos;
-        param.set('gain.' + ch, hw);
-        valEl.textContent = '\u00d7' + gain.toFixed(2);
-        detEl.textContent = hw + '+' + sw.toFixed(1);
-        _updateTriggerIfActive(ch);
-        _finalizeChannel();
+      const el = document.getElementById('gain.'+ch), valEl = document.getElementById('gain.'+ch+'.val'), detEl = document.getElementById('gain.'+ch+'.detail');
+      function apply(p) { const g = posToGain(p), {hw, sw} = splitGain(g); swState[ch].zoom = sw; _track.gainPos[ch] = p; param.set('gain.'+ch, hw); valEl.textContent = '\u00d7'+g.toFixed(2); detEl.textContent = hw+'+'+sw.toFixed(1); _updateTriggerIfActive(ch); _finalizeChannel(); }
+      el.oninput = function() { apply(parseFloat(this.value)); }; el.apply = apply;
       }
-      el.oninput = function () { apply(parseFloat(this.value)); };
-      el.apply = apply;
-    }
-
     function setupBiasSlider(ch) {
-      const el = document.getElementById('vbias.' + ch);
-      function apply(total) {
-        const hw = Math.trunc(total);
-        const residual = total - hw;
-        const range = (rawUvRange['max' + ch.toUpperCase()] || 1650000) - (rawUvRange['min' + ch.toUpperCase()] || -1650000);
-        const offsetUv = residual * range / 2000000;
-        swState[ch].offset = offsetUv;
-        swState[ch].offsetPpm = residual;
-        _track.biasTotal[ch] = total;
-        param.set('vbias.' + ch, hw);
-        _updateTriggerIfActive(ch);
-        _finalizeChannel();
-      }
-      el.oninput = function () { apply(parseFloat(this.value)); };
-      el.apply = apply;
+      const el = document.getElementById('vbias.'+ch), uc = ch.toUpperCase();
+      function apply(t) { const hw = Math.trunc(t), r = t-hw, rg = (rawUvRange['max'+uc]||1650000)-(rawUvRange['min'+uc]||-1650000); swState[ch].offset = r*rg/2e6; swState[ch].offsetPpm = r; _track.biasTotal[ch] = t; param.set('vbias.'+ch, hw); _updateTriggerIfActive(ch); _finalizeChannel(); }
+      el.oninput = function() { apply(parseFloat(this.value)); }; el.apply = apply;
     }
 
-    // Register gain/bias command params (no UI binding — slider handles it)
-    param.register('gain.a', null, () => {}, 50); param._values['gain.a'] = 1;
-    param.register('gain.b', null, () => {}, 50); param._values['gain.b'] = 1;
-    param.register('vbias.a', null, () => {}, 50); param._values['vbias.a'] = 0;
-    param.register('vbias.b', null, () => {}, 50); param._values['vbias.b'] = 0;
+    ['gain.a','gain.b','vbias.a','vbias.b'].forEach(k => { param.register(k, null, ()=>{}, 50); param._values[k] = k.startsWith('vbias') ? 0 : 1; });
+    ['a','b'].forEach(c => { setupGainSlider(c); setupBiasSlider(c); });
 
-    setupGainSlider('a');
-    setupGainSlider('b');
-    setupBiasSlider('a');
-    setupBiasSlider('b');
+    function _trackSaveCookie() { document.cookie = "scope_track=" + encodeURIComponent(JSON.stringify(_track)) + ";path=/;SameSite=Lax"; }
+    function _trackLoadCookie() { const s = _readCookie('scope_track'); if (s) { Object.assign(_track, s); if (!_track.gainPos) _track.gainPos = {}; if (!_track.biasTotal) _track.biasTotal = {}; } }
 
-    // Separate cookie for tracking data (never in param._values)
-    function _trackSaveCookie() {
-      document.cookie = "scope_track=" + encodeURIComponent(JSON.stringify(_track)) + ";path=/;SameSite=Lax";
-    }
-    function _trackLoadCookie() {
-      const saved = _readCookie('scope_track');
-      if (saved) {
-        Object.assign(_track, saved);
-        if (!_track.gainPos) _track.gainPos = {};
-        if (!_track.biasTotal) _track.biasTotal = {};
+    (function() {
+      _trackLoadCookie(); const old = _readCookie('scope_params') || {};
+      function restore(type, ch, id, lo, hi, def, po) {
+        const el = document.getElementById(id+ch);
+        if (_track[type][ch] !== undefined) el.value = String(Math.min(hi, Math.max(lo, _track[type][ch])));
+        else { const s = parseFloat(old[id+ch+'.total']); _track[type][ch] = !isNaN(s) ? po(s) : def; el.value = String(Math.min(hi, Math.max(lo, _track[type][ch]))); }
+        el.apply(parseFloat(el.value));
       }
-    }
-
-    // Restore slider positions from scope_params cookie (migrate old values)
-    (function () {
-      const restoreVals = _readCookie('scope_params') || {};
-      // Read from separate track cookie (new), fall back to old scope_params keys (migration)
-      _trackLoadCookie();
-      function restoreGain(ch) {
-        const hw = param.get('gain.' + ch, 1);
-        const el = document.getElementById('gain.' + ch);
-        if (_track.gainPos[ch] !== undefined) {
-          el.value = String(Math.min(1000, Math.max(0, _track.gainPos[ch])));
-        } else {
-          const savedTotal = parseFloat(restoreVals['gain.' + ch + '.total']);
-          const pos = !isNaN(savedTotal) ? gainToPos(Math.min(504, Math.max(1, savedTotal))) : gainToPos(hw);
-          el.value = String(pos);
-          _track.gainPos[ch] = pos;
-        }
-        el.apply(_track.gainPos[ch]);
-      }
-      function restoreBias(ch) {
-        const hw = param.get('vbias.' + ch);
-        const el = document.getElementById('vbias.' + ch);
-        if (_track.biasTotal[ch] !== undefined) {
-          el.value = String(Math.min(1000000, Math.max(-1000000, _track.biasTotal[ch])));
-        } else {
-          const savedTotal = parseFloat(restoreVals['vbias.' + ch + '.total']);
-          const total = !isNaN(savedTotal) ? savedTotal : hw;
-          el.value = String(Math.min(1000000, Math.max(-1000000, total)));
-          _track.biasTotal[ch] = total;
-        }
-        el.apply(_track.biasTotal[ch]);
-      }
-      restoreGain('a'); restoreGain('b');
-      restoreBias('a'); restoreBias('b');
-      // Save track cookie now that restore is complete
+      restore('gainPos','a','gain.',0,1000,gainToPos(param.get('gain.a',1)),v=>gainToPos(Math.min(504,Math.max(1,v))));
+      restore('gainPos','b','gain.',0,1000,gainToPos(param.get('gain.b',1)),v=>gainToPos(Math.min(504,Math.max(1,v))));
+      restore('biasTotal','a','vbias.',-1e6,1e6,param.get('vbias.a'),v=>v);
+      restore('biasTotal','b','vbias.',-1e6,1e6,param.get('vbias.b'),v=>v);
       _trackSaveCookie();
-    }());
+    })();
 
-    function fmtUv(v) {
-        if (v === undefined || isNaN(v)) return '';
-        const a = Math.abs(v);
-        let m, u, d;
-        if (a >= 10e6) { m = 1e-6; u = 'V'; d = 1; }
-        else if (a >= 1e6) { m = 1e-6; u = 'V'; d = 2; }
-        else if (a >= 10e3) { m = 1e-3; u = 'mV'; d = 1; }
-        else if (a >= 1e3) { m = 1e-3; u = 'mV'; d = 2; }
-        else if (a >= 10) { m = 1; u = '\u00B5V'; d = 1; }
-        else if (a >= 1) { m = 1; u = '\u00B5V'; d = 2; }
-        else { m = 1e3; u = 'nV'; d = 0; }
-        return (v*m).toFixed(d) + u;
-    }
-    function fmtTime(t) {
-        if (t === undefined || isNaN(t)) return '';
-        const a = Math.abs(t);
-        let m, u, d;
-        if (a >= 10e3) { m = 1e-3; u = 's'; d = 0; }
-        else if (a >= 1e3) { m = 1e-3; u = 's'; d = 1; }
-        else if (a >= 10) { m = 1; u = 'ms'; d = 0; }
-        else if (a >= 1) { m = 1; u = 'ms'; d = 1; }
-        else if (a >= 10e-3) { m = 1e3; u = '\u00B5s'; d = 0; }
-        else if (a >= 1e-3) { m = 1e3; u = '\u00B5s'; d = 1; }
-        else { m = 1e6; u = 'ns'; d = 0; }
-        return (t*m).toFixed(d) + u;
-    }
-    function adcToUv(adc, min, max) {
-        if(adc === undefined) return null;
-        const steps = vltg.steps || 4096;
-        if (min !== undefined && max !== undefined) {
-            return min + (adc / steps) * (max - min);
-        }
-        return (adc / steps) * 3300000 - 1650000;
-    }
+    function fmtSi(v, s) { if (v===undefined||isNaN(v)) return''; const a=Math.abs(v); for(const[t,m,u,d]of s)if(a>=t)return(v*m).toFixed(d)+u; const[m,u,d]=s.at(-1);return(v*m).toFixed(d)+u; }
+    function fmtUv(v) { return fmtSi(v, [[10e6,1e-6,'V',1],[1e6,1e-6,'V',2],[10e3,1e-3,'mV',1],[1e3,1e-3,'mV',2],[10,1,'\u00B5V',1],[1,1,'\u00B5V',2],[1e3,'nV',0]]); }
+    function fmtTime(t) { return fmtSi(t, [[10e3,1e-3,'s',0],[1e3,1e-3,'s',1],[10,1,'ms',0],[1,1,'ms',1],[10e-3,1e3,'\u00B5s',0],[1e-3,1e3,'\u00B5s',1],[1e6,'ns',0]]); }
+    function adcToUv(adc, mn, mx) { if (adc==undefined) return null; const s=vltg.steps||4096; if(mn!=undefined&&mx!=undefined) return mn+(adc/s)*(mx-mn); return (adc/s)*3300000-1650000; }
 
     let _drag = false;
     function initUplot() {
@@ -884,140 +411,64 @@
         el.addEventListener('pointerdown', e => { if (e.button === 0) _drag = true; });
         el.addEventListener('pointerup', () => _drag = false);
         el.addEventListener('pointerleave', () => _drag = false);
-        function seriesColor(u, seriesIdx) {
-            const baseColor = seriesIdx % 2 === 0 ? COLORS.chB : COLORS.chA;
-            return baseColor + (param._values["trg.type"] === "0" ? "A0" : "50");
-        }
-
-
-        function keySeriesColor(u, seriesIdx) {
-            const baseColor = seriesIdx % 2 === 0 ? COLORS.chBKey : COLORS.chAKey;
-            const msecPerFrame = param.get("sampling.ns") * param.frameWidth / 1e6;
-            const timeDivider = isFinite(msecPerFrame) ? Math.max(1000, msecPerFrame) : 1000;
-            const alpha = Math.max(30, 250 -  Math.ceil(50 * (Date.now() - (keyFrame.timestamp || 0 )) / timeDivider))
-                .toString(16).padStart(2,"0");
-            return baseColor + alpha;
+        function seriesColor(u,i) { const c=i%2===0?COLORS.chB:COLORS.chA; return c+(param._values["trg.type"]==="0"?"A0":"50"); }
+        function keySeriesColor(u,i) {
+            const b=i%2===0?COLORS.chBKey:COLORS.chAKey, ms=param.get("sampling.ns")*param.frameWidth/1e6, td=isFinite(ms)?Math.max(1e3,ms):1e3;
+            return b+Math.max(30,250-Math.ceil(50*(Date.now()-(keyFrame.timestamp||0))/td)).toString(16).padStart(2,"0");
         }
         try {
-            const grid = {show: true, width: 1, size: 20, stroke:"#333333", dash:[3,8]}
+            const grid={show:true,width:1,size:20,stroke:"#333",dash:[3,8]};
             uplot = new uPlot({
                 width: w, height: h,
                 cursor: { show: true, drag: { x: true, y: true, setScale: false } },
-                legend: { show: false },
-                select: { show: true },
-                scales: {
-                    chA: { range: (self, initMin, initMax) => [vltg.minUvA ?? -1650000, vltg.maxUvA ?? 1650000] },
-                    chB: { range: (self, initMin, initMax) => [vltg.minUvB ?? -1650000, vltg.maxUvB ?? 1650000] },
-                },
+                legend: { show: false }, select: { show: true },
+                scales: { chA:{range: (u,mn,mx)=>[vltg.minUvA??-1650000,vltg.maxUvA??1650000]}, chB:{range: (u,mn,mx)=>[vltg.minUvB??-1650000,vltg.maxUvB??1650000]} },
                 axes: [
-                    {
-                        scale: "x", stroke: "#FFF", grid:grid,
-                        values: (self, splits) => splits.map(t => fmtTime(t)),
-                    },
-                    {scale: "chA", side: 3, values: (self, splits) => splits.map(fmtUv), stroke: COLORS.chAKey, size:90, grid: grid},
-                    {scale: "chB", side: 1, values: (self, splits) => splits.map(fmtUv), stroke: COLORS.chBKey, size:90},
+                    { scale:"x", stroke:"#FFF", grid, values:(u,s)=>s.map(fmtTime) },
+                    { scale:"chA", side:3, values:(u,s)=>s.map(fmtUv), stroke:COLORS.chAKey, size:90, grid },
+                    { scale:"chB", side:1, values:(u,s)=>s.map(fmtUv), stroke:COLORS.chBKey, size:90 },
                 ],
                 series: [
                     {},
-                    { scale: "chA", stroke: seriesColor, width: 2, points: { show: false } },
-                    { scale: "chB", stroke: seriesColor, width: 2, points: { show: false } },
-                    { scale: "chA", stroke: keySeriesColor, width: 2, points: { show: false } },
-                    { scale: "chB", stroke: keySeriesColor, width: 2, points: { show: false } }
+                    { scale:"chA", stroke:seriesColor, width:2, points:{show:false} },
+                    { scale:"chB", stroke:seriesColor, width:2, points:{show:false} },
+                    { scale:"chA", stroke:keySeriesColor, width:2, points:{show:false} },
+                    { scale:"chB", stroke:keySeriesColor, width:2, points:{show:false} }
                 ],
                 hooks: {
                      drawAxes: [(self) => {
-                        const ctx = self.ctx;
-                        ctx.save();
-                        ctx.setLineDash([4, 4]);
-                        ctx.lineWidth = 1;
-                        for (const ch of [{a:'chA',c:COLORS.chA },{a:'chB',c:COLORS.chB}]) {
-                            const y = self.valToPos(0, ch.a, true);
-                            if (y < -10 || y > self.height + 10) continue;
-                            const x0 = self.bbox.left, x1 = x0 + self.bbox.width;
-                            ctx.strokeStyle = ch.c;
-                            ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
-                        }
+                        const ctx = self.ctx, l = self.bbox.left, r = l + self.bbox.width, t = self.bbox.top, b = t + self.bbox.height;
+                        ctx.save(); ctx.setLineDash([4,4]);
+                        [{a:'chA',c:COLORS.chA},{a:'chB',c:COLORS.chB}].forEach(({a,c})=>{const y=self.valToPos(0,a,true); if(y>-10&&y<self.height+10){ctx.strokeStyle=c;ctx.beginPath();ctx.moveTo(l,y);ctx.lineTo(r,y);ctx.stroke();}});
                         ctx.setLineDash([]);
                         try {
                           const trgPpm = param.get('trg.level');
                           if (!isNaN(trgPpm)) {
-                            const trgChan = param.get('trg.chan');
-                            const scaleName = trgChan === 0 ? 'chA' : 'chB';
-                            const minUv = trgChan === 0 ? (vltg.minUvA ?? -1650000) : (vltg.minUvB ?? -1650000);
-                            const maxUv = trgChan === 0 ? (vltg.maxUvA ??  1650000) : (vltg.maxUvB ??  1650000);
-                            const frac = (trgPpm + 1000000) / 2000000;
-                            const trgUv = minUv + frac * (maxUv - minUv);
-                            const y = self.valToPos(trgUv, scaleName, true);
-                            const x0 = self.bbox.left, x1 = x0 + self.bbox.width;
-                            ctx.setLineDash([4, 4]);
-                            ctx.strokeStyle = '#ff69b480';
-                            ctx.lineWidth = 1.5;
-                            ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
-                            ctx.setLineDash([]);
-                          }
-                          const _trgOff = param.get('trg.time.offset');
-                          const _xS = self.scales.x;
-                          const _xV = (_xS.min != null ? _xS.min : 0) + (_trgOff / 1000000) * ((_xS.max != null ? _xS.max : 1) - (_xS.min != null ? _xS.min : 0));
-                          const _xPos = self.valToPos(_xV, 'x', true);
-                          let _pL = self.bbox.left, _pR = self.bbox.left + self.bbox.width;
-                          for (let _i2 = 0; _i2 < self.axes.length; _i2++) {
-                            const _a = self.axes[_i2];
-                            if (_a && _a.bbox) {
-                              if (_a.side === 1) _pL = Math.max(_pL, _a.bbox.left + _a.bbox.width);
-                              if (_a.side === 3) _pR = Math.min(_pR, _a.bbox.left);
+                            const tc = param.get('trg.chan'), sc = tc === 0 ? 'chA':'chB', mn = tc === 0 ? (vltg.minUvA??-1650000):(vltg.minUvB??-1650000), mx = tc === 0 ? (vltg.maxUvA??1650000):(vltg.maxUvB??1650000);
+                            const y = self.valToPos(mn+((trgPpm+1e6)/2e6)*(mx-mn), sc, true);
+                            ctx.setLineDash([4,4]); ctx.strokeStyle='#ff69b480'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(l,y); ctx.lineTo(r,y); ctx.stroke(); ctx.setLineDash([]);
                             }
-                          }
-                          if (_xPos >= _pL && _xPos <= _pR && _pR - _pL > 0) {
-                            ctx.save();
-                            ctx.beginPath(); ctx.rect(_pL, self.bbox.top, _pR - _pL, self.bbox.height); ctx.clip();
-                            ctx.setLineDash([4, 4]);
-                            ctx.strokeStyle = '#ff69b480';
-                            ctx.lineWidth = 1.5;
-                            ctx.beginPath(); ctx.moveTo(_xPos, self.bbox.top); ctx.lineTo(_xPos, self.bbox.top + self.bbox.height); ctx.stroke();
-                            ctx.setLineDash([]);
-                            ctx.restore();
-                          }
-                        } catch(e) { console.error("drawAxes:", e); }
+                          const off = param.get('trg.time.offset'), xs = self.scales.x, xv = (xs.min??0)+(off/1e6)*((xs.max??1)-(xs.min??0)), xp = self.valToPos(xv,'x',true);
+                          let pl = l, pr = r;
+                          for (const a of self.axes) { if (a?.bbox) { if (a.side===1) pl=Math.max(pl,a.bbox.left+a.bbox.width); if (a.side===3) pr=Math.min(pr,a.bbox.left); } }
+                          if (xp >= pl && xp <= pr && pr - pl > 0) { ctx.save(); ctx.beginPath(); ctx.rect(pl,t,pr-pl,b-t); ctx.clip(); ctx.setLineDash([4,4]); ctx.strokeStyle='#ff69b480'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(xp,t); ctx.lineTo(xp,b); ctx.stroke(); ctx.setLineDash([]); ctx.restore(); }
+                        } catch(e) {}
                         ctx.restore();
                       }],
-                      setCursor: [
-                         self => {
+                      setCursor: [self => {
                               const cx = self.cursor.left, cy = self.cursor.top, ci = document.getElementById('cursor-info');
-
                               if (cx == null || cy == null || !ci) return;
                               try {
                                   const se = self.root.querySelector('.u-select');
                                   if (se) se.style.display = _drag ? '' : 'none';
-                                  const s = self.select;
-                                  if (_drag && s && s.width > 0 && s.height > 0) {
-                                      const bx = self.bbox.left, by = self.bbox.top;
-                                      const t1 = self.posToVal(s.left + bx, 'x');
-                                      const t2 = self.posToVal(s.left + s.width + bx, 'x');
-                                      const vA1 = self.posToVal(s.top + s.height + by, 'chA');
-                                      const vA2 = self.posToVal(s.top + by, 'chA');
-                                      const vB1 = self.posToVal(s.top + s.height + by, 'chB');
-                                      const vB2 = self.posToVal(s.top + by, 'chB');
-                                      const dt = Math.abs(t2 - t1);
-                                      const dA = Math.abs(vA2 - vA1);
-                                      const dB = Math.abs(vB2 - vB1);
-                                      const parts = [];
-                                      if (!isNaN(dt)) parts.push('\u0394t ' + fmtTime(dt));
-                                      if (!isNaN(dA)) parts.push('\u0394A ' + fmtUv(dA));
-                                      if (!isNaN(dB)) parts.push('\u0394B ' + fmtUv(dB));
-                                       ci.textContent = parts.join('  ');
-                                   } else {
-                                       const t = self.posToVal(cx, 'x');
-                                       const vA = self.posToVal(cy, 'chA');
-                                       const vB = self.posToVal(cy, 'chB');
-                                       const parts = [];
-                                       if (!isNaN(t)) parts.push(fmtTime(t));
-                                       if (!isNaN(vA)) parts.push('A ' + fmtUv(vA));
-                                       if (!isNaN(vB)) parts.push('B ' + fmtUv(vB));
-                                       ci.textContent = parts.join('  ');
-                                  }
-                              } catch(e) { console.error("setCursor:", e); }
-                          }
-                     ],
+                          const s = self.select, bx = self.bbox.left, by = self.bbox.top;
+                          const dt = _drag && s && s.width > 0 && s.height > 0 ? Math.abs(self.posToVal(s.left+bx,'x')-self.posToVal(s.left+s.width+bx,'x')) : null;
+                          const t = dt || self.posToVal(cx,'x'), p = [];
+                          if (dt) { p.push('\u0394t '+fmtTime(dt)); const dA = Math.abs(self.posToVal(s.top+by,'chA')-self.posToVal(s.top+s.height+by,'chA')), dB = Math.abs(self.posToVal(s.top+by,'chB')-self.posToVal(s.top+s.height+by,'chB')); if (!isNaN(dA)) p.push('\u0394A '+fmtUv(dA)); if (!isNaN(dB)) p.push('\u0394B '+fmtUv(dB)); }
+                          else { const cA = self.posToVal(cy,'chA'), cB = self.posToVal(cy,'chB'); p.push(fmtTime(t)); if (!isNaN(cA)) p.push('A '+fmtUv(cA)); if (!isNaN(cB)) p.push('B '+fmtUv(cB)); }
+                          ci.textContent = p.join('  ');
+                        } catch(e) {}
+                      }],
                 },
             }, [[0], [0], [0], [0], [0]], el);
         } catch (e) { console.error("uPlot init fail:", e); }
@@ -1028,202 +479,66 @@
     }
 
     function updatePlot() {
-        const frameWidth = param.frameWidth;
-        function padArray(arr) {
-            return arr.concat(...Array(Math.max(0, frameWidth - arr.length)).fill(null));
-        }
-        function clamp(arr, lo, hi) {
-            if (lo === undefined || hi === undefined) return arr;
-            return arr.map(v => v === null ? null : Math.max(lo, Math.min(hi, v)));
-        }
+        const fw = param.frameWidth;
+        const pa = a => a.concat(...Array(Math.max(0,fw-a.length)).fill(null));
+        const cl = (a,lo,hi) => lo!=undefined&&hi!=undefined ? a.map(v=>v===null?null:Math.max(lo,Math.min(hi,v))) : a;
         if (!uplot) return;
         try {
-            const sp = param.get("sampling.ns", 500000);
-            if (Math.min(frame.samplesA.length, frame.samplesB.length) < 2) return;
-            const totalNs = sp * frameWidth;
-            const xs = new Array(frameWidth);
-            const dataA = clamp(padArray(frame.samplesA), vltg.minUvA, vltg.maxUvA);
-            const dataB = clamp(padArray(frame.samplesB), vltg.minUvB, vltg.maxUvB);
-            const dataKeyA = clamp(padArray(keyFrame.samplesA), vltg.minUvA, vltg.maxUvA);
-            const dataKeyB = clamp(padArray(keyFrame.samplesB), vltg.minUvB, vltg.maxUvB);
-
-            const trgOff = param.get('trg.time.offset');
-            const triggerTime = (trgOff / 1000000) * totalNs / 1e6;
-            for (let i = 0; i < frameWidth; i++) {
-                xs[i] = i * totalNs / frameWidth / 1e6 - triggerTime;
-            }
-            uplot.setData([xs, dataA, dataB, dataKeyA, dataKeyB], true);
-        } catch (e) { console.error("updatePlot:", e); }
+            const sp = param.get("sampling.ns",500000);
+            if (Math.min(frame.samplesA.length,frame.samplesB.length) < 2) return;
+            const tn = sp * fw, xs = new Array(fw);
+            const [dA,dB,dKA,dKB] = [cl(pa(frame.samplesA),vltg.minUvA,vltg.maxUvA), cl(pa(frame.samplesB),vltg.minUvB,vltg.maxUvB), cl(pa(keyFrame.samplesA),vltg.minUvA,vltg.maxUvA), cl(pa(keyFrame.samplesB),vltg.minUvB,vltg.maxUvB)];
+            const tr = (param.get('trg.time.offset')/1e6)*tn/1e6;
+            for (let i=0;i<fw;i++) xs[i]=i*tn/fw/1e6-tr;
+            uplot.setData([xs,dA,dB,dKA,dKB], true);
+        } catch(e) { console.error("updatePlot:",e); }
     }
 
-    const _BASE64_MAP = Object.fromEntries(
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-        .split("").map((c, i) => [c, i])
-    );
-    function decode(input) {
-        let results = [];
-        for (let i = 0; i < input.length; i += 2) {
-            const char1 = input[i];
-            const char2 = input[i + 1];
-            if (!char1 || !char2) break;
-            const val1 = _BASE64_MAP[char1];
-            const val2 = _BASE64_MAP[char2];
-            if (val1 !== undefined && val2 !== undefined) {
-                results.push((val1 << 6) | val2);
-            }
-        }
-        return results;
-    }
-
-    function setStatus(txt, isErr) {
-        const el = document.getElementById("status");
-        if (el) { el.textContent = txt; el.className = isErr ? 'error' : ''; }
-    }
-
-    function appendStatus(txt) {
-        const el = document.getElementById("status");
-        if (el) {
-            el.textContent += " " + txt;
-        }
-    }
+    const _B64 = Object.fromEntries("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".split("").map((c,i)=>[c,i]));
+    function decode(s) { const r=[]; for(let i=0;i<s.length;i+=2){const a=_B64[s[i]],b=_B64[s[i+1]]; if(a!==undefined&&b!==undefined) r.push((a<<6)|b); } return r; }
+    function setStatus(t, e) { const el=document.getElementById("status"); if(el) { el.textContent=t; el.className=e?'error':''; } }
+    function appendStatus(t) { const el=document.getElementById("status"); if(el) el.textContent+=" "+t; }
 
     function onFrame(text) {
         clearTimeout(staleTimer);
-        if (text.startsWith("error: ")) { setStatus("error: " + text.substring(7), true); return; }
-        staleTimer = setTimeout(() => { setStatus("communication stalling", true); }, 1000);
+        if (text.startsWith("error:")) { setStatus(text.substring(7).trim(), true); return; }
+        staleTimer = setTimeout(() => setStatus("communication stalling", true), 1000);
         if (paused) return;
-        const lines = text.split("\n");
-        let commands = {};
-        for (const rawLine of lines) {
-            const line = rawLine.trim();
-            if (!line) continue;
-            const eqIdx = line.indexOf("=");
-            if (eqIdx !== -1) {
-                commands[line.substring(0, eqIdx).trim()] = line.substring(eqIdx + 1).trim();
-            } else if (line === 'param?') {
-                param.sendAllCommands();
-            }
-        }
-        let samplesA = decode(commands["data.a"] || "").map(v => adcToUv(v, rawUvRange.minA, rawUvRange.maxA));
-        let samplesB = decode(commands["data.b"] || "").map(v => adcToUv(v, rawUvRange.minB, rawUvRange.maxB));
-        if (commands["head"] === "1") {
-            frame = {samplesA: samplesA, samplesB: samplesB};
-        } else {
-            Array.prototype.push.apply(frame.samplesA, samplesA);
-            Array.prototype.push.apply(frame.samplesB, samplesB);
-        }
-        if (commands["keyframe"] === "1") {
-            if (commands["head"] === "1") {
-                keyFrame.samplesA = samplesA;
-                keyFrame.samplesB = samplesB;
-            } else {
-                Array.prototype.push.apply(keyFrame.samplesA, samplesA);
-                Array.prototype.push.apply(keyFrame.samplesB, samplesB);
-            }
-            keyFrame.timestamp = Date.now();
-            samplesA = null;
-            samplesB = null;
-        }
-        if (commands["vltg.steps"] !== undefined) vltg.steps = parseFloat(commands["vltg.steps"]);
-        if (commands["vltg.min.uv.a"] !== undefined) rawUvRange.minA = parseFloat(commands["vltg.min.uv.a"]);
-        if (commands["vltg.max.uv.a"] !== undefined) rawUvRange.maxA = parseFloat(commands["vltg.max.uv.a"]);
-        if (commands["vltg.min.uv.b"] !== undefined) rawUvRange.minB = parseFloat(commands["vltg.min.uv.b"]);
-        if (commands["vltg.max.uv.b"] !== undefined) rawUvRange.maxB = parseFloat(commands["vltg.max.uv.b"]);
-        updateDisplayRange();
-        setStatus("streaming");
-        param.frameWidth = parseInt(commands["frame.size"]) || 200;
+        const cmds = {};
+        for (const l of text.split("\n")) { const t=l.trim(); if(!t) continue; const i=t.indexOf("="); if(i!==-1) cmds[t.substring(0,i).trim()]=t.substring(i+1).trim(); else if(t==='param?') param.sendAllCommands(); }
+        const push = (a,b) => { for (let i=0;i<b.length;i++) a.push(b[i]); };
+        let sA = decode(cmds["data.a"]||"").map(v=>adcToUv(v,rawUvRange.minA,rawUvRange.maxA));
+        let sB = decode(cmds["data.b"]||"").map(v=>adcToUv(v,rawUvRange.minB,rawUvRange.maxB));
+        if (cmds["head"]==="1") frame={samplesA:sA,samplesB:sB}; else { push(frame.samplesA,sA); push(frame.samplesB,sB); }
+        if (cmds["keyframe"]==="1") { if (cmds["head"]==="1") { keyFrame.samplesA=sA; keyFrame.samplesB=sB; } else { push(keyFrame.samplesA,sA); push(keyFrame.samplesB,sB); } keyFrame.timestamp=Date.now(); sA=sB=null; }
+        if (cmds["vltg.steps"]!==undefined) vltg.steps=parseFloat(cmds["vltg.steps"]);
+        if (cmds["vltg.min.uv.a"]!==undefined) rawUvRange.minA=parseFloat(cmds["vltg.min.uv.a"]);
+        if (cmds["vltg.max.uv.a"]!==undefined) rawUvRange.maxA=parseFloat(cmds["vltg.max.uv.a"]);
+        if (cmds["vltg.min.uv.b"]!==undefined) rawUvRange.minB=parseFloat(cmds["vltg.min.uv.b"]);
+        if (cmds["vltg.max.uv.b"]!==undefined) rawUvRange.maxB=parseFloat(cmds["vltg.max.uv.b"]);
+        updateDisplayRange(); setStatus("streaming");
+        param.frameWidth = parseInt(cmds["frame.size"]) || 200;
         updatePlot();
     }
 
-    function connect() {
-        comm.close();
-        comm.ws = new WebSocket(`ws://${location.host}/ws`);
-        comm.ws.onopen = () => {
-            clearTimeout(staleTimer);
-            setStatus("Connected");
-            param.sendAllCommands();
-        };
-        comm.ws.onclose = () => {
-            clearTimeout(staleTimer);
-            appendStatus("Oscilloscope disconnected.");
-        };
-        comm.ws.onerror = () => setStatus("error", true);
-        comm.ws.onmessage = (e) => {
-            const raw = e.data;
-            if (typeof raw !== "string") return;
-            onFrame(raw);
-        };
-    }
-
-    document.getElementById('commMode').onchange = function () {
-        comm.close();
-        if (this.value === 'serial') {
-            switchToSerial();
-        } else {
-            comm.mode = 'web';
-            connect();
-        }
-    };
-
-    async function switchToSerial() {
-        try {
-            const port = await navigator.serial.requestPort();
-            await port.open({ baudRate: 460800 });
-            comm.serialPort = port;
-            comm.mode = 'serial';
-            setStatus("serial connected");
-            param.sendAllCommands();
-            startSerialRead();
-        } catch (e) {
-            setStatus("serial error: " + e.message, true);
-            comm.mode = 'web';
-            document.getElementById('commMode').value = 'web';
-            connect();
-        }
-    }
-
-    async function startSerialRead() {
-        const decoder = new TextDecoder();
-        let buffer = '';
-        try {
-            while (comm.serialPort.readable) {
-                const reader = comm.serialPort.readable.getReader();
-                try {
-                    while (true) {
-                        const { value, done } = await reader.read();
-                        if (done) break;
-                        buffer += decoder.decode(value, { stream: true });
-                        const parts = buffer.split('#');
-                        buffer = parts.pop();
-                        for (const frame of parts) {
-                            if (frame.trim()) onFrame(frame.trim());
-                        }
-                    }
-                } finally {
-                    reader.releaseLock();
-                }
-            }
-        } catch (e) {
-            setStatus("serial disconnected", true);
-            comm.mode = 'web';
-            document.getElementById('commMode').value = 'web';
-            connect();
-        }
-    }
+    if (!window.isSecureContext) document.querySelectorAll('.transport-btn[data-mode="ble"],.transport-btn[data-mode="serial"]').forEach(b=>b.classList.add('insecure'));
+    document.querySelectorAll('.transport-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const m = btn.dataset.mode;
+            if (!window.isSecureContext && m !== 'wifi') { window.open('https://elmot.xyz/oscilloscope','_blank'); return; }
+            comm.switchTo(btn.classList.contains('active') && m !== 'web' ? 'web' : m);
+        });
+    });
 
     initUplot();
-    connect();
-    document.getElementById("trgShiftReset").onclick = function () {
-        const el = document.getElementById("trg.time.offset");
-        el.value = "0";
-        param.set("trg.time.offset", "0");
-    };
-    const pauseBtn = document.getElementById("pauseBtn");
-    pauseBtn.onclick = function () {
-        paused = !paused;
-        this.textContent = paused ? "Resume" : "Pause";
-        this.classList.toggle("paused", paused);
-    };
+    const host = location.hostname;
+    if (host.endsWith('.local') || (host === '127.0.0.1') || !host.includes('.')) {
+        comm.switchTo('web');}
+     else {
+         setStatus("Select transport");
+    }
+    document.getElementById("trgShiftReset").onclick = () => { const e=document.getElementById("trg.time.offset"); e.value="0"; param.set("trg.time.offset","0"); };
+    document.getElementById("pauseBtn").onclick = function() { paused=!paused; this.textContent=paused?"Resume":"Pause"; this.classList.toggle("paused",paused); };
 </script>
 </body>
 </html>
