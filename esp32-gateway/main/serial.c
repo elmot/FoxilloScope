@@ -12,6 +12,7 @@
 
 #define BUF_SIZE 20000
 
+static const char * TAG = "serial";
 static QueueHandle_t s_uart_queue = nullptr;
 
 void uart_write_str(const char *str)
@@ -19,15 +20,7 @@ void uart_write_str(const char *str)
     uart_write_bytes(UART_PORT, str, strlen(str));
 }
 
-// ReSharper disable once CppDFAConstantParameter
-static void transmit_error(const char *msg)
-{
-    char buf[128];
-    const int n = snprintf(buf, sizeof(buf), "error: %s", msg);
-    if (n > 0) ws_transmit(buf, n);
-}
-
-[[noreturn]] static void uart_event_task([[maybe_unused]] void *arg)
+[[noreturn]] static void uart_rx_task([[maybe_unused]] void *arg)
 {
     static char buf[BUF_SIZE];
     static int len = 0;
@@ -59,8 +52,12 @@ static void transmit_error(const char *msg)
                     char *hash;
                     while ((hash = memchr(buf, '#', len)) != NULL) {
                         const int idx = hash - buf;
-                        *hash = '\0';
-                        if (idx > 0) ws_transmit(buf, idx);
+                        if (idx > 0)
+                        {
+                            constexpr char keyframe_key[] = "keyframe=1";
+                            bool isKeyFrame = memmem(buf, idx, keyframe_key, sizeof(keyframe_key) -1) != nullptr;
+                            scheduleTxMessage(buf, idx, isKeyFrame);
+                        }
                         const int after = len - idx - 1;
                         memmove(buf, hash + 1, after);
                         len = after;
@@ -70,7 +67,7 @@ static void transmit_error(const char *msg)
                 break;
             }
             case UART_FRAME_ERR:
-                transmit_error("UART frame error");
+                ESP_LOGW(TAG, "UART frame error");
                 break;
             case UART_FIFO_OVF:
                 uart_flush_input(UART_PORT);
@@ -81,6 +78,7 @@ static void transmit_error(const char *msg)
         }
     }
 }
+
 
 void uart_init(void)
 {
@@ -95,5 +93,5 @@ void uart_init(void)
     ESP_ERROR_CHECK(uart_param_config(UART_PORT, &cfg));
     ESP_ERROR_CHECK(uart_set_pin(UART_PORT, UART_TX_PIN, UART_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
     ESP_ERROR_CHECK(uart_driver_install(UART_PORT, 4096, 256, 20, &s_uart_queue, 0));
-    xTaskCreate(uart_event_task, "uart_evt", 4096, nullptr, 10, nullptr);
+    xTaskCreate(uart_rx_task, "uart_rx_evt", 4096, nullptr, 10, nullptr);
 }

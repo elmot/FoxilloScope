@@ -9,21 +9,30 @@
 
 #define WIFI_FAIL_BIT BIT1
 
-
 extern void led_init(void);
 extern void led_refresh(void);
 
 void uart_init(void);
+
+httpd_handle_t start_webserver(void);
+esp_err_t ws_handler(httpd_req_t *req);
+void nvs_save_wifi_creds(const char *ssid, const char *password);
+
 void uart_write_str(const char *str);
-void ws_transmit(const char *text, int len);
 
 extern bool ws_any_connected(void);
 extern EventGroupHandle_t s_wifi_event_group;
 
 volatile extern bool s_sta_connected;
 
-void register_http_static_resources(const httpd_handle_t hd);
+void register_http_static_resources(httpd_handle_t hd);
 
 void start_dns_server(void);
+
+void scheduleTxMessage(const char* payload, int len, bool isKey);
+
+extern char s_sta_ssid[32];
+extern char s_sta_ip[16];
+extern volatile int s_sta_rssi;
 
 #endif //ESP32_GATEWAY_GATEWAY_H
