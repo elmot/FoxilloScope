@@ -89,4 +89,18 @@ menu "Gateway Configuration"
             range 0 48
     endmenu
 
+    menu "BLE Configuration"
+
+        config OSC_BLE_ENABLE
+            bool "Enable BLE 5 Transport"
+            default y
+
+        config OSC_BLE_DEVICE_NAME
+            string "BLE device name"
+            default "ELMOSC"
+            depends on OSC_BLE_ENABLE
+            help
+                Bluetooth LE device name used in advertising.
+    endmenu
+
 endmenu

@@ -55,8 +55,8 @@ void uart_write_str(const char *str)
                         if (idx > 0)
                         {
                             constexpr char keyframe_key[] = "keyframe=1";
-                            bool isKeyFrame = memmem(buf, idx, keyframe_key, sizeof(keyframe_key) -1) != nullptr;
-                            scheduleTxMessage(buf, idx, isKeyFrame);
+                            const bool isKeyFrame = memmem(buf, idx, keyframe_key, sizeof(keyframe_key) -1) != nullptr;
+                            scheduleTxMessage(buf, idx + 1, isKeyFrame);
                         }
                         const int after = len - idx - 1;
                         memmove(buf, hash + 1, after);

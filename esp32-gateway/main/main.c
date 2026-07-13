@@ -119,18 +119,34 @@ static void close_msg_ws(void* arg)
     }
 }
 
+static void replace_ws_client(const int reqFd)
+{
+    if (currentClientFd >= 0)
+    {
+        ESP_LOGI(TAG, "WS disconnecting fd=%d", currentClientFd);
+    }
+    xSemaphoreTake(s_ws_mutex, portMAX_DELAY);
+    if (currentClientFd >= 0)
+    {
+        httpd_queue_work(s_server, close_msg_ws, (void*)currentClientFd);
+    }
+    currentClientFd = reqFd;
+    xSemaphoreGive(s_ws_mutex);
+
+}
+
+void kick_out_ws_client()
+{
+    replace_ws_client(-1);
+}
+
 esp_err_t ws_handler(httpd_req_t* req)
 {
     const int reqFd = httpd_req_to_sockfd(req);
     if (req->method == HTTP_GET)
     {
-        xSemaphoreTake(s_ws_mutex, portMAX_DELAY);
-        if (currentClientFd >= 0)
-        {
-            httpd_queue_work(s_server, close_msg_ws, (void*)currentClientFd);
-        }
-        currentClientFd = reqFd;
-        xSemaphoreGive(s_ws_mutex);
+        replace_ws_client(reqFd);
+        ble_disconnect_client();
         ESP_LOGI(TAG, "WS connected fd=%d", currentClientFd);
         led_refresh();
         ESP_LOGI(TAG,
@@ -323,7 +339,7 @@ void scheduleTxMessage(const char* payload,const  int len,const  bool isKey)
         if (currentClientFd >= 0)
         {
             frame.payload = (uint8_t*)message.payload;
-            frame.len = message.len;
+            frame.len = message.len - 1;//skip trailing #
             const esp_err_t err = httpd_ws_send_data(s_server, currentClientFd, &frame);
             if (err != ESP_OK)
             {
@@ -334,6 +350,7 @@ void scheduleTxMessage(const char* payload,const  int len,const  bool isKey)
                 led_refresh();
             }
         }
+        ble_transmit(message.payload, message.len);
         free(message.payload);
     }
 }
@@ -395,6 +412,7 @@ void app_main(void)
     s_ws_queue = xQueueCreate(1, sizeof(tx_message_t));
     xTaskCreate(ws_tx_task, "uart_tx_evt", 4096, nullptr, 10, nullptr);
     s_server = start_webserver();
+    ble_uart_init();
     uart_init();
 
     ESP_ERROR_CHECK(mdns_init());

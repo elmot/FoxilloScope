@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>BLE UART Test</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:system-ui,sans-serif;background:#111;color:#ddd;height:100dvh;display:flex;flex-direction:column;padding:12px;gap:8px;overflow:hidden}
+        h1{font-size:1.1rem;color:#0af;flex-shrink:0}
+        #toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex-shrink:0}
+        button{background:#333;color:#fff;border:1px solid #555;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:.85rem}
+        button:hover{background:#444}
+        button:disabled{opacity:.4;cursor:default}
+        #status{font-size:.8rem;color:#888;flex:1}
+        #status.ok{color:#0f0}
+        #send-row{display:flex;gap:8px;flex-shrink:0}
+        #msg{flex:1;background:#222;border:1px solid #444;border-radius:4px;padding:6px;color:#ddd;font-family:monospace;font-size:.85rem}
+        #msg::placeholder{color:#555}
+        #panes{flex:1 1 0;display:flex;flex-direction:column;gap:8px;min-height:0}
+        #log{border:1px solid #333;border-radius:4px;flex:1 1 0;overflow-y:auto;padding:6px;font-family:monospace;font-size:.8rem;background:#0a0a0a;min-height:0}
+        #log .rx{color:#0af}
+        #log .tx{color:#fa0}
+        #log .info{color:#888}
+        #log .err{color:#f44}
+        #data{flex:1 1 0;display:flex;flex-direction:column;min-height:0}
+        #data-header{display:flex;gap:8px;align-items:center;font-size:.8rem;color:#888;flex-shrink:0}
+        #data-header label{display:flex;align-items:center;gap:4px;cursor:pointer}
+        #data-header input{cursor:pointer}
+        #raw{flex:1 1 0;overflow-y:auto;padding:6px;font-family:monospace;font-size:.75rem;background:#0a0a0a;border:1px solid #333;border-radius:4px;min-height:0;white-space:pre}
+    </style>
+</head>
+<body>
+<h1>BLE UART — Nordic UART Service Test</h1>
+<div id="toolbar">
+    <button id="scanBtn" onclick="scan()">Scan</button>
+    <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+    <span id="status">Idle</span>
+</div>
+<div id="send-row">
+    <input id="msg" placeholder="send to MCU via BLE..." onkeydown="if(event.key==='Enter')send()">
+    <button id="sendBtn" onclick="send()" disabled>Send</button>
+    <button id="clearBtn" onclick="clearLog()">Clear</button>
+</div>
+<div id="panes">
+    <div id="log"></div>
+    <div id="data">
+        <div id="data-header">
+            <span id="dataStatus">0 bytes</span>
+            <label><input type="checkbox" id="pauseData"> Pause</label>
+            <button id="clearBtn2" onclick="clearData();clearLog()" style="font-size:.7rem;padding:2px 6px">Clear</button>
+        </div>
+        <pre id="raw"></pre>
+    </div>
+</div>
+
+<script>
+    const NUS_SVC = '6623a8e1-77d3-4e35-a01c-4d649ff5fb07';
+    const NUS_TX  = '6623a8e2-77d3-4e35-a01c-4d649ff5fb07';
+    const NUS_RX  = '6623a8e3-77d3-4e35-a01c-4d649ff5fb07';
+
+    let device, svc, txChar, rxChar;
+    let totalBytes = 0, startTime = 0;
+    let dotBuf = '';
+
+    const $log = document.getElementById('log');
+    const $status = document.getElementById('status');
+    const $scan = document.getElementById('scanBtn');
+    const $disco = document.getElementById('disconnectBtn');
+    const $send = document.getElementById('sendBtn');
+    let dotTimer;
+
+    const MAX_LINES = 100;
+
+    function log(msg, cls = 'info') {
+        const e = document.createElement('div');
+        e.className = cls;
+        e.textContent = msg;
+        $log.appendChild(e);
+        while ($log.children.length > MAX_LINES) $log.removeChild($log.firstChild);
+        $log.scrollTop = $log.scrollHeight;
+    }
+
+    function setStatus(s, ok) {
+        $status.textContent = s;
+        $status.className = ok ? 'ok' : '';
+    }
+
+    function setEnabled(connected) {
+        $disco.disabled = !connected;
+        $send.disabled = !connected;
+        $scan.disabled = connected;
+    }
+
+    async function scan() {
+        try {
+            device = await navigator.bluetooth.requestDevice({
+                filters: [{ services: [NUS_SVC] }],
+            });
+            log(`Device selected: ${device.name || 'unnamed'}`, 'info');
+            setStatus('Connecting...');
+
+            device.addEventListener('gattserverdisconnected', onDisconnected);
+            const server = await device.gatt.connect();
+            svc = await server.getPrimaryService(NUS_SVC);
+            log('NUS service found', 'info');
+
+            txChar = await svc.getCharacteristic(NUS_TX);
+            rxChar = await svc.getCharacteristic(NUS_RX);
+            log('TX/RX characteristics found', 'info');
+
+            await txChar.startNotifications();
+            txChar.addEventListener('characteristicvaluechanged', onData);
+            log('Notifications enabled', 'info');
+
+            totalBytes = 0;
+            startTime = Date.now();
+            dotTimer = setInterval(flushDots, 500);
+            setStatus('Connected', true);
+            setEnabled(true);
+            log(`← Connected to ${device.name}`, 'ok');
+        } catch (e) {
+            if (e.name !== 'NotFoundError') {
+                log(`Error: ${e.message}`, 'err');
+                setStatus('Error', false);
+            }
+        }
+    }
+
+    const decoder = new TextDecoder('utf-8');
+    const $raw = document.getElementById('raw');
+    const $dataStatus = document.getElementById('dataStatus');
+    const $pauseData = document.getElementById('pauseData');
+    let dataCount = 0;
+
+    const MAX_LOG = 1000;
+
+    function clearData() { $raw.textContent = ''; dataCount = 0; $dataStatus.textContent = '0 bytes'; }
+
+    function onData(ev) {
+        const dv = ev.target.value;
+        const n = dv.byteLength;
+        totalBytes += n;
+        dotBuf += '.';
+
+        if (!$pauseData.checked) {
+            const text = decoder.decode(dv, { stream: true });
+            let s = $raw.textContent + text;
+            if (s.length > MAX_LOG) s = s.slice(s.length - MAX_LOG);
+            $raw.textContent = s;
+            $raw.scrollTop = $raw.scrollHeight;
+            dataCount++;
+            $dataStatus.textContent = `${dataCount} chunks, ${totalBytes} bytes`;
+        }
+    }
+
+    function flushDots() {
+        if (!dotBuf) return;
+        log(dotBuf, 'rx');
+        dotBuf = '';
+
+        if (totalBytes && startTime) {
+            const sec = (Date.now() - startTime) / 1000;
+            const kbps = (totalBytes * 8 / 1000 / sec).toFixed(1);
+            const KBs = (totalBytes / 1000 / sec).toFixed(1);
+            setStatus(`${kbps} kbps (${KBs} KB/s)`, true);
+        }
+    }
+
+    function onDisconnected() {
+        clearInterval(dotTimer);
+        flushDots();
+        if (totalBytes && startTime) {
+            const sec = (Date.now() - startTime) / 1000;
+            const kbps = (totalBytes * 8 / 1000 / sec).toFixed(1);
+            log(`× Disconnected — ${totalBytes} bytes in ${sec.toFixed(1)}s = ${kbps} kbps`, 'err');
+        } else {
+            log('× Device disconnected', 'err');
+        }
+        setStatus('Disconnected', false);
+        setEnabled(false);
+        device = svc = txChar = rxChar = null;
+        totalBytes = 0;
+        startTime = 0;
+    }
+
+    async function send() {
+        const inp = document.getElementById('msg');
+        const txt = inp.value.trim();
+        if (!txt || !rxChar) return;
+        try {
+            await rxChar.writeValue(new TextEncoder().encode(txt + '\n'));
+            log(`→ ${txt}`, 'tx');
+            inp.value = '';
+        } catch (e) {
+            log(`Send error: ${e.message}`, 'err');
+        }
+    }
+
+    async function disconnect() {
+        if (!device) return;
+        try {
+            device.gatt.disconnect();
+        } catch (_) {}
+        onDisconnected();
+    }
+
+    function clearLog() {
+        $log.innerHTML = '';
+    }
+</script>
+</body>
+</html>

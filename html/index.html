@@ -160,12 +160,10 @@
 </div>
 <div id="bottom-controls">
     <div id="transport-widget">
-<!--
         <button id="btn-ble" class="transport-btn" data-mode="ble">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></svg>
             <span class="hint">You're viewing an unsecured page. Click here to switch to the secure version.</span>
         </button>
--->
         <button id="btn-wifi" class="transport-btn" data-mode="wifi">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01M2 8.82a15 15 0 0 1 20 0M5 12.86a10 10 0 0 1 14 0M8.5 16.43a5 5 0 0 1 7 0"/></svg>
         </button>
@@ -224,6 +222,9 @@
         chAKey: cssVar('--ch-a-key'),
         chBKey: cssVar('--ch-b-key'),
     };
+    const NUS_SVC = '6623a8e1-77d3-4e35-a01c-4d649ff5fb07';//todo move
+    const NUS_TX  = '6623a8e2-77d3-4e35-a01c-4d649ff5fb07';
+    const NUS_RX  = '6623a8e3-77d3-4e35-a01c-4d649ff5fb07';
     const vltg = {};
     let uplot = null, paused = false, staleTimer = null;
     function createFrameReader(onFrame) {
@@ -241,9 +242,9 @@
             async connect(onFrame, onDisconnect) {
                 const ws = new WebSocket(`ws://${location.host}/ws`); this.ws = ws;
                 await new Promise((resolve, reject) => {
-                    ws.onopen = () => { clearTimeout(staleTimer); resolve(); };
+                    ws.onopen = () => resolve();
                     ws.onerror = () => reject(new Error("WebSocket connection failed"));
-                    ws.onclose = () => { clearTimeout(staleTimer); if (!this._intentionalClose && ws === this.ws) onDisconnect(); };
+                    ws.onclose = () => { if (!this._intentionalClose && ws === this.ws) onDisconnect(); };
                     ws.onmessage = (e) => { if (typeof e.data === 'string') onFrame(e.data); };
                 });
             },
@@ -267,6 +268,33 @@
             send(data) { const w = this.serialPort?.writable?.getWriter(); if (w) { w.write(new TextEncoder().encode(data)); w.releaseLock(); } },
             statusText: "serial connected", errorLabel: "serial error",
         },
+        ble: {
+            _writeQueue: [], _writing: false,
+            async _flush() {
+                if (this._writing) return;
+                this._writing = true;
+                while (this._writeQueue.length) {
+                    const data = this._writeQueue.shift();
+                    try { if (this.bleRxChar) await this.bleRxChar.writeValueWithoutResponse(data); }
+                    catch (e) { console.error("BLE write failed:", e); }
+                }
+                this._writing = false;
+            },
+            async connect(onFrame, onDisconnect) {
+                const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [NUS_SVC] }] });
+                this.bleDevice = device;
+                device.addEventListener('gattserverdisconnected', () => { if (!this._intentionalClose && device === this.bleDevice) onDisconnect(); });
+                const svc = await (await device.gatt.connect()).getPrimaryService(NUS_SVC);
+                const txChar = await svc.getCharacteristic(NUS_TX);
+                this.bleRxChar = await svc.getCharacteristic(NUS_RX);
+                const feed = createFrameReader(onFrame);
+                await txChar.startNotifications();
+                txChar.addEventListener('characteristicvaluechanged', (ev) => feed(new TextDecoder().decode(ev.target.value)));
+            },
+            disconnect() { this._writeQueue = []; this._writing = false; if (this.bleDevice) { try { this.bleDevice.gatt.disconnect(); } catch(e) {} this.bleDevice = null; } this.bleRxChar = null; },
+            send(data) { if (!this.bleRxChar) return; this._writeQueue.push(new TextEncoder().encode(data)); this._flush(); },
+            statusText: "BLE connected", errorLabel: "BLE error",
+        },
     };
     transports.wifi = transports.web;
 
@@ -276,23 +304,27 @@
     const comm = {
         mode: 'web', _transport: null,
         async switchTo(mode) {
-            this.close(); this.mode = mode;
+            this.close();
+            if (mode === 'none') {
+                this.mode = 'none'; this._transport = null;
+                resetTransport(); setStatus("Disconnected"); return;
+            }
+            this.mode = mode;
             const t = transports[mode]; if (!t) return;
-            if (mode === 'web') resetTransport(); else activateTransport(mode);
+            if (mode === 'web') activateTransport('wifi'); else activateTransport(mode);
             this._transport = t; t._intentionalClose = false;
             const self = this;
             try {
                 await t.connect(d => onFrame(d), () => {
-                    clearTimeout(staleTimer);
                     appendStatus("Disconnected.");
                     resetTransport();
-                    self.mode = 'web';
+                    self.mode = 'none';
                     self._transport = null;
                 });
-                clearTimeout(staleTimer); setStatus("Connected"); param.sendAllCommands();
+                setStatus("Connected"); param.sendAllCommands();
             } catch (e) {
                 setStatus("Error: " + e.message, true);
-                self.mode = 'web'; self._transport = null; resetTransport();
+                self.mode = 'none'; self._transport = null; resetTransport();
             }
         },
         close() { if (this._transport) { this._transport._intentionalClose = true; this._transport.disconnect(); this._transport = null; } },
@@ -320,7 +352,7 @@
     document.querySelectorAll('.param-slider').forEach(slider => {
         slider.oninput = () => { param.set(slider.id, slider.value); if (uplot) uplot.redraw(); };
         param._values[slider.id] = slider.value;
-        param.register(slider.id, slider, (el, v) => el.value = String(v), 50);
+        param.register(slider.id, slider, (el, v) => el.value = String(v), 20);
     });
 
     (function() { const c = param._controls['trg.level']; if (c) c.methods = { send(v) { const r = parseFloat(v) || 0, tc = param.get('trg.chan'), lc = tc === 0 ? 'a' : 'b'; return String(Math.max(-1e6, Math.min(1e6, Math.round(r / (swState[lc].zoom || 1) + (swState[lc].offsetPpm || 0))))); } }; })();
@@ -377,7 +409,7 @@
       el.oninput = function() { apply(parseFloat(this.value)); }; el.apply = apply;
     }
 
-    ['gain.a','gain.b','vbias.a','vbias.b'].forEach(k => { param.register(k, null, ()=>{}, 50); param._values[k] = k.startsWith('vbias') ? 0 : 1; });
+    ['gain.a','gain.b','vbias.a','vbias.b'].forEach(k => { param.register(k, null, ()=>{}, 20); param._values[k] = k.startsWith('vbias') ? 0 : 1; });
     ['a','b'].forEach(c => { setupGainSlider(c); setupBiasSlider(c); });
 
     function _trackSaveCookie() { document.cookie = "scope_track=" + encodeURIComponent(JSON.stringify(_track)) + ";path=/;SameSite=Lax"; }
@@ -502,7 +534,7 @@
     function onFrame(text) {
         clearTimeout(staleTimer);
         if (text.startsWith("error:")) { setStatus(text.substring(7).trim(), true); return; }
-        staleTimer = setTimeout(() => setStatus("communication stalling", true), 1000);
+        staleTimer = setTimeout(() => { if (comm._transport) setStatus("communication stalling", true); }, 1000);
         if (paused) return;
         const cmds = {};
         for (const l of text.split("\n")) { const t=l.trim(); if(!t) continue; const i=t.indexOf("="); if(i!==-1) cmds[t.substring(0,i).trim()]=t.substring(i+1).trim(); else if(t==='param?') param.sendAllCommands(); }
@@ -526,7 +558,7 @@
         btn.addEventListener('click', () => {
             const m = btn.dataset.mode;
             if (!window.isSecureContext && m !== 'wifi') { window.open('https://elmot.xyz/oscilloscope','_blank'); return; }
-            comm.switchTo(btn.classList.contains('active') && m !== 'web' ? 'web' : m);
+            comm.switchTo(btn.classList.contains('active') ? 'none' : m);
         });
     });
 

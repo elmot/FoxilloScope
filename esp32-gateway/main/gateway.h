@@ -21,6 +21,9 @@ void nvs_save_wifi_creds(const char *ssid, const char *password);
 void uart_write_str(const char *str);
 
 extern bool ws_any_connected(void);
+extern bool ble_any_connected(void);
+void ble_disconnect_client(void);
+
 extern EventGroupHandle_t s_wifi_event_group;
 
 volatile extern bool s_sta_connected;
@@ -34,5 +37,10 @@ void scheduleTxMessage(const char* payload, int len, bool isKey);
 extern char s_sta_ssid[32];
 extern char s_sta_ip[16];
 extern volatile int s_sta_rssi;
+
+void ble_uart_init(void);
+void ble_transmit(const char *text, int len);
+
+void kick_out_ws_client();
 
 #endif //ESP32_GATEWAY_GATEWAY_H
