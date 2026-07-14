@@ -37,6 +37,9 @@ static uint16_t s_conn_handle;
 
 static constexpr uint8_t s_slave_itvl_range[] = { 6, 0, 6, 0 };
 
+static char s_ble_long_name[64];
+static char s_ble_short_name[32];
+
 static void ble_advertise(void);
 
 static int osc_char_access([[maybe_unused]] uint16_t conn_handle, [[maybe_unused]] uint16_t attr_handle,
@@ -119,8 +122,8 @@ static void ble_advertise()
     ble_gap_adv_set_fields(&fields);
 
     struct ble_hs_adv_fields rsp_fields = {0};
-    rsp_fields.name = (uint8_t *)CONFIG_OSC_BLE_DEVICE_NAME;
-    rsp_fields.name_len = strlen(CONFIG_OSC_BLE_DEVICE_NAME);
+    rsp_fields.name = (uint8_t *)s_ble_short_name;
+    rsp_fields.name_len = strlen(s_ble_short_name);
     rsp_fields.name_is_complete = 1;
     ble_gap_adv_rsp_set_fields(&rsp_fields);
 
@@ -133,13 +136,14 @@ static void ble_advertise()
 
 static void ble_host_sync()
 {
+    ble_svc_gap_device_name_set(s_ble_long_name);
     ble_att_set_preferred_mtu(256);
     ble_advertise();
 }
 
 static void ble_host_reset(const int reason)
 {
-    ESP_LOGI(TAG, "reset reason=%d", reason);
+    ESP_LOGW(TAG, "host reset reason=%d", reason);
 }
 
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
@@ -228,7 +232,9 @@ void ble_uart_init()
     ble_hs_cfg.reset_cb = ble_host_reset;
     ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
 
-    ble_svc_gap_device_name_set(CONFIG_OSC_BLE_DEVICE_NAME);
+    snprintf(s_ble_long_name, sizeof(s_ble_long_name), "Elmot-Wireless-Oscilloscope%s", s_mac_suffix);
+    snprintf(s_ble_short_name, sizeof(s_ble_short_name), "ELMOSC%s", s_mac_suffix);
+    ble_svc_gap_device_name_set(s_ble_long_name);
     ble_svc_gap_init();
     ble_svc_gatt_init();
 

@@ -39,6 +39,7 @@ static char s_sta_password[64];
 char s_sta_ip[16];
 volatile int s_sta_rssi;
 volatile bool s_sta_connected;
+char s_mac_suffix[8];
 
 static const char* NVS_NS = "wifi";
 
@@ -257,7 +258,6 @@ static void wifi_init_apsta(void)
 
     wifi_config_t ap_cfg = {
         .ap = {
-            .ssid = CONFIG_ESP_WIFI_AP_SSID,
             .ssid_len = 0,
             .channel = CONFIG_ESP_WIFI_AP_CHANNEL,
             .password = CONFIG_ESP_WIFI_AP_PASSWORD,
@@ -266,6 +266,8 @@ static void wifi_init_apsta(void)
             .authmode = strlen(CONFIG_ESP_WIFI_AP_PASSWORD) ? WIFI_AUTH_WPA2_PSK : WIFI_AUTH_OPEN,
         }
     };
+    snprintf((char*)ap_cfg.ap.ssid, sizeof(ap_cfg.ap.ssid), "%.24s%s",
+             CONFIG_ESP_WIFI_AP_SSID, s_mac_suffix);
     wifi_config_t sta_cfg = {
         .sta = {
             .threshold.authmode = WIFI_AUTH_WPA2_PSK,
@@ -279,7 +281,7 @@ static void wifi_init_apsta(void)
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_cfg));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    ESP_LOGI(TAG, "AP SSID: %s", CONFIG_ESP_WIFI_AP_SSID);
+    ESP_LOGI(TAG, "AP SSID: %s", ap_cfg.ap.ssid);
     ESP_LOGI(TAG, "STA connecting to: %s", CONFIG_ESP_WIFI_REMOTE_AP_SSID);
 }
 
@@ -402,6 +404,10 @@ void app_main(void)
 
     nvs_load_wifi_creds();
 
+    uint8_t mac[6];
+    esp_read_mac(mac, ESP_MAC_WIFI_STA);
+    snprintf(s_mac_suffix, sizeof(s_mac_suffix), "-%02X%02X", mac[4], mac[5]);
+
     const wifi_init_config_t wcfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&wcfg));
     wifi_init_apsta();
@@ -430,8 +436,6 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(mdns_instance_name_set("ESP32 Elmot Oscilloscope(" CONFIG_LWIP_LOCAL_HOSTNAME ")"));
     ESP_ERROR_CHECK(mdns_service_add(nullptr, "_http", "_tcp", 80, nullptr, 0));
-    uint8_t mac[6];
-    esp_read_mac(mac, ESP_MAC_WIFI_STA);
     char mac_str[18];
     snprintf(mac_str, sizeof(mac_str), MACSTR, MAC2STR(mac));
     mdns_service_txt_item_set("_http", "_tcp", "mac", mac_str);

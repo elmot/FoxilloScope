@@ -36,6 +36,7 @@ void scheduleTxMessage(const char* payload, int len, bool isKey);
 
 extern char s_sta_ssid[32];
 extern char s_sta_ip[16];
+extern char s_mac_suffix[8];
 extern volatile int s_sta_rssi;
 
 void ble_uart_init(void);
