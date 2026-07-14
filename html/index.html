@@ -51,6 +51,7 @@
         #cursor-info { text-align: center; }
         #status.error { color: #f00; }
         .u-select { background: rgba(0, 255, 0, 0.15) !important; }
+        .sel-label { position: absolute; pointer-events: none; color: #0f0; font-size: 11px; white-space: nowrap; background: rgba(0,0,0,0.75); padding: 1px 5px; border-radius: 3px; z-index: 10; transform: translateX(-50%); }
 
 
         #pauseBtn { background: #333; color: #0f0; border: 1px solid #0f0; cursor: pointer; font: inherit; padding: 1px 10px; border-radius: 3px; width: 10ex; transition: background 0.15s, color 0.15s; }
@@ -79,7 +80,7 @@
         .transport-btn.insecure { border-color: #555; color: #555; cursor: default; }
         .transport-btn.insecure:hover { background: #222; color: #555; border-color: #555; }
         .transport-btn .icon { width: 16px; height: 16px; display: block; }
-        .transport-btn .hint { display: none; position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); white-space: nowrap; background: #333; color: #f66; border: 1px solid #f66; padding: 3px 8px; border-radius: 3px; font-size: 10px; pointer-events: none; z-index: 100; }
+        .transport-btn .hint { display: none; position: absolute; bottom: calc(100% + 6px); left: 0; white-space: nowrap; background: #333; color: #f66; border: 1px solid #f66; padding: 3px 8px; border-radius: 3px; font-size: 10px; pointer-events: none; z-index: 100; }
         .transport-btn.insecure:hover .hint { display: block; }
 
         .button-switch-block { display: flex; gap: 2px; margin-top: 8px; background: #222; border: 1px solid #0f0; border-radius: 3px; padding: 2px; }
@@ -488,10 +489,22 @@
                           if (dt) { p.push('\u0394t '+fmtTime(dt)); const dA = Math.abs(self.posToVal(s.top+by,'chA')-self.posToVal(s.top+s.height+by,'chA')), dB = Math.abs(self.posToVal(s.top+by,'chB')-self.posToVal(s.top+s.height+by,'chB')); if (!isNaN(dA)) p.push('\u0394A '+fmtUv(dA)); if (!isNaN(dB)) p.push('\u0394B '+fmtUv(dB)); }
                           else { const cA = self.posToVal(cy,'chA'), cB = self.posToVal(cy,'chB'); p.push(fmtTime(t)); if (!isNaN(cA)) p.push('A '+fmtUv(cA)); if (!isNaN(cB)) p.push('B '+fmtUv(cB)); }
                           ci.textContent = p.join('  ');
+                          const sl = document.querySelector('.sel-label');
+                          if (dt && sl) {
+                              sl.textContent = p.join('  ');
+                              sl.style.display = '';
+                              sl.style.left = (s.left + bx + s.width/2) + 'px';
+                              sl.style.top = (s.top + by + 2) + 'px';
+                          } else if (sl) {
+                              sl.style.display = 'none';
+                          }
                         } catch(e) {}
                       }],
                 },
             }, [[0], [0], [0], [0], [0]], el);
+            const selLabel = document.createElement('div');
+            selLabel.className = 'sel-label';
+            uplot.root.append(selLabel);
             uplot.over.addEventListener('pointerdown', e => { if (e.button === 0) _drag = true; });
             uplot.over.addEventListener('pointerup', () => _drag = false);
             uplot.over.addEventListener('pointerleave', () => _drag = false);
