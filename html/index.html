@@ -222,9 +222,6 @@
         chAKey: cssVar('--ch-a-key'),
         chBKey: cssVar('--ch-b-key'),
     };
-    const NUS_SVC = '6623a8e1-77d3-4e35-a01c-4d649ff5fb07';//todo move
-    const NUS_TX  = '6623a8e2-77d3-4e35-a01c-4d649ff5fb07';
-    const NUS_RX  = '6623a8e3-77d3-4e35-a01c-4d649ff5fb07';
     const vltg = {};
     let uplot = null, paused = false, staleTimer = null;
     function createFrameReader(onFrame) {
@@ -294,6 +291,9 @@
             statusText: "serial connected", errorLabel: "serial error",
         },
         ble: {
+            _svc: '6623a8e1-77d3-4e35-a01c-4d649ff5fb07',
+            _tx: '6623a8e2-77d3-4e35-a01c-4d649ff5fb07',
+            _rx: '6623a8e3-77d3-4e35-a01c-4d649ff5fb07',
             _writeQueue: [], _writing: false,
             async _flush() {
                 if (this._writing) return;
@@ -306,12 +306,12 @@
                 this._writing = false;
             },
             async connect(onFrame, onDisconnect) {
-                const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [NUS_SVC] }] });
+                const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [this._svc] }] });
                 this.bleDevice = device;
                 device.addEventListener('gattserverdisconnected', () => { if (!this._intentionalClose && device === this.bleDevice) onDisconnect(); });
-                const svc = await (await device.gatt.connect()).getPrimaryService(NUS_SVC);
-                const txChar = await svc.getCharacteristic(NUS_TX);
-                this.bleRxChar = await svc.getCharacteristic(NUS_RX);
+                const svc = await (await device.gatt.connect()).getPrimaryService(this._svc);
+                const txChar = await svc.getCharacteristic(this._tx);
+                this.bleRxChar = await svc.getCharacteristic(this._rx);
                 const feed = createFrameReader(onFrame);
                 await txChar.startNotifications();
                 txChar.addEventListener('characteristicvaluechanged', (ev) => feed(new TextDecoder().decode(ev.target.value)));

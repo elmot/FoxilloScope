@@ -35,7 +35,7 @@ static uint16_t osc_tx_val_handle;
 static bool s_notify_enabled;
 static uint16_t s_conn_handle;
 
-static constexpr uint8_t s_slave_itvl_range[] = { 6, 0, 6, 0 };
+static constexpr uint8_t s_slave_itvl_range[] = { 6, 0, 6, 0 }; // Slave connection interval range: min=6 (7.5ms), max=6 (7.5ms), little-endian uint16 pairs
 
 static char s_ble_long_name[64];
 static char s_ble_short_name[32];
