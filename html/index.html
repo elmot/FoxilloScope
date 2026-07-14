@@ -19,8 +19,8 @@
         #scope-wrap { overflow: auto; min-width: 0; min-height: 0; display: flex; flex: 1; background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 4px; }
         #scope-wrap div#scope { min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; width: 100%; height: 100%; flex: 1 1 0; }
         .v-controls-a, .v-controls-b { display: grid; align-self: stretch; min-height: 0; }
-        .v-controls-a { flex: 0 0 240px; border-right: 1px solid #2a2a2a; grid: auto 1fr auto / 1fr 1fr; }
-        .v-controls-b { flex: 0 0 160px; border-left: 1px solid #2a2a2a; grid: auto 1fr auto / 1fr; }
+        .v-controls-a { flex: 0 1 auto; border-right: 1px solid #2a2a2a; grid: auto 1fr auto / 1fr 1fr; }
+        .v-controls-b { flex: 0 1 auto; border-left: 1px solid #2a2a2a; grid: auto 1fr auto / 1fr; }
         .v-controls-a .label, .v-controls-b .label { text-align: center; }
         .v-controls-a .label { color: var(--ch-a); }
         .v-controls-b .label { color: var(--ch-b); }
@@ -111,14 +111,8 @@
             .transport-btn .icon { width: 12px; height: 12px; }
         }
 
-        @media (orientation: portrait) and (max-width: 900px) {
-            #scope-wrap { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr auto; }
-            #scope-wrap div#scope { grid-column: 1 / -1; grid-row: 1 / 2; }
-            .v-controls-a { grid-column: 1 / 2; grid-row: 2 / 3; border: none; border-top: 1px solid #2a2a2a; border-right: 1px solid #2a2a2a; height: 130px; }
-            .v-controls-b { grid-column: 2 / 3; grid-row: 2 / 3; border: none; border-top: 1px solid #2a2a2a; height: 130px; }
-            }
 
-        @media (orientation: landscape) and (max-height: 500px) { .v-controls-a { flex: 0 0 95px; } .v-controls-b { flex: 0 0 70px; } }
+        @media (orientation: landscape) and (max-height: 500px) { .v-controls-a { flex: 0 1 auto; max-width: 6rem; } .v-controls-b { flex: 0 1 auto; max-width: 5rem; } }
     </style>
 </head>
 <body>
