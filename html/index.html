@@ -19,8 +19,8 @@
         #scope-wrap { overflow: auto; min-width: 0; min-height: 0; display: flex; flex: 1; background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 4px; }
         #scope-wrap div#scope { min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; width: 100%; height: 100%; flex: 1 1 0; }
         .v-controls-a, .v-controls-b { display: grid; align-self: stretch; min-height: 0; }
-        .v-controls-a { flex: 0 0 240px; border-right: 1px solid #2a2a2a; grid: auto 1fr auto / 1fr 1fr 1fr; }
-        .v-controls-b { flex: 0 0 160px; border-left: 1px solid #2a2a2a; grid: auto 1fr auto / 1fr 1fr; }
+        .v-controls-a { flex: 0 0 240px; border-right: 1px solid #2a2a2a; grid: auto 1fr auto / 1fr 1fr; }
+        .v-controls-b { flex: 0 0 160px; border-left: 1px solid #2a2a2a; grid: auto 1fr auto / 1fr; }
         .v-controls-a .label, .v-controls-b .label { text-align: center; }
         .v-controls-a .label { color: var(--ch-a); }
         .v-controls-b .label { color: var(--ch-b); }
@@ -48,8 +48,7 @@
         #cursor-info { text-align: center; }
         #status.error { color: #f00; }
         .u-select { background: rgba(0, 255, 0, 0.15) !important; }
-        #trgShiftReset { background: none; border: none; color: #666; cursor: pointer; font: inherit; font-size: 11px; padding: 0 2px; vertical-align: middle; }
-        #trgShiftReset:hover { color: #0f0; }
+
 
         #pauseBtn { background: #333; color: #0f0; border: 1px solid #0f0; cursor: pointer; font: inherit; padding: 1px 10px; border-radius: 3px; width: 10ex; transition: background 0.15s, color 0.15s; }
         #pauseBtn:hover { background: #0f0; color: #000; }
@@ -61,12 +60,15 @@
 
         #bottom-controls { display: flex; justify-content: center; align-items: flex-start; padding: 2px 10px; background: #1a1a1a; gap: 0.8em; flex-shrink: 0; flex-wrap: wrap; border-top: 1px solid #2a2a2a; }
 
-        .switch-control { display: flex; align-items: center; gap: 0; }
-        .time-pause-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .switch-control { display: flex; align-items: center; gap: 4px; }
+        .time-pause-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
         .switch-control select { min-width: 3em; height: 1.5em; text-align: center; color: #0f0; background: #222; border: 1px solid #0f0; font: inherit; font-weight: bold; cursor: pointer; }
-        .switch-control button { width: 1.5em; height: 1.5em; background: #222; border: 1px solid #0f0; color: #0f0; font: inherit; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; }
+        .switch-control button { background: #222; border: 1px solid #0f0; color: #0f0; font: inherit; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
         .switch-control button:hover { background: #0f0; color: #000; }
-
+        .switch-control button:focus-visible { outline: 1px solid #0f0; }
+        .switch-control .arrow { width: 1.5em; height: 1.5em; padding: 0; }
+        .step-control { display: flex; align-items: center; gap: 0; }
+        #pauseBtn, #trgShiftReset { height: 1.5em; padding: 0 6px; white-space: nowrap; }
         #transport-widget { display: flex; gap: 3px; align-items: center; margin-right: auto; }
         .transport-btn { width: 28px; height: 28px; background: #222; border: 1px solid #0f0; color: #0f0; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 3px; position: relative; transition: background 0.15s, color 0.15s, border-color 0.15s; padding: 0; }
         .transport-btn:hover { border-color: #5f5; color: #5f5; }
@@ -81,7 +83,6 @@
         .trg-btn-group { margin: 0; padding: 1px; gap: 1px; }
         .trg-btn-group > button { flex: 1; }
         .trg-btns-wrap { display: flex; flex-direction: column; gap: 1px; }
-        .pause-wrap { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 
         .trg-btn { background: transparent; color: #0f0; border: none; cursor: pointer; font: inherit; font-size: 11px; padding: 2px 6px; border-radius: 2px; line-height: 1; min-width: 20px; text-align: center; transition: background 0.15s, color 0.15s; }
         .trg-btn:hover { background: #222; color: #fff; }
@@ -121,19 +122,18 @@
     </style>
 </head>
 <body>
+<input type="hidden" id="vbias.a" class="bias-slider" value="0" min="-1000000" max="1000000" step="0.1">
+<input type="hidden" id="vbias.b" class="bias-slider" value="0" min="-1000000" max="1000000" step="0.1">
+<input type="hidden" id="trg.time.offset" class="param-slider" value="0" min="-1000000" max="1000000">
 <div id="scope-wrap">
     <div class="v-controls-a">
         <span class="label">Gain A</span>
-        <span class="label">Bias A</span>
         <span class="label trglabel">Trigger</span>
         <div class="slider-cell"><input type="range" id="gain.a" class="gain-slider"
                min="0" max="1000" value="0" step="1"></div>
-        <div class="slider-cell"><input type="range" id="vbias.a" class="bias-slider"
-               value="0" min="-1000000" max="1000000" step="0.1"></div>
         <div class="slider-cell"><input type="range" id="trg.level" class="trgborder param-slider"
                value="0" min="-1000000" max="1000000"></div>
         <div class="rdout-cell"><span id="gain.a.val" class="val">×1.0</span><span id="gain.a.detail" class="detail">1+1.0</span></div>
-        <div class="rdout-cell"></div>
         <div class="rdout-cell"><div class="trg-btns-wrap">
             <div class="button-switch-block trg-btn-group" id="trg.chan">
                 <button class="trg-btn active channel-a" data-val="0">A</button>
@@ -149,13 +149,9 @@
     <div id="scope"></div>
     <div class="v-controls-b">
         <span class="label">Gain B</span>
-        <span class="label">Bias B</span>
         <div class="slider-cell"><input type="range" id="gain.b" class="gain-slider"
                min="0" max="1000" value="0" step="1"></div>
-        <div class="slider-cell"><input type="range" id="vbias.b" class="bias-slider"
-               value="0" min="-1000000" max="1000000" step="0.1"></div>
         <div class="rdout-cell"><span id="gain.b.val" class="val">×1.0</span><span id="gain.b.detail" class="detail">1+1.0</span></div>
-        <div class="rdout-cell"></div>
     </div>
 </div>
 <div id="bottom-controls">
@@ -174,7 +170,7 @@
     </div>
     <div class="time-pause-wrap">
         <div class="switch-control">
-            <button>&lt;</button>
+            <span class="step-control"><button class="arrow">&lt;</button>
             <select id="sampling.ns">
                 <option value="500000000">500ms</option>
                 <option value="200000000">200ms</option>
@@ -196,17 +192,10 @@
                 <option value="1000">1&micro;s</option>
                 <option value="500">0.5&micro;s</option>
             </select>
-            <button>&gt;</button>
-        </div>
-        <div class="pause-wrap">
+            <button class="arrow">&gt;</button></span>
             <button id="pauseBtn">Pause</button>
+            <button id="trgShiftReset" title="Reset to centre">Trigger @ Start |◀</button>
         </div>
-    </div>
-    <div class="h-control-container">
-        <span class="label">TRG shift <button id="trgShiftReset" title="Reset to centre">↺</button></span>
-        <input type="range" id="trg.time.offset" class="param-slider"
-               value="0" min="-1000000" max="1000000" list="trgMarks">
-        <datalist id="trgMarks"><option value="0"></datalist>
     </div>
 </div>
 <div id="footer"><span id="footer-left"><span id="status">connecting...</span></span><span id="cursor-info"></span></div>
@@ -465,9 +454,7 @@
         const el = document.getElementById("scope");
         const rect = el.getBoundingClientRect();
         const w = rect.width || 600, h = rect.height || 400;
-        el.addEventListener('pointerdown', e => { if (e.button === 0) _drag = true; });
-        el.addEventListener('pointerup', () => _drag = false);
-        el.addEventListener('pointerleave', () => _drag = false);
+
         function seriesColor(u,i) { const c=i%2===0?COLORS.chB:COLORS.chA; return c+(param._values["trg.type"]==="0"?"A0":"50"); }
         function keySeriesColor(u,i) {
             const b=i%2===0?COLORS.chBKey:COLORS.chAKey, ms=param.get("sampling.ns")*param.frameWidth/1e6, td=isFinite(ms)?Math.max(1e3,ms):1e3;
@@ -528,6 +515,53 @@
                       }],
                 },
             }, [[0], [0], [0], [0], [0]], el);
+            uplot.over.addEventListener('pointerdown', e => { if (e.button === 0) _drag = true; });
+            uplot.over.addEventListener('pointerup', () => _drag = false);
+            uplot.over.addEventListener('pointerleave', () => _drag = false);
+            const _yAxes = uplot.root.querySelectorAll('.u-axis');
+            if (_yAxes.length >= 3) {
+                _yAxes[0].id = 'axis-x';
+                _yAxes[0].style.touchAction = 'none';
+                _yAxes[1].id = 'axis-yA';
+                _yAxes[1].style.touchAction = 'none';
+                _yAxes[2].id = 'axis-yB';
+                _yAxes[2].style.touchAction = 'none';
+                const dpr = window.devicePixelRatio || 1;
+                let _axisDrag = null;
+                _yAxes[0].addEventListener('pointerdown', (e) => {
+                    if (e.button !== 0) return;
+                    _yAxes[0].setPointerCapture(e.pointerId);
+                    _axisDrag = { startX: e.clientX, startOffset: param.get('trg.time.offset', 0), uvPerPx: dpr / uplot.bbox.width };
+                });
+                _yAxes[0].addEventListener('pointermove', (e) => {
+                    if (!_axisDrag) return;
+                    const newOffset = Math.max(-1e6, Math.min(1e6, _axisDrag.startOffset + (e.clientX - _axisDrag.startX) * _axisDrag.uvPerPx * 1e6));
+                    param.set('trg.time.offset', String(Math.round(newOffset)));
+                    updatePlot();
+                });
+                _yAxes[0].addEventListener('pointerup', () => { _axisDrag = null; });
+                _yAxes[0].addEventListener('pointerleave', () => { _axisDrag = null; });
+                const _axisYSetup = (axis, lc) => {
+                    axis.addEventListener('pointerdown', (e) => {
+                        if (e.button !== 0) return;
+                        axis.setPointerCapture(e.pointerId);
+                        const uc = lc.toUpperCase();
+                        const rng = (vltg['maxUv' + uc] || 1650000) - (vltg['minUv' + uc] || -1650000);
+                        _axisDrag = { startY: e.clientY, startOffset: swState[lc].offset || 0, lc, uvPerPx: rng * dpr / uplot.bbox.height };
+                    });
+                    axis.addEventListener('pointermove', (e) => {
+                        if (!_axisDrag) return;
+                        const deltaUv = (e.clientY - _axisDrag.startY) * _axisDrag.uvPerPx;
+                        swState[_axisDrag.lc].offset = _axisDrag.startOffset + deltaUv;
+                        updateDisplayRange();
+                        uplot.redraw();
+                    });
+                    axis.addEventListener('pointerup', () => { _axisDrag = null; });
+                    axis.addEventListener('pointerleave', () => { _axisDrag = null; });
+                };
+                _axisYSetup(_yAxes[1], 'a');
+                _axisYSetup(_yAxes[2], 'b');
+            }
         } catch (e) { console.error("uPlot init fail:", e); }
         window.addEventListener("resize", () => {
             const r = el.getBoundingClientRect();
@@ -594,7 +628,7 @@
      else {
          setStatus("Select transport");
     }
-    document.getElementById("trgShiftReset").onclick = () => { const e=document.getElementById("trg.time.offset"); e.value="0"; param.set("trg.time.offset","0"); };
+    document.getElementById("trgShiftReset").onclick = (e) => { const el=document.getElementById("trg.time.offset"); el.value="0"; param.set("trg.time.offset","0"); e.target.blur(); };
     document.getElementById("pauseBtn").onclick = function() { paused=!paused; this.textContent=paused?"Resume":"Pause"; this.classList.toggle("paused",paused); };
 </script>
 </body>
