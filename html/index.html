@@ -18,6 +18,7 @@
         body { margin: 0; background: #111; color: #0f0; font: 14px monospace; flex-direction: column; }
         #scope-wrap { overflow: auto; min-width: 0; min-height: 0; display: flex; flex: 1; background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 4px; }
         #scope-wrap div#scope { min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; width: 100%; height: 100%; flex: 1 1 0; }
+        #scope-wrap, #scope-wrap * { touch-action: none; }
         .v-controls-a, .v-controls-b { display: grid; align-self: stretch; min-height: 0; }
         .v-controls-a { flex: 0 1 auto; border-right: 1px solid #2a2a2a; grid: auto 1fr auto / 1fr 1fr; }
         .v-controls-b { flex: 0 1 auto; border-left: 1px solid #2a2a2a; grid: auto 1fr auto / 1fr; }
@@ -36,7 +37,9 @@
         .v-controls-a .slider-cell input, .v-controls-b .slider-cell input { flex: 1; width: 100%; min-height: 20px; background: #222; color: #0f0; border: 1px solid #0f0; padding: 5px; font: inherit; writing-mode: sideways-lr; }
         .v-controls-b .rdout-cell { justify-content: center; }
         .detail { color: #686868; font-size: 9px; line-height: 1; }
-        .trg-btn-sm { background: transparent; color: #0f0; border: 1px solid #555; cursor: pointer; font: inherit; font-size: 9px; padding: 0 3px; border-radius: 2px; line-height: 1.4; min-width: 16px; text-align: center; transition: background 0.15s, color 0.15s; }
+        .trg-btn, .trg-btn-sm { background: transparent; color: #0f0; cursor: pointer; font: inherit; border-radius: 2px; text-align: center; transition: background 0.15s, color 0.15s; }
+        .trg-btn { font-size: 11px; padding: 2px 6px; line-height: 1; min-width: 20px; border: none; }
+        .trg-btn-sm { font-size: 9px; padding: 0 3px; line-height: 1.4; min-width: 16px; border: 1px solid #555; }
         .trg-btn-sm:hover, .trg-btn-sm.active { background: #0f0; color: #000; }
         .h-control-container { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; }
         .h-control-container input { width: 100%; background: #222; color: #0f0; border: 1px solid #0f0; padding: 2px 5px; font: inherit; }
@@ -93,26 +96,6 @@
         .trg-btn.channel-a:hover, .trg-btn.channel-b:hover { background: #222; color: #fff; }
         .trg-btn.channel-a.active, .trg-btn.channel-b.active { background: var(--ch); color: #000; }
 
-        @media ((orientation: portrait) and (max-width: 900px)), ((orientation: landscape) and (max-height: 500px)) {
-            #footer { display: none; }
-            .v-controls-a .label, .v-controls-b .label { font-size: 8px; }
-            .v-controls-a .rdout-cell, .v-controls-b .rdout-cell, .v-controls-a .slider-cell, .v-controls-b .slider-cell { padding: 0 2px; }
-            .val, .detail { font-size: 8px; }
-            .detail { font-size: 6px; }
-            #bottom-controls { padding: 2px 6px; gap: 4px; }
-            .switch-control select, .switch-control button, #pauseBtn { font-size: 10px; width: auto; }
-            .h-control-container input { height: 18px; padding: 0 4px; }
-            .h-control-container { gap: 1px; }
-            .trg-btn { font-size: 8px; padding: 1px 3px; min-width: 14px; }
-            .trg-btn-sm { font-size: 7px; padding: 0 2px; min-width: 12px; }
-            .button-switch-block { margin-top: 0; padding: 1px; }
-            .trg-btns-wrap { gap: 0; }
-            .transport-btn { width: 1.5em; height: 1.3em; font-size: 10px; }
-            .transport-btn .icon { width: 12px; height: 12px; }
-        }
-
-
-        @media (orientation: landscape) and (max-height: 500px) { .v-controls-a { flex: 0 1 auto; max-width: 6rem; } .v-controls-b { flex: 0 1 auto; max-width: 5rem; } }
     </style>
 </head>
 <body>
@@ -512,6 +495,29 @@
             uplot.over.addEventListener('pointerdown', e => { if (e.button === 0) _drag = true; });
             uplot.over.addEventListener('pointerup', () => _drag = false);
             uplot.over.addEventListener('pointerleave', () => _drag = false);
+            let _touchStart = null;
+            uplot.over.addEventListener('touchstart', e => {
+                e.preventDefault();
+                const r = uplot.over.getBoundingClientRect(), t = e.changedTouches[0];
+                _touchStart = {x: t.clientX - r.left, y: t.clientY - r.top};
+                uplot.setSelect({left: _touchStart.x, top: _touchStart.y, width: 0, height: 0});
+                uplot.setCursor({left: _touchStart.x, top: _touchStart.y}, true);
+                _drag = true;
+            }, {passive: false});
+            uplot.over.addEventListener('touchmove', e => {
+                e.preventDefault();
+                const r = uplot.over.getBoundingClientRect(), t = e.changedTouches[0];
+                const cx = t.clientX - r.left, cy = t.clientY - r.top;
+                if (_touchStart) {
+                    uplot.setSelect({left: Math.min(_touchStart.x, cx), top: Math.min(_touchStart.y, cy), width: Math.abs(cx - _touchStart.x), height: Math.abs(cy - _touchStart.y)});
+                }
+                uplot.setCursor({left: cx, top: cy}, true);
+            }, {passive: false});
+            uplot.over.addEventListener('touchend', () => {
+                _drag = false;
+                _touchStart = null;
+                uplot.setSelect({left: 0, top: 0, width: 0, height: 0});
+            });
             const _yAxes = uplot.root.querySelectorAll('.u-axis');
             if (_yAxes.length >= 3) {
                 _yAxes[0].id = 'axis-x';
