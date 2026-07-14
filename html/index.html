@@ -257,14 +257,39 @@
             async connect(onFrame, onDisconnect) {
                 const port = await navigator.serial.requestPort(); await port.open({ baudRate: 460800 });
                 this.serialPort = port;
+                this._serialStop = false;
                 const feed = createFrameReader(onFrame), dec = new TextDecoder();
                 this._readLoop(port, feed, dec, onDisconnect);
             },
             async _readLoop(port, feed, dec, onDisconnect) {
-                try { while (port.readable) { const r = port.readable.getReader(); try { while (true) { const { value, done } = await r.read(); if (done) break; feed(dec.decode(value, { stream: true })); } } finally { r.releaseLock(); } } }
+                try {
+                    while (port.readable && !this._serialStop) {
+                        const r = port.readable.getReader();
+                        this._serialReader = r;
+                        try {
+                            while (true) {
+                                const { value, done } = await r.read();
+                                if (done) break;
+                                feed(dec.decode(value, { stream: true }));
+                            }
+                        } finally {
+                            r.releaseLock();
+                            if (this._serialReader === r) this._serialReader = null;
+                        }
+                    }
+                }
                 catch (e) { if (!this._intentionalClose && port === this.serialPort) onDisconnect(); }
             },
-            disconnect() { if (this.serialPort) { try { this.serialPort.close(); } catch(e) {} this.serialPort = null; } },
+            disconnect() {
+                if (this.serialPort) {
+                    this._serialStop = true;
+                    const port = this.serialPort;
+                    const p = this._serialReader ? this._serialReader.cancel() : Promise.resolve();
+                    p.then(() => port.close().catch(() => {})).catch(() => {});
+                }
+                this.serialPort = null;
+                this._serialReader = null;
+            },
             send(data) { const w = this.serialPort?.writable?.getWriter(); if (w) { w.write(new TextEncoder().encode(data)); w.releaseLock(); } },
             statusText: "serial connected", errorLabel: "serial error",
         },
