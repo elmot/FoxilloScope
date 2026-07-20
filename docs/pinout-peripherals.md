@@ -1,5 +1,5 @@
-Configuration g4-oscilloscope-b
-Date 06/16/2026
+FoxilloScope
+===
 
 **NB** OPAMP6, OPAMP3 work in inverted mode, so bias, trigger, and trigger type are also inverted
 

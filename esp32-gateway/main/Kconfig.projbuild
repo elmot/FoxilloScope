@@ -4,7 +4,7 @@ menu "Gateway Configuration"
 
         config ESP_WIFI_AP_SSID
             string "WiFi AP SSID"
-            default "Elmot-Oscilloscope"
+            default "FoxilloScope"
             help
                 SSID of the soft-AP.
 

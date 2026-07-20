@@ -35,6 +35,7 @@
             margin-top: 12px; padding: 8px;
             border-radius: 3px;
         }
+
         #status-box.connected { background: #0a2a0a; border: 1px solid #0f0; }
         #status-box.disconnected { background: #2a0a0a; border: 1px solid #f00; }
         #status-box.connecting { background: #2a2a0a; border: 1px solid #ff0; }
@@ -46,17 +47,17 @@
     </style>
 </head>
 <body>
-    <h1>Elmot Oscilloscope Wi-Fi Configuration</h1>
+    <h1>FoxilloScope Wi-Fi Configuration</h1>
     <div class="card" style="margin-bottom:16px;font-size:13px;line-height:1.5;color:#aaa">
         <p style="margin-bottom:8px">The oscilloscope may use your existing WiFi network,
             or run its own access point (without internet access).
             To use the oscilloscope, either:</p>
         <ol style="padding-left:1.2em">
             <li>Keep this network, acknowledge "no internet" on your device, and open the oscilloscope directly.</li>
-            <li>Configure WiFi client below &mdash; then reconnect to your normal WiFi network and open the oscilloscope.</li>
+            <li>Configure Wi-Fi client below &mdash; then reconnect to your normal WiFi network and open the oscilloscope.</li>
         </ol>
         <p style="margin-top:8px">Better copy the URL to open later:<br>
-        <code style="user-select:all;color:#0f0;font-size:15px">http://elmot-oscl.local/</code></p>
+        <code style="user-select:all;color:#0f0;font-size:15px">http://f-scope.local/</code></p>
     </div>
     <div class="card" id="status-box">
         <div class="stat-row"><span class="stat-label">Status</span><span id="stat-status">—</span></div>
@@ -68,7 +69,7 @@
     <h2>Change Network</h2>
     <div class="card">
         <label for="ssid">SSID</label>
-        <input type="text" id="ssid" placeholder="Network name">
+        <input type="text" id="ssid" placeholder="Network name" class="not-fetched">
         <label for="password">Password</label>
         <input type="password" id="password" placeholder="WiFi password">
         <button id="saveBtn">Save &amp; Reconnect</button>
@@ -91,7 +92,11 @@
                 $('stat-rssi').textContent = sta.rssi !== null ? sta.rssi + ' dBm' : '—';
                 const box = $('status-box');
                 box.className = 'card ' + (sta.status || 'disconnected');
-                if (sta.ssid) $('ssid').value = sta.ssid;
+                const ssid_input = $('ssid')
+                if (sta.ssid && ssid_input.classList.contains("not-fetched")) {
+                    ssid_input.value = sta.ssid;
+                    ssid_input.classList.remove("not-fetched")
+                }
             } catch (e) {
                 $('status-box').className = 'card disconnected';
             }
@@ -100,10 +105,11 @@
         $('saveBtn').onclick = async () => {
             const ssid = $('ssid').value.trim();
             const password = $('password').value.trim();
-            if (!ssid) { $('msg').textContent = 'SSID is required'; $('msg').className = ''; return; }
+            let $msg = $('msg');
+            if (!ssid) { $msg.textContent = 'SSID is required'; $msg.className = ''; return; }
             $('saveBtn').disabled = true;
-            $('msg').textContent = 'Saving...';
-            $('msg').className = 'ok';
+            $msg.textContent = 'Saving...';
+            $msg.className = 'ok';
             try {
                 const r = await fetch('/api/wifi', {
                     method: 'POST',
@@ -112,16 +118,16 @@
                 });
                 const result = await r.json();
                 if (result.ok) {
-                    $('msg').innerHTML = 'Saved! Rebooting\u2026<br>Access the oscilloscope at <a href="http://elmot-oscl.local/" style="color:#0f0">http://elmot-oscl.local/</a>';
-                    $('msg').className = 'ok';
+                    $msg.innerHTML = 'Saved! Rebooting\u2026<br>Access the oscilloscope at <a href="http://f-scope.local/" style="color:#0f0">http://f-scope.local/</a>';
+                    $msg.className = 'ok';
                     $('saveBtn').disabled = true;
                 } else {
-                    $('msg').textContent = 'Error: ' + (result.error || 'unknown');
-                    $('msg').className = '';
+                    $msg.textContent = 'Error: ' + (result.error || 'unknown');
+                    $msg.className = '';
                 }
             } catch (e) {
-                $('msg').textContent = 'Failed to send: ' + e.message;
-                $('msg').className = '';
+                $msg.textContent = 'Failed to send: ' + e.message;
+                $msg.className = '';
             }
             $('saveBtn').disabled = false;
         };

@@ -16,7 +16,8 @@ static void led_set_rgb(uint8_t r, uint8_t g, uint8_t b)
     if (!s_led_chan || !s_led_encoder) return;
     rmt_symbol_word_t sym[25];
     const uint32_t grb = ((uint32_t)g << 16) | ((uint32_t)r << 8) | b;
-    for (int i = 0; i < 24; i++) {
+    for (int i = 0; i < 24; i++)
+    {
         const bool bit = (grb >> (23 - i)) & 1;
         sym[i] = (rmt_symbol_word_t){
             .duration0 = bit ? LED_T1H : LED_T0H,
@@ -29,18 +30,34 @@ static void led_set_rgb(uint8_t r, uint8_t g, uint8_t b)
         .duration0 = LED_RESET, .level0 = 0,
         .duration1 = 0, .level1 = 0,
     };
-    const rmt_transmit_config_t t = { .loop_count = 0 };
+    const rmt_transmit_config_t t = {.loop_count = 0};
     rmt_transmit(s_led_chan, s_led_encoder, sym, sizeof(sym), &t);
 }
 
 void led_refresh(void)
 {
     if (!s_led_chan) return;
-    if (ws_any_connected()) { led_set_rgb(0, 32, 0); return; }
-    if (ble_any_connected()) { led_set_rgb(0, 0, 32); return; }
-    if (xEventGroupGetBits(s_wifi_event_group) & WIFI_FAIL_BIT) { led_set_rgb(32, 24, 0); return; }
-    if (s_sta_connected) { led_set_rgb(0, 6, 0); return; }
-    led_set_rgb(20,10,10);
+    if (ws_any_connected())
+    {
+        led_set_rgb(0, 128, 0);
+        return;
+    }
+    if (ble_any_connected())
+    {
+        led_set_rgb(0, 0, 128);
+        return;
+    }
+    if (xEventGroupGetBits(s_wifi_event_group) & WIFI_FAIL_BIT)
+    {
+        led_set_rgb(128, 64, 0);
+        return;
+    }
+    if (s_sta_connected)
+    {
+        led_set_rgb(32, 32, 32);
+        return;
+    }
+    led_set_rgb(20, 0, 20);
 }
 
 void led_init(void)
@@ -56,6 +73,5 @@ void led_init(void)
     rmt_copy_encoder_config_t ec = {};
     if (rmt_new_copy_encoder(&ec, &s_led_encoder) != ESP_OK) return;
     rmt_enable(s_led_chan);
-    led_set_rgb(40,20,20);
+    led_set_rgb(20, 0, 20);
 }
-
