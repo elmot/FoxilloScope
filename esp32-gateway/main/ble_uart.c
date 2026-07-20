@@ -232,8 +232,8 @@ void ble_uart_init()
     ble_hs_cfg.reset_cb = ble_host_reset;
     ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
 
-    snprintf(s_ble_long_name, sizeof(s_ble_long_name), "Elmot-Wireless-Oscilloscope%s", s_mac_suffix);
-    snprintf(s_ble_short_name, sizeof(s_ble_short_name), "ELMOSC%s", s_mac_suffix);
+    snprintf(s_ble_long_name, sizeof(s_ble_long_name), "FoxilloScope%s", s_mac_suffix);
+    snprintf(s_ble_short_name, sizeof(s_ble_short_name), CONFIG_OSC_BLE_DEVICE_NAME "%s", s_mac_suffix);
     ble_svc_gap_device_name_set(s_ble_long_name);
     ble_svc_gap_init();
     ble_svc_gatt_init();

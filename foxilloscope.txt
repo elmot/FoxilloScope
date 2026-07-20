@@ -1,6 +1,6 @@
-Configuration	g4-oscilloscope-b
+Configuration	foxilloscope
 STM32CubeMX 	6.17.0
-Date	07/16/2026
+Date	07/20/2026
 MCU	STM32G474RETx
 
 
@@ -151,8 +151,8 @@ Pin Nb	PINs	FUNCTIONs	LABELs
 SOFTWARE PROJECT
 
 Project Settings : 
-Project Name : g4-oscilloscope-b
-Project Folder : D:\projects\g4-oscilloscope-b
+Project Name : foxilloscope
+Project Folder : D:\projects\foxilloscope
 Toolchain / IDE : CMake
 Firmware Package Name and Version : STM32Cube FW_G4 V1.6.3
 

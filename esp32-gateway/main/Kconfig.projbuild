@@ -97,7 +97,7 @@ menu "Gateway Configuration"
 
         config OSC_BLE_DEVICE_NAME
             string "BLE device name"
-            default "ELMOSC"
+            default "F-SCOPE"
             depends on OSC_BLE_ENABLE
             help
                 Bluetooth LE device name used in advertising.

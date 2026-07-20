@@ -9,6 +9,6 @@
     </gdbserver>
     <console enabled="true" port="4444" />
     <target download-type="NONE" reset-command="monitor reset init" reset-before="false" />
-    <connection extended-remote="false" use-custom-script="true" remote-string="tcp::3333" custom-script="source D:/projects/g4-oscilloscope-b/esp32-gateway/cmake-build-release-esp-idf-6/gdbinit/symbols&#10;source D:/projects/g4-oscilloscope-b/esp32-gateway/cmake-build-release-esp-idf-6/gdbinit/connect&#10;echo Connected to target!\n" warmup-ms="2000" />
+    <connection extended-remote="false" use-custom-script="true" remote-string="tcp::3333" custom-script="source $CMakeCurrentBuildDir$/gdbinit/connect&#10;echo Connected to target!\n" warmup-ms="1000" />
   </generic-debug-target>
 </component>
