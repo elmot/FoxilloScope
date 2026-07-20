@@ -1,0 +1,108 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        @page {
+            size: 50mm 90mm;
+            margin: 0;
+        }
+
+        html, body {
+            margin: 0;
+            background: lightgray;
+        }
+
+        .card {
+            width: 50mm;
+            height: 90mm;
+            background: url("background.png") no-repeat ;
+            background-size: 100%;
+        }
+
+        /* QR */
+        #qr-wifi-name, #qr-wifi-url, #qr-global-url   {
+            position: absolute;
+            top: 45mm;
+            width: 12mm;
+            height: 12mm;
+        }
+        #qr-wifi-name{
+            left: 2.8mm;
+        }
+        #qr-wifi-url   {
+            left: 19mm;
+        }
+        #qr-global-url   {
+            left: 35.2mm;
+        }
+        #texts {
+            position: absolute;
+            left: 3mm;
+            top: 59.5mm;
+            font-size: 4mm;
+        }
+
+        img {
+            width: 100%;
+        }
+        @media print {
+            html, body {
+                margin: 0;
+                background: transparent;
+            }
+            body * {display: none}
+            .card * {
+                display: block;
+            }
+            .card {
+                display: block;
+                width: 50mm;
+                height: 90mm;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div id="qr-wifi-name"></div>
+    <div id="qr-wifi-url"></div>
+    <div id="qr-global-url"></div>
+
+    <div  id="texts">
+        <div id="wifi-name">&nbsp;</div>
+        <div id="wifi-url">http://f-scope.local</div>
+        <div id="global-url">https://elmot.xyz/f-scope</div>
+    </div>
+</div>
+
+<script src="qrcode.min.js"></script>
+<script>
+    const qrWifi = new QRCode(document.getElementById("qr-wifi-name"), {
+        text: "",
+        width: 180,
+        height: 180
+    });
+    new QRCode(document.getElementById("qr-wifi-url"), {
+        text: document.getElementById("wifi-url").textContent,
+        width: 180,
+        height: 180
+    });
+    new QRCode(document.getElementById("qr-global-url"), {
+        text: document.getElementById("global-url").textContent,
+        width: 180,
+        height: 180
+    });
+    function updateCodes(hexCode) {
+        const ssid=`FoxilloScope-${hexCode}`
+        document.getElementById("wifi-name").textContent = ssid
+        qrWifi.makeCode(`WIFI:T:nopass;S:${ssid};;`)
+    }
+</script>
+<p>
+<label for="uniq-hex">Unique hex number(XXXX):</label>
+    <input type="text" id="uniq-hex" oninput="updateCodes(this.value)">
+</p>
+</body>
+</html>
