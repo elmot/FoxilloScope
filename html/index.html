@@ -80,6 +80,9 @@
         .transport-btn.insecure { border-color: #555; color: #555; cursor: default; }
         .transport-btn.insecure:hover { background: #222; color: #555; border-color: #555; }
         .transport-btn .icon { width: 16px; height: 16px; display: block; }
+        #btn-fullscreen .icon-shrink { display: none; }
+        #btn-fullscreen.active .icon-expand { display: none; }
+        #btn-fullscreen.active .icon-shrink { display: block; }
         .transport-btn .hint { display: none; position: absolute; bottom: calc(100% + 6px); left: 0; white-space: nowrap; background: #333; color: #f66; border: 1px solid #f66; padding: 3px 8px; border-radius: 3px; font-size: 10px; pointer-events: none; z-index: 100; }
         .transport-btn.insecure:hover .hint { display: block; }
 
@@ -144,6 +147,10 @@
         <button id="btn-serial" class="transport-btn" data-mode="serial">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="1"/><circle cx="4" cy="20" r="1"/><path d="M4.7 19.3 19 5m2-2-3 1 2 2Z M9.26 7.68 5 12l2 5M10 14l5 2 3.5-3.5M18 12l1-1 1 1-1 1Z"/></svg>
             <span class="hint">You're viewing an unsecured page. Click here to switch to the secure version.</span>
+        </button>
+        <button id="btn-fullscreen" class="transport-btn" title="Toggle Fullscreen">
+            <svg class="icon icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            <svg class="icon icon-shrink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
         </button>
     </div>
     <div class="time-pause-wrap">
@@ -625,13 +632,18 @@
     }
 
     if (!window.isSecureContext) document.querySelectorAll('.transport-btn[data-mode="ble"],.transport-btn[data-mode="serial"]').forEach(b=>b.classList.add('insecure'));
-    document.querySelectorAll('.transport-btn').forEach(btn => {
+    document.querySelectorAll('.transport-btn[data-mode]').forEach(btn => {
         btn.addEventListener('click', () => {
             const m = btn.dataset.mode;
             if (!window.isSecureContext && m !== 'wifi') { window.open('https://elmot.xyz/oscilloscope','_blank'); return; }
             comm.switchTo(btn.classList.contains('active') ? 'none' : m);
         });
     });
+    const fsBtn = document.getElementById('btn-fullscreen');
+    if (fsBtn) {
+        fsBtn.onclick = () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); };
+        document.addEventListener('fullscreenchange', () => fsBtn.classList.toggle('active', !!document.fullscreenElement));
+    }
 
     initUplot();
     const host = location.hostname;
