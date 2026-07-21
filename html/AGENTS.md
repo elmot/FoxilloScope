@@ -45,7 +45,7 @@
 - Slider stores **log position** (0–1000), not gain value directly
 - `posToGain(pos)` = `exp(pos/1000 * ln(504))`, rounded to 0.01
 - `gainToPos(gain)` = inverse
-- `splitGain(totalGain)` → {hw, sw}: picks largest HW gain (63,31,15,6,3,1) ≤ total with SW zoom ≤ 8
+- `splitGain(totalGain)` → {hw, sw}: picks largest HW gain (63,31,15,7,3,1) ≤ total with SW zoom ≤ 8
 - HW gain sent to device (`gain.a` / `gain.b`)
 - SW zoom stored in `swState[ch].zoom`, applied in `updateDisplayRange()`
 - Tracking key: `gain.{ch}.pos` in `_track.gainPos`
