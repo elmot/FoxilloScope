@@ -55,19 +55,8 @@ async def ws_handler(request: web.Request) -> web.WebSocketResponse:
         WS_CLIENTS.discard(ws)
     return ws
 
-
 async def index_handler(request: web.Request) -> web.FileResponse:
     return web.FileResponse("../html/index.html")
-
-async def css_handler(request: web.Request) -> web.FileResponse:
-    return web.FileResponse("../html/uPlot.min.css")
-
-async def js_handler(request: web.Request) -> web.FileResponse:
-    return web.FileResponse("../html/uPlot.iife.min.js")
-
-async def icon_handler(request: web.Request) -> web.FileResponse:
-    return web.FileResponse("../html/favicon.png")
-
 def main():
     global serial_writer
     port = sys.argv[1] if len(sys.argv) > 1 else "COM11"
@@ -89,10 +78,8 @@ def main():
 
     app = web.Application()
     app.router.add_get("/", index_handler)
-    app.router.add_get("/uPlot.min.css", css_handler)
-    app.router.add_get("/uPlot.iife.min.js", js_handler)
+    app.router.add_static("/", "../html")
     app.router.add_get("/ws", ws_handler)
-    app.router.add_get("/favicon.png", icon_handler)
     app.on_startup.append(on_startup)
     app.on_shutdown.append(on_shutdown)
     web.run_app(app, host="127.0.0.1", port=8000)
