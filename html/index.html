@@ -28,8 +28,6 @@
         .v-controls-a .val { color: var(--ch-a); }
         .v-controls-b .val { color: var(--ch-b); }
         .v-controls-a .trglabel { color: #0f0; }
-        .v-controls-a input.trgborder { border-color: #0f0; }
-        .v-controls-a input:not(.trgborder) { border-color: var(--ch-a); }
         .v-controls-b input { border-color: var(--ch-b); }
         .v-controls-a .slider-cell, .v-controls-b .slider-cell,
         .v-controls-a .rdout-cell, .v-controls-b .rdout-cell { display: flex; flex-direction: column; align-items: center; padding: 0 6px; }
@@ -110,9 +108,8 @@
     <div class="v-controls-a">
         <span class="label">Gain A</span>
         <span class="label trglabel">Trigger</span>
-        <div class="slider-cell"><input type="range" id="gain.a" class="gain-slider"
-               min="0" max="1000" value="0" step="1"></div>
-        <div class="slider-cell"><input type="range" id="trg.level" class="trgborder param-slider"
+        <div class="slider-cell"><input type="range" id="gain.a" min="1" step="0.1"></div>
+        <div class="slider-cell"><input type="range" id="trg.level" class="trgborder"
                value="0" min="-1000000" max="1000000"></div>
         <div class="rdout-cell"><span id="gain.a.val" class="val">×1.0</span><span id="gain.a.detail" class="detail">1+1.0</span></div>
         <div class="rdout-cell"><div class="trg-btns-wrap">
@@ -130,8 +127,7 @@
     <div id="scope"></div>
     <div class="v-controls-b">
         <span class="label">Gain B</span>
-        <div class="slider-cell"><input type="range" id="gain.b" class="gain-slider"
-               min="0" max="1000" value="0" step="1"></div>
+        <div class="slider-cell"><input type="range" id="gain.b" step="0.1"></div>
         <div class="rdout-cell"><span id="gain.b.val" class="val">×1.0</span><span id="gain.b.detail" class="detail">1+1.0</span></div>
     </div>
 </div>
@@ -155,7 +151,7 @@
     </div>
     <div class="time-pause-wrap">
         <div class="switch-control">
-            <span class="step-control"><button class="arrow">&lt;</button>
+            <span class="step-control"><button data-val="-1" class="arrow">&lt;</button>
             <select id="sampling.ns">
                 <option value="500000000">500ms</option>
                 <option value="200000000">200ms</option>
@@ -177,7 +173,7 @@
                 <option value="1000">1&micro;s</option>
                 <option value="500">0.5&micro;s</option>
             </select>
-            <button class="arrow">&gt;</button></span>
+            <button class="arrow" data-val="1">&gt;</button></span>
             <button id="pauseBtn">Pause</button>
             <button id="trgShiftReset" title="Reset to centre">Trigger @ Start |◀</button>
         </div>

@@ -411,7 +411,7 @@ void writeCommands()
     {
         command->write();
     }
-    writeUart("vltg.steps=" ADC_MAX_VALUE_STR "\n");
+    writeUart("vltg.steps=" ADC_MAX_VALUE_STR "\n");//todo correct +1
     const auto [minA, maxA] = calculate_min_max_uV(CommandGainChannelA, CommandBiasChannelA);
     const auto [minB, maxB] = calculate_min_max_uV(CommandGainChannelB, CommandBiasChannelB);
     Command::do_write_value("vltg.min.uv.a", minA);
