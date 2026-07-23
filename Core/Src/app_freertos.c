@@ -140,6 +140,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 /* Hook prototypes */
 void configureTimerForRunTimeStats(void);
 unsigned long getRunTimeCounterValue(void);
+void vApplicationIdleHook(void);
 
 /* USER CODE BEGIN 1 */
 /* Functions needed when configGENERATE_RUN_TIME_STATS is on */
@@ -153,6 +154,15 @@ __weak unsigned long getRunTimeCounterValue(void)
 return 0;
 }
 /* USER CODE END 1 */
+
+/* USER CODE BEGIN 2 */
+void vApplicationIdleHook( void )
+{
+  __DSB();
+  __WFI();
+  __ISB();
+}
+/* USER CODE END 2 */
 
 /**
   * @brief  FreeRTOS initialization

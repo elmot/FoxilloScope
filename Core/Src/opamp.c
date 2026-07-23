@@ -99,7 +99,7 @@ void MX_OPAMP5_Init(void)
 
   /* USER CODE END OPAMP5_Init 1 */
   hopamp5.Instance = OPAMP5;
-  hopamp5.Init.PowerMode = OPAMP_POWERMODE_NORMALSPEED;
+  hopamp5.Init.PowerMode = OPAMP_POWERMODE_HIGHSPEED;
   hopamp5.Init.Mode = OPAMP_FOLLOWER_MODE;
   hopamp5.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO0;
   hopamp5.Init.InternalOutput = DISABLE;
@@ -126,7 +126,7 @@ void MX_OPAMP6_Init(void)
 
   /* USER CODE END OPAMP6_Init 1 */
   hopamp6.Instance = OPAMP6;
-  hopamp6.Init.PowerMode = OPAMP_POWERMODE_NORMALSPEED;
+  hopamp6.Init.PowerMode = OPAMP_POWERMODE_HIGHSPEED;
   hopamp6.Init.Mode = OPAMP_FOLLOWER_MODE;
   hopamp6.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO2;
   hopamp6.Init.InternalOutput = DISABLE;
