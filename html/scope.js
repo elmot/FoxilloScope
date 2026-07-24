@@ -36,6 +36,7 @@ const ParametersStorage = {
 ParametersStorage.load();
 
 const Hardware = {
+    sentParameters: {},
     sendAllParameters() {
         this.sendTimingParameters()
         this.sendChannelParameters("a")
@@ -43,7 +44,12 @@ const Hardware = {
         this.sendTriggerParameters()
     },
     sendChannelParameters(channel) {
-        //todo
+        const range = vslParameters.channels[channel]["range.uv"]
+        const gain = Gain.BASE_VOLTAGE_uV / range
+        const {hw} = Gain.splitGain(gain)
+        const dacVoltage = (vslParameters.channels[channel]["base.lvl.uv"] - range / 2) * (hw) / (hw+1 )
+        const dacLevel  = - clampValue(1e6 * dacVoltage / Gain.BASE_VOLTAGE_uV ,-1e6,1e6)
+        comm.send(`gain.${channel}=${hw}\nvbias.${channel}=${dacLevel.toFixed(0)}`)
     },
     _sendParameters(...names) {
         let cmd = ""
@@ -55,7 +61,6 @@ const Hardware = {
     },
     sendTimingParameters() {
         this._sendParameters("sampling.ns")
-        //todo
     }
 }
 
@@ -88,6 +93,7 @@ function onFrame(text) {
         }
     }
     let currentFrame;
+    // noinspection JSUnresolvedReference
     if (cmds.parameters.keyframe === 1) {
         keyFrame.timestamp = Date.now();
         currentFrame = keyFrame;
@@ -134,8 +140,8 @@ document.querySelectorAll(".button-switch-block").forEach(block => {
 const Gain  = {
     HW_GAINS: [63, 31, 15, 7, 3, 1],
     MAX: 504,
-    LOG_MAX: Math.log(this.MAX),
-    baseVoltageUv: 3300000,
+    LOG_MAX: Math.ceil(Math.log(504) * 100) / 100,
+    BASE_VOLTAGE_uV: 3300000,//todo replace with calibrated value
     splitGain: (total) => {
         for (const hw of Gain.HW_GAINS) {
             if (hw <= total) {
@@ -144,28 +150,31 @@ const Gain  = {
             }
         }
         return {hw: 63, sw: Math.round(total / 63 * 100) / 100};
+    },
+    readGain(slider) {
+        return clampValue(Math.exp(parseFloat(slider.value)), 1, Gain.MAX)
     }
 }
 
 for(const chName of ["a","b"]) {
     const slider = document.getElementById('gain.' + chName);
-    slider.setAttribute("max", "" + Gain.MAX);
-    slider.setAttribute("min", "1");
-    const gain = clampValue(vslParameters.channels[chName]["range.uv"] / Gain.baseVoltageUv, 1, Gain.MAX);
-    slider.value = gain;
+    slider.setAttribute("max", "" + Gain.LOG_MAX);
+    slider.setAttribute("min", "0");
+    slider.value = clampValue(vslParameters.channels[chName]["range.uv"] / Gain.BASE_VOLTAGE_uV, 1, Gain.MAX);
     const updateDetails = () =>{
-        const gain = parseFloat(slider.value)
+        // noinspection JSCheckFunctionSignatures
+        const gain = Gain.readGain(slider)
         const {hw, sw} = Gain.splitGain(gain);
         document.getElementById('gain.' + chName + '.val').textContent = `x${gain.toFixed(1)}`;
         document.getElementById('gain.' + chName + '.detail').textContent = `${hw}+${sw.toFixed(1)}`;
-        return {gain: gain, hw: hw, sw:sw }
     }
-    updateDetails()
     slider.oninput = () => {
-        const {gain, hw } = updateDetails();
-        vslParameters.channels[chName]["range.uv"] = Gain.baseVoltageUv / gain;
+        // noinspection JSCheckFunctionSignatures
+        vslParameters.channels[chName]["range.uv"] = Gain.BASE_VOLTAGE_uV / Gain.readGain(slider);
+        updateDetails()
         updatePlot()
         Hardware.sendChannelParameters(chName) //todo debouncing
+        updateDetails()
     }
 }
 
@@ -182,13 +191,6 @@ function fmtUv(v) {
 }
 
 function fmtTime(t) { return fmtSi(t, [[10e3,1e-3,'s',0],[1e3,1e-3,'s',1],[10,1,'ms',0],[1,1,'ms',1],[10e-3,1e3,'\u00B5s',0],[1e-3,1e3,'\u00B5s',1],[1e6,'ns',0]]); }
-
-function adcToUv(adc, mn, mx) {
-    if (adc == undefined) return null;
-    const s = vltg.steps || 4096;
-    if (mn != undefined && mx != undefined) return mn + (adc / s) * (mx - mn);
-    return (adc / s) * 3300000 - 1650000;
-}
 
 let _drag = false;
 
@@ -211,6 +213,7 @@ function initUplot() {
     try {
         const grid = {show: true, width: 1, size: 20, stroke: "#333", dash: [3, 8]};
         const axisRange = chParams => () => {const [r,b] = [chParams["range.uv"],chParams["base.lvl.uv"]]; return [b - r / 2, b + r / 2]}
+        // noinspection JSPotentiallyInvalidConstructorUsage
         uplot = new uPlot({
             width: w, height: h,
             cursor: {show: true, drag: {x: true, y: true, setScale: false}},
@@ -351,67 +354,59 @@ function initUplot() {
             _touchStart = null;
             uplot.setSelect({left: 0, top: 0, width: 0, height: 0});
         });
-        const _yAxes = uplot.root.querySelectorAll('.u-axis');
-        if (_yAxes.length >= 3) {
-            _yAxes[0].id = 'axis-x';
-            _yAxes[0].style.touchAction = 'none';
-            _yAxes[1].id = 'axis-yA';
-            _yAxes[1].style.touchAction = 'none';
-            _yAxes[2].id = 'axis-yB';
-            _yAxes[2].style.touchAction = 'none';
+        const axes = uplot.root.querySelectorAll('.u-axis');
+        if (axes.length >= 3) {
+            axes[0].id = 'axis-x';
+            axes[0].style.touchAction = 'none';
+            axes[1].id = 'axis-yA';
+            axes[1].style.touchAction = 'none';
+            axes[2].id = 'axis-yB';
+            axes[2].style.touchAction = 'none';
             const dpr = window.devicePixelRatio || 1;
             let _axisDrag = null;
-            _yAxes[0].addEventListener('pointerdown', (e) => {
+            axes[0].addEventListener('pointerdown', (e) => {
                 if (e.button !== 0) return;
-                _yAxes[0].setPointerCapture(e.pointerId);
+                axes[0].setPointerCapture(e.pointerId);
                 _axisDrag = {
                     startX: e.clientX,
-                    startOffset: vslParameters["trg.time.offset"]|| 0,
+                    startOffset: vslParameters["trg.time.offset"] || 0,
                     uvPerPx: dpr / uplot.bbox.width
                 };
             });
-            _yAxes[0].addEventListener('pointermove', (e) => {
+            axes[0].addEventListener('pointermove', (e) => {
                 if (!_axisDrag) return;
                 const newOffset = Math.max(-1e6, Math.min(1e6, _axisDrag.startOffset - (e.clientX - _axisDrag.startX) * _axisDrag.uvPerPx * 1e6));
                 vslParameters["trg.time.offset"] = Math.round(newOffset);
                 Hardware.sendTriggerParameters();//todo debouncing
                 updatePlot();
             });
-            _yAxes[0].addEventListener('pointerup', () => {
-                _axisDrag = null;
-            });
-            _yAxes[0].addEventListener('pointerleave', () => {
-                _axisDrag = null;
-            });
-            const _axisYSetup = (axis, lc) => {
+            const dragStop =() =>{_axisDrag = null;};
+            axes[0].addEventListener('pointerup', dragStop);
+            axes[0].addEventListener('pointerleave', dragStop);
+            const _axisYSetup = (axis, chName) => {
                 axis.addEventListener('pointerdown', (e) => {
                     if (e.button !== 0) return;
                     axis.setPointerCapture(e.pointerId);
-                    const uc = lc.toUpperCase();
-                    const rng = (vltg['maxUv' + uc] || 1650000) - (vltg['minUv' + uc] || -1650000);
+                    const rng = vslParameters.channels[chName]["range.uv"];
                     _axisDrag = {
                         startY: e.clientY,
-                        startOffset: swState[lc].offset || 0,
-                        lc,
+                        startOffset: vslParameters.channels[chName]["base.lvl.uv"],
+                        lc: chName,
                         uvPerPx: rng * dpr / uplot.bbox.height
                     };
                 });
                 axis.addEventListener('pointermove', (e) => {
                     if (!_axisDrag) return;
                     const deltaUv = (e.clientY - _axisDrag.startY) * _axisDrag.uvPerPx;
-                    swState[_axisDrag.lc].offset = _axisDrag.startOffset + deltaUv;
-                    updateDisplayRange();
-                    uplot.redraw();
+                    vslParameters.channels[chName]["base.lvl.uv"] = _axisDrag.startOffset + deltaUv;
+                    Hardware.sendChannelParameters(chName)//todo debounce
+                    updatePlot();
                 });
-                axis.addEventListener('pointerup', () => {
-                    _axisDrag = null;
-                });
-                axis.addEventListener('pointerleave', () => {
-                    _axisDrag = null;
-                });
+                axis.addEventListener('pointerup', dragStop);
+                axis.addEventListener('pointerleave', dragStop);
             };
-            _axisYSetup(_yAxes[1], 'a');
-            _axisYSetup(_yAxes[2], 'b');
+            _axisYSetup(axes[1], 'a');
+            _axisYSetup(axes[2], 'b');
         }
     } catch (e) {
         console.error("uPlot init fail:", e);
@@ -478,6 +473,7 @@ document.querySelectorAll('.transport-btn[data-mode]').forEach(btn => {
             window.open('https://elmot.xyz/oscilloscope', '_blank');
             return;
         }
+        // noinspection JSIgnoredPromiseFromCall
         comm.switchTo(btn.classList.contains('active') ? 'none' : m);
     });
 });
@@ -491,11 +487,12 @@ if (fsBtn) {
 
 const host = location.hostname;
 if (host.endsWith('.local') || (host === '127.0.0.1') || !host.includes('.')) {
+    // noinspection JSIgnoredPromiseFromCall
     comm.switchTo('wifi');
 } else {
     setStatus("Select transport");
 }
-document.getElementById("trgShiftReset").onclick = (e) => {
+document.getElementById("trgShiftReset").onclick = () => {
     const el = document.getElementById("trg.time.offset");
     el.value = "0";
     vslParameters["trg.time.offset"] = 0;
