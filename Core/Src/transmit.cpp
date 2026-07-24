@@ -26,17 +26,12 @@ static std::span<char> encode_bin_buffer(
     auto textPtr = asciiBuffer.begin();
     for (auto val : samples)
     {
-        val = ADC_MAX_VALUE - (val & 0x0FFF);
+        val &= 0x0FFF;
 
         // Split the 12 bits into two 6-bit chunks
-        // Chunk 1: Bits 0-5 (Lower 6 bits)
-        // Chunk 2: Bits 6-11 (Upper 6 bits)
         const uint8_t high6 = (val >> 6) & 0x3F;
         const uint8_t low6 = val & 0x3F;
 
-        // Note: In standard Base64, the "high" part of a byte comes first.
-        // Depending on your specific protocol, you might need to swap these.
-        // Usually, for a single 12-bit word, it maps as follows:
         *(textPtr++) = BASE64_CHARS[high6];
         *(textPtr++) = BASE64_CHARS[low6];
     }

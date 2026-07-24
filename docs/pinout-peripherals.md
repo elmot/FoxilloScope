@@ -1,35 +1,36 @@
 FoxilloScope
 ===
 
-**NB** OPAMP6, OPAMP3 work in inverted mode, so bias, trigger, and trigger type are also inverted
-
 | PERIPHERALS | FUNCTIONS                                    | DESCRIPTION                                                        | PINS | MODES                                           |
 |:------------|:---------------------------------------------|:-------------------------------------------------------------------|:-----|:------------------------------------------------|
 |             | **Test Signal**                              |                                                                    |      |                                                 |
-| DAC1        | DAC1_OUT1                                    | *TODO* remove - test signal 1                                      | PA4  |                                                 |
-| DAC1        | DAC1_OUT2                                    | *TODO* remove - test signal 2                                      | -    | Triangle generation                             |
-| TIM15       | Internal clock                               | *TODO* remove - test signal clock                                  | -    | Internal Clock                                  |
+| DAC4        | *(int)*DAC1_OUT1                             | *TODO* remove - test signal 1                                      | PA4  | Connected to internal pin                       |
+| DAC3        | *(int)*DAC1_OUT1                             | *TODO* remove - test signal 2                                      | -    | Triangle generation, connected to internal pin  |
+| OPAMP4      | DAC Follower                                 | *TODO* remove - test signal 2                                      | PB12 | DAC4.1 Follower                                 |
+| OPAMP6      | DAC Follower                                 | *TODO* remove - test signal 2                                      | PB11 | DAC3.1 Follower                                 |
+| TIM15       |                                              | *TODO* remove - test signal clock                                  | -    | Internal Clock                                  |
 |             | **Virtual Ground**                           |                                                                    |      |                                                 |
-| DAC2        | DAC2_OUT1                                    | Virtual ground                                                     | PA6  | Connected to external pin only                  |
-|             | **Triggers **                                |                                                                    |      |                                                 |
-| COMP3       | COMP3_INP                                    | CH1 Trigger                                                        | PA0  |                                                 |
-| COMP1       | COMP1_INP                                    | CH2 Trigger                                                        | PB1  |                                                 |
-| DAC3        | *(int)* DAC3_OUT1                            | Trigger level, internally connected                                | -    |                                                 |
+| DAC4        | *(int)*DAC4_OUT2                             | Virtual ground                                                     | -    | Connected to internal pin only                  |
+| OPAMP5      | DAC Follower                                 | Virtual ground                                                     | PA8  | DAC4.2 Follower                                 |
+|             | **Triggers**                                 |                                                                    |      |                                                 |
+| DAC3        | *(int)* DAC3_OUT2                            | CH1 Trigger level, internally connected                            | -    |                                                 |
+| DAC2        | *(int)* DAC2_OUT1                            | CH2 Trigger level, internally connected                            | -    |                                                 |
+| COMP2       | COMP2_INP                                    | CH1 Trigger                                                        | PA7  |                                                 |
+| COMP7       | COMP7_INP                                    | CH2 Trigger                                                        | PB14 |                                                 |
 |             | **Channel A**                                |                                                                    |      |                                                 |
-| OPAMP5      | Follower                                     | *CH1 Input* (connect to **PA4**)                                   | P14  | OPAMP5_VINP                                     |           
-| OPAMP5      | Follower                                     | CH1 pre-amplifier output, connect to **PB10**                      | PA8  | OPAMP5_VOUT                                     | 
-| OPAMP4      | OPAMP4_VINM0                                 | CH1 signal, connect to **PA8**                                     | PB10 | Connected-INVERTINGINPUT_IO0_BIAS-DAC4_OUT1-INP |
-| OPAMP4      | OPAMP4_VOUT                                  | CH1 amplified/shifted signal output, connect to **PA0**            | PB11 | Connected-INVERTINGINPUT_IO0_BIAS-DAC4_OUT1-INP |
-| DAC4        | *(int)* DAC4_OUT1                            | CH1 Zero level bias, internally connected                          | -    | Connected to external pin only                  |
-| ADC1,ADC2   | ADCx_IN1                                     | CH2 amplified/shifted signal input, connect to **PB12**            | PA0  | IN1 Single-ended                                |
+| OPAMP2      | OPAMP2_VINP                                  | *CH1 Input* (connect to **PB12**)                                  | PB0  | OPAMP2_VINP                                     |           
+| OPAMP2      | OPAMP2_VINM0                                 | CH1 bias                                                           | PA5  | Connected-INVERTINGINPUT_IO0_BIAS               |
+| OPAMP2      | OPAMP2_VOUT                                  | CH1 normalized, connect to **PA0**, **PA7**                        | PA8  | OPAMP2_VOUT                                     | 
+| DAC1        | DAC1_OUT2                                    | CH1 bias                                                           | PA5  | Connected to external pin only                  |
+| ADC1        | ADC1_IN1                                     | CH1 normalized, connect to **PA7**, **PA8**                        | PA0  | IN1 Single-ended                                |
+| ADC2        | ADC2_IN4                                     | CH1 normalized, connect to **PA0**, **PA8**                        | PA7  | IN4 Single-ended                                |
 |             | **Channel B**                                |                                                                    |      |                                                 |
-| OPAMP6      | Follower                                     | *CH2 Input* (connect to **PA5**)                                   | PB13 | OPAMP6_VINP                                     |           
-| OPAMP6      | Follower                                     | CH2 pre-amplifier output, connect to **PB2**                       | PB11 | OPAMP6_VOUT                                     | 
-| OPAMP3      | OPAMP3_VINM0                                 | CH3 signal, connect to **PB11**                                    | PB2  | Connected-INVERTINGINPUT_IO0_BIAS-DAC3_OUT2-INP |
-| OPAMP3      | OPAMP3_VOUT                                  | CH3 amplified/shifted signal output, connect to **PB13**, **PB15** | PB1  | Connected-INVERTINGINPUT_IO0_BIAS-DAC3_OUT2-INP |
-| DAC3        | *(int)* DAC3_OUT2                            | CH2 Zero level bias, internally connected                          | -    | Connected to external pin only                  |
-| ADC3        | ADC3_IN1                                     | CH3 amplified/shifted signal input, connect to **PB15**            | PB1  | IN1 Single-ended                                |
-| ADC4        | ADC4_IN5                                     | CH3 amplified/shifted signal input, connect to **PB1**             | PB15 | IN5 Single-ended                                |
+| OPAMP3      | OPAMP3_VINP                                  | *CH2 Input* (connect to **PB11**)                                  | PA1  | OPAMP3_VINP                                     |           
+| OPAMP3      | OPAMP3_VINM0                                 | CH2 bias, connect to **PA4**,                                      | PB2  | Connected-INVERTINGINPUT_IO0_BIAS               |
+| OPAMP3      | OPAMP3_VOUT                                  | CH2 normalized, connect to **PB14**                                | PB1  | OPAMP3_VOUT                                     | 
+| DAC1        | DAC1_OUT1                                    | CH2 bias                                                           | PA4  | Connected to external pin only                  |
+| ADC3        | ADC3_IN1                                     | CH2 normalized, connect to **PB14**                                | PB1  | IN1 Single-ended                                |
+| ADC4        | ADC4_IN4                                     | CH2 normalized, connect to **PB1**                                 | PB14 | IN4 Single-ended                                |
 |             | **Clocking**                                 |                                                                    |      |                                                 |
 | TIM2        | *(int)* TRGO->ADC3 trigger                   | Triggers ADC3/4 measurements                                       | -    | Gated by ITR0(TIM1)                             |
 | TIM1        | *(int)* CH A PWM1 -> TRGO -> TIM3 clock gate | Stops TIM2 when keyframe ended                                     | -    | Clocked by ITR1(TIM2)                           |

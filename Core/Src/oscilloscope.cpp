@@ -11,6 +11,9 @@
 #include "cmsis_os2.h"
 #include "comp.h"
 #include "opamp.h"
+//todo fix timing defect
+//todo comparators +
+//todo comparator switching
 
 alignas(uint32_t) static std::array<uint16_t, data_frame_size * 2> adcBufferA{};
 
@@ -26,11 +29,15 @@ constexpr auto bufferHalves = std::array{
 
 void dmaMemToMemCallback(DMA_HandleTypeDef* dma_handle_type_def);
 
-void initialize_test_signal() //todo remove together with tim2 & hdac1 wave generation
+void initialize_test_signal() //todo remove together with tim2 & hdacs wave generation
 {
     extern const unsigned short fake_signal[];
-    HAL_DAC_Start_DMA(&hdac1, DAC1_CHANNEL_1, reinterpret_cast<const uint32_t*>(fake_signal), 164, DAC_ALIGN_12B_R);
-    HAL_DAC_Start(&hdac1, DAC1_CHANNEL_2);
+    HAL_DAC_Start_DMA(&hdac4, DAC_CHANNEL_1, reinterpret_cast<const uint32_t*>(fake_signal), 164, DAC_ALIGN_12B_R);
+    HAL_DAC_Start(&hdac3, DAC_CHANNEL_1);
+    HAL_OPAMP_SelfCalibrate(&hopamp4);
+    HAL_OPAMP_SelfCalibrate(&hopamp6);
+    HAL_OPAMP_Start(&hopamp4);
+    HAL_OPAMP_Start(&hopamp6);
     //__HAL_TIM_SET_PRESCALER(&htim15, 30000);
     HAL_TIM_Base_Start(&htim15);
 }
@@ -39,11 +46,11 @@ void initialize_test_signal() //todo remove together with tim2 & hdac1 wave gene
  *
  */
 
-constexpr struct CommandTimeResolution_t : Command
+constexpr struct CommandTimeResolution_t : Command_t
 {
     static constexpr long minAdcTime = 1'000'000'000LL / 4'000'000; // 4 MHz ADC max sampling
 
-    constexpr CommandTimeResolution_t() : Command("sampling.ns", 250,
+    constexpr CommandTimeResolution_t() : Command_t("sampling.ns", 250,
                                                   1'000'000'000LL / 8'000'000, // 8 MHz max sampling freq in nsec
                                                   1'000'000'000LL / 20, // 20 Hz min sampling freq in nsec
                                                   true) {}
@@ -80,9 +87,9 @@ namespace trigger
     std::atomic<TriggerState> state  = TriggerState::DISARMED;
     std::atomic<int> pre_arming  = 0;
 
-    constexpr struct CommandTriggerLevel_t : Command
+    constexpr struct CommandTriggerLevel_t : Command_t
     {
-        constexpr CommandTriggerLevel_t() : Command("trg.level", 200'000L/*todo 0*/, -1'000'000, 1'000'000)
+        constexpr CommandTriggerLevel_t() : Command_t("trg.level", 200'000L/*todo 0*/, -1'000'000, 1'000'000)
         {
         }
 
@@ -95,18 +102,18 @@ namespace trigger
     } CommandTriggerLevel{};
 
 
-    constexpr struct CommandTriggerType_t : Command
+    constexpr struct CommandTriggerType_t : Command_t
     {
-        constexpr CommandTriggerType_t() : Command("trg.type", 0, -1, 1)
+        constexpr CommandTriggerType_t() : Command_t("trg.type", 0, -1, 1)
         {
         }
 
         void useNewValue() const override { startSampling(); }
     } CommandTriggerType{};
 
-    constexpr struct CommandTriggerOffset_t : Command
+    constexpr struct CommandTriggerOffset_t : Command_t
     {
-        constexpr CommandTriggerOffset_t() : Command("trg.time.offset", 0, -1'000'000, 1'000'000)
+        constexpr CommandTriggerOffset_t() : Command_t("trg.time.offset", 0, -1'000'000, 1'000'000)
         {
         }
 
@@ -119,9 +126,9 @@ namespace trigger
         }
     } CommandTriggerOffset{};
 
-    constexpr struct CommandTriggerChannel_t : Command
+    constexpr struct CommandTriggerChannel_t : Command_t
     {
-        constexpr CommandTriggerChannel_t() : Command("trg.chan", 0, 0, 1)
+        constexpr CommandTriggerChannel_t() : Command_t("trg.chan", 0, 0, 1)
         {
         }
 
@@ -151,17 +158,17 @@ namespace trigger
 
 }
 
-constexpr CommandGainChannel_t CommandGainChannelA{"gain.a", &hopamp4};
+constexpr CommandGainChannel_t CommandGainChannelA{"gain.a", &hopamp2};
 
 constexpr CommandGainChannel_t CommandGainChannelB{"gain.b", &hopamp3};
 
-constexpr CommandBiasChannel_t CommandBiasChannelA{"vbias.a", &hdac4,DAC_CHANNEL_1};
+constexpr CommandBaseLevelUv_t CommandBaseLevelA{"base.lvl.a.uv", &hdac1,DAC_CHANNEL_2, CommandGainChannelA};
 
-constexpr CommandBiasChannel_t CommandBiasChannelB{"vbias.b", &hdac3,DAC_CHANNEL_2};
+constexpr CommandBaseLevelUv_t CommandBaseLevelB{"base.lvl.b.uv", &hdac1,DAC_CHANNEL_1, CommandGainChannelB};
 
-constexpr std::array<const Command*, 9> commands{
-    &CommandBiasChannelA,
-    &CommandBiasChannelB,
+constexpr std::array<const Command_t*, 9> commands{
+    &CommandBaseLevelA,
+    &CommandBaseLevelB,
     &CommandGainChannelA,
     &CommandGainChannelB,
     &CommandTimeResolution,
@@ -234,7 +241,7 @@ static void executeIncomingCommand()
         if (*ptr++ != '=') continue;
 
         long newValue;
-        auto [cookie_ptr,errc] = std::from_chars(ptr, ptr + strlen(ptr), newValue);
+        const auto [cookie_ptr,errc] = std::from_chars(ptr, ptr + strlen(ptr), newValue);
         if (errc != std::errc{}) break;
         if (command->setValue(newValue))
         {
@@ -254,23 +261,26 @@ static void executeIncomingCommand()
     adcCalibration();
     HAL_DMA_RegisterCallback(&hdma_memtomem_dma1_channel2, HAL_DMA_XFER_CPLT_CB_ID, dmaMemToMemCallback);
 
-    for (const auto opamp : {&hopamp3,&hopamp4,&hopamp5,&hopamp6})
+    for (const auto opamp : {&hopamp2, &hopamp3, &hopamp4, &hopamp5})
     {
         HAL_OPAMP_Start(opamp);
         HAL_OPAMP_SelfCalibrate(opamp);
     }
 
-    HAL_DAC_Start(&hdac3, DAC_CHANNEL_1);
-    HAL_DAC_Start(&hdac3, DAC_CHANNEL_2);
-    HAL_DAC_Start(&hdac4, DAC_CHANNEL_1);
-    HAL_DAC_Start(&hdac2, DAC2_CHANNEL_1);
-    HAL_DAC_SetValue(&hdac2, DAC2_CHANNEL_1, DAC_ALIGN_12B_R, (DAC_MAX_VALUE + 1) / 2);
+    {  // Virtual ground
+        HAL_DAC_Start(&hdac4, DAC_CHANNEL_2);
+        HAL_DAC_SetValue(&hdac4, DAC_CHANNEL_2, DAC_ALIGN_12B_R, (DAC_MAX_VALUE + 1) / 2);
+    }
+    HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
+    HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
+    HAL_DAC_Start(&hdac2, DAC_CHANNEL_1);
+    HAL_DAC_Start(&hdac2, DAC_CHANNEL_2);
     TIM_CCxChannelCmd(htim1.Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
     HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
     HAL_TIM_Base_Start(&htim1);
     startSampling();
-    HAL_COMP_Start(&hcomp1);
-    HAL_COMP_Start(&hcomp3);
+    HAL_COMP_Start(&hcomp2);
+    HAL_COMP_Start(&hcomp7);
     for (const auto& command : commands)
     {
         command->useNewValue();
@@ -393,16 +403,42 @@ extern "C" [[noreturn]] void keyFramesProcessing([[maybe_unused]] void*)
     }
 }
 
-static std::pair<long, long> calculate_min_max_uV(const CommandGainChannel_t& gain, const CommandBiasChannel_t& bias)
+constexpr static std::pair<long, long> calculate_min_max_uV(const long gain, const long bias, const long supply_voltage_uV)
 {
-    const long long D = bias.get_12bit_bias();
-    const long long G = gain.getValue();
-    const long long v_ref = analog_supply_voltage_mV * 1000LL;
-    const long long amplitude_uV = analog_supply_voltage_mV * 1000LL / gain.getValue();
-    const long long vmax_uV = (1LL + G) * D * v_ref / G / DAC_MAX_VALUE - v_ref / 2;
-    const long long vmin_uV = vmax_uV - amplitude_uV;
+    if (gain == 1) { return {- supply_voltage_uV/2, supply_voltage_uV/2};}
+    const long long amplitude_uV = supply_voltage_uV / gain;
+    long long min_uV = bias - amplitude_uV / 2;
+    long long max_uV = bias + amplitude_uV / 2;
+    return {min_uV, max_uV};
+}
 
-    return {vmin_uV, vmax_uV};
+static std::pair<long, long> calculate_min_max_uV(const CommandGainChannel_t& gain, const CommandBaseLevelUv_t& bias)
+{
+    return  calculate_min_max_uV(gain.getValue(), bias.getValue(), analog_supply_voltage_mV * 1000L);
+}
+
+/**
+ * Inline compile-time-test
+ *
+ * **/
+namespace Test
+{
+    constexpr void test_min_max()
+    {
+        {
+            constexpr auto bounds = calculate_min_max_uV(32, 500'000, 2'500'000);
+            static_assert(bounds.first == 460'938);
+            static_assert(bounds.second == 539'062);
+        }
+        {
+            constexpr auto bounds = calculate_min_max_uV(32, 0, 3'500'000);
+            static_assert(bounds.first == -54'687);
+            static_assert(bounds.second == 54'687);
+        }
+        constexpr auto bounds = calculate_min_max_uV(16, -1'000'000, 3'300'000);
+        static_assert(bounds.first == -1'103'125);
+        static_assert(bounds.second == -896'875);
+    }
 }
 
 void writeCommands()
@@ -411,13 +447,13 @@ void writeCommands()
     {
         command->write();
     }
-    writeUart("vltg.steps=" ADC_MAX_VALUE_STR "\n");//todo correct +1
-    const auto [minA, maxA] = calculate_min_max_uV(CommandGainChannelA, CommandBiasChannelA);
-    const auto [minB, maxB] = calculate_min_max_uV(CommandGainChannelB, CommandBiasChannelB);
-    Command::do_write_value("vltg.min.uv.a", minA);
-    Command::do_write_value("vltg.max.uv.a", maxA);
-    Command::do_write_value("vltg.min.uv.b", minB);
-    Command::do_write_value("vltg.max.uv.b", maxB);
+    writeUart("vltg.steps=" ADC_STEPS_STR "\n");
+    const auto [minA, maxA] = calculate_min_max_uV(CommandGainChannelA, CommandBaseLevelA);
+    const auto [minB, maxB] = calculate_min_max_uV(CommandGainChannelB, CommandBaseLevelB);
+    Command_t::do_write_value("vltg.min.uv.a", minA);
+    Command_t::do_write_value("vltg.max.uv.a", maxA);
+    Command_t::do_write_value("vltg.min.uv.b", minB);
+    Command_t::do_write_value("vltg.max.uv.b", maxB);
 }
 
 extern "C" void partialFrameSend([[maybe_unused]] void*)

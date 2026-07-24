@@ -45,11 +45,9 @@ const Hardware = {
     },
     sendChannelParameters(channel) {
         const range = vslParameters.channels[channel]["range.uv"]
-        const gain = Gain.BASE_VOLTAGE_uV / range
-        const {hw} = Gain.splitGain(gain)
-        const dacVoltage = (vslParameters.channels[channel]["base.lvl.uv"] - range / 2) * (hw) / (hw+1 )
-        const dacLevel  = - clampValue(1e6 * dacVoltage / Gain.BASE_VOLTAGE_uV ,-1e6,1e6)
-        comm.send(`gain.${channel}=${hw}\nvbias.${channel}=${dacLevel.toFixed(0)}`)
+        const {hw} = Gain.splitGain(Gain.BASE_VOLTAGE_uV / range)
+        const baseLevelUv = vslParameters.channels[channel]["base.lvl.uv"]
+        comm.send(`gain.${channel}=${hw}\nbase.lvl.${channel}.uv=${baseLevelUv.toFixed(0)}`)
     },
     _sendParameters(...names) {
         let cmd = ""
@@ -138,7 +136,7 @@ document.querySelectorAll(".button-switch-block").forEach(block => {
 });
 
 const Gain  = {
-    HW_GAINS: [63, 31, 15, 7, 3, 1],
+    HW_GAINS: [64, 32, 16, 8, 4, 2, 1],
     MAX: 504,
     LOG_MAX: Math.ceil(Math.log(504) * 100) / 100,
     BASE_VOLTAGE_uV: 3300000,//todo replace with calibrated value
@@ -242,7 +240,7 @@ function initUplot() {
                     ctx.setLineDash([4, 4]);
                     [{a: 'chA', c: COLORS.chA}, {a: 'chB', c: COLORS.chB}].forEach(({a, c}) => {
                         const y = self.valToPos(0, a, true);
-                        if (y > -10 && y < self.height + 10) {
+                        if (y >= t && y <= b) {
                             ctx.strokeStyle = c;
                             ctx.beginPath();
                             ctx.moveTo(l, y);
@@ -493,9 +491,7 @@ if (host.endsWith('.local') || (host === '127.0.0.1') || !host.includes('.')) {
     setStatus("Select transport");
 }
 document.getElementById("trgShiftReset").onclick = () => {
-    const el = document.getElementById("trg.time.offset");
-    el.value = "0";
-    vslParameters["trg.time.offset"] = 0;
+        vslParameters["trg.time.offset"] = 0;
     Hardware.sendTriggerParameters()
 };
 

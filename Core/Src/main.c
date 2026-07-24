@@ -96,10 +96,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_ADC3_Init();
-  MX_OPAMP3_Init();
   MX_DAC1_Init();
-  MX_ADC4_Init();
   MX_LPUART1_UART_Init();
   MX_TIM1_Init();
   MX_TIM15_Init();
@@ -111,10 +108,14 @@ int main(void)
   MX_ADC2_Init();
   MX_OPAMP6_Init();
   MX_OPAMP4_Init();
-  MX_COMP1_Init();
-  MX_COMP3_Init();
-  MX_DAC2_Init();
   MX_UART4_Init();
+  MX_ADC3_Init();
+  MX_ADC4_Init();
+  MX_COMP2_Init();
+  MX_COMP7_Init();
+  MX_DAC2_Init();
+  MX_OPAMP2_Init();
+  MX_OPAMP3_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
