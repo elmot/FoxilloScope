@@ -1,5 +1,5 @@
 const _defVslParameters = {
-    "trigger.lvl.uv": -1000000,
+    "trigger.lvl.ppm": 100000,
     "trg.type": 1,
     "trg.chan": 0,
     "trg.time.offset": -200000, //ppm //todo 0
@@ -54,8 +54,14 @@ const Hardware = {
         names.forEach(name => cmd +=`${name}=${vslParameters[name]}\n` )
         comm.send(cmd)
     },
+    triggerLevelUv() {
+        const ch = vslParameters["trg.chan"] === 0 ? "a" : "b";
+        const range = vslParameters.channels[ch]["range.uv"]
+        const base = vslParameters.channels[ch]["base.lvl.uv"]
+        return base + range * vslParameters["trigger.lvl.ppm"] / 2000000
+    },
     sendTriggerParameters() {
-        this._sendParameters("trg.type", "trg.chan", "trg.time.offset")
+        this._sendParameters("trg.type", "trg.chan", "trg.time.offset", "trigger.lvl.ppm")
     },
     sendTimingParameters() {
         this._sendParameters("sampling.ns")
@@ -134,6 +140,16 @@ document.querySelectorAll(".button-switch-block").forEach(block => {
         }
     });
 });
+
+{
+    const trgSlider = document.getElementById('trg.level');
+    trgSlider.value = vslParameters["trigger.lvl.ppm"] || 0;
+    trgSlider.oninput = () => {
+        vslParameters["trigger.lvl.ppm"] = parseFloat(trgSlider.value);
+        Hardware.sendTriggerParameters();
+        updatePlot();
+    };
+}
 
 const Gain  = {
     HW_GAINS: [64, 32, 16, 8, 4, 2, 1],
@@ -250,8 +266,9 @@ function initUplot() {
                     });
                     ctx.setLineDash([]);
                     try {
-                        if (vslParameters["trigger.type"] !== 0) {
-                            const [trgUv, trgCh] = [vslParameters["trigger.lvl.uv"], vslParameters["trigger.channel"]];
+                        if (vslParameters["trg.type"] !== 0) {
+                            const trgCh = vslParameters["trg.chan"] === 0 ? "a" : "b";
+                            const trgUv = Hardware.triggerLevelUv();
                             const y = self.valToPos(trgUv, trgCh === "a" ? "chA" : "chB", true);
                             ctx.setLineDash([4, 4]);
                             ctx.strokeStyle = '#ff69b480';
