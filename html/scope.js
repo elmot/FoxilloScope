@@ -23,14 +23,19 @@ const ParametersStorage = {
         localStorage.setItem("vslParameters", JSON.stringify(vslParameters));
     },
     load() {
-        vslParameters = null
+        vslParameters = JSON.parse(JSON.stringify(_defVslParameters));
         try {
-            vslParameters = JSON.parse(localStorage.getItem("vslParameters"));
+            const saved = JSON.parse(localStorage.getItem("vslParameters"));
+            if (saved && typeof saved === 'object') {
+                Object.assign(vslParameters, saved);
+                if (saved.channels) {
+                    vslParameters.channels.a = Object.assign({}, _defVslParameters.channels.a, saved.channels.a);
+                    vslParameters.channels.b = Object.assign({}, _defVslParameters.channels.b, saved.channels.b);
+                }
+            }
         } catch (e) {
             console.log("Error loading parameters from local storage:", e);
-            vslParameters = JSON.parse(JSON.stringify(_defVslParameters));
         }
-        vslParameters = vslParameters || JSON.parse(JSON.stringify(_defVslParameters));
     }
 }
 ParametersStorage.load();
@@ -131,11 +136,14 @@ clearFrames();
 
 document.querySelectorAll(".button-switch-block").forEach(block => {
     const id = block.id;
+    const val = String(vslParameters[id]);
     const buttons = block.querySelectorAll("button");
     buttons.forEach(button => {
+        button.classList.toggle('active', String(button.dataset.val) === val);
         button.onclick = () => {
-            vslParameters[id] = button.dataset.val;
-            Hardware.sendTriggerParameters()
+            vslParameters[id] = parseFloat(button.dataset.val);
+            Hardware.sendTriggerParameters();
+            ParametersStorage.save();
             buttons.forEach(otherButton => otherButton.classList.toggle('active', button === otherButton));
         }
     });
@@ -143,10 +151,11 @@ document.querySelectorAll(".button-switch-block").forEach(block => {
 
 {
     const trgSlider = document.getElementById('trg.level');
-    trgSlider.value = vslParameters["trigger.lvl.ppm"] || 0;
+    trgSlider.value = vslParameters["trigger.lvl.ppm"] ?? 0;
     trgSlider.oninput = () => {
         vslParameters["trigger.lvl.ppm"] = parseFloat(trgSlider.value);
         Hardware.sendTriggerParameters();
+        ParametersStorage.save();
         updatePlot();
     };
 }
@@ -174,7 +183,8 @@ for(const chName of ["a","b"]) {
     const slider = document.getElementById('gain.' + chName);
     slider.setAttribute("max", "" + Gain.LOG_MAX);
     slider.setAttribute("min", "0");
-    slider.value = clampValue(vslParameters.channels[chName]["range.uv"] / Gain.BASE_VOLTAGE_uV, 1, Gain.MAX);
+    const currentGain = Gain.BASE_VOLTAGE_uV / vslParameters.channels[chName]["range.uv"];
+    slider.value = Math.log(clampValue(currentGain, 1, Gain.MAX));
     const updateDetails = () =>{
         // noinspection JSCheckFunctionSignatures
         const gain = Gain.readGain(slider)
@@ -182,13 +192,14 @@ for(const chName of ["a","b"]) {
         document.getElementById('gain.' + chName + '.val').textContent = `x${gain.toFixed(1)}`;
         document.getElementById('gain.' + chName + '.detail').textContent = `${hw}+${sw.toFixed(1)}`;
     }
+    updateDetails();
     slider.oninput = () => {
         // noinspection JSCheckFunctionSignatures
         vslParameters.channels[chName]["range.uv"] = Gain.BASE_VOLTAGE_uV / Gain.readGain(slider);
         updateDetails()
         updatePlot()
         Hardware.sendChannelParameters(chName) //todo debouncing
-        updateDetails()
+        ParametersStorage.save();
     }
 }
 
@@ -393,6 +404,7 @@ function initUplot() {
                 const newOffset = Math.max(-1e6, Math.min(1e6, _axisDrag.startOffset - (e.clientX - _axisDrag.startX) * _axisDrag.uvPerPx * 1e6));
                 vslParameters["trg.time.offset"] = Math.round(newOffset);
                 Hardware.sendTriggerParameters();//todo debouncing
+                ParametersStorage.save();
                 updatePlot();
             });
             const dragStop =() =>{_axisDrag = null;};
@@ -415,6 +427,7 @@ function initUplot() {
                     const deltaUv = (e.clientY - _axisDrag.startY) * _axisDrag.uvPerPx;
                     vslParameters.channels[chName]["base.lvl.uv"] = _axisDrag.startOffset + deltaUv;
                     Hardware.sendChannelParameters(chName)//todo debounce
+                    ParametersStorage.save();
                     updatePlot();
                 });
                 axis.addEventListener('pointerup', dragStop);
@@ -508,8 +521,9 @@ if (host.endsWith('.local') || (host === '127.0.0.1') || !host.includes('.')) {
     setStatus("Select transport");
 }
 document.getElementById("trgShiftReset").onclick = () => {
-        vslParameters["trg.time.offset"] = 0;
-    Hardware.sendTriggerParameters()
+    vslParameters["trg.time.offset"] = 0;
+    Hardware.sendTriggerParameters();
+    ParametersStorage.save();
 };
 
 document.getElementById("pauseBtn").onclick = function () {
@@ -520,9 +534,13 @@ document.getElementById("pauseBtn").onclick = function () {
 
 {
     const samplingInput = document.getElementById("sampling.ns");
+    if (vslParameters["sampling.ns"]) {
+        samplingInput.value = vslParameters["sampling.ns"];
+    }
     const changeSampling = function () {
         vslParameters["sampling.ns"] = parseFloat(samplingInput.value);
         Hardware.sendTimingParameters();
+        ParametersStorage.save();
         clearFrames();
         updatePlot();
     };
