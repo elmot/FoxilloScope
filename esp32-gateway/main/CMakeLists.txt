@@ -4,6 +4,7 @@ idf_component_register(SRCS "main.c" "serial.c" "led.c" "web-resources.c" "dns_s
         EMBED_FILES ../../html/index.html
                      ../../html/wifi.html
                      ../../html/uPlot.iife.min.js
+                     ../../html/scope.js
                      ../../html/uPlot.min.css
                      ../../html/favicon.png
                      ../../docs/wiring.png

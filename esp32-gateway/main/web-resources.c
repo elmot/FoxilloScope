@@ -8,6 +8,9 @@
 extern const uint8_t _binary_index_html_start[]; // NOLINT(*-reserved-identifier)
 extern const uint8_t _binary_index_html_end[]; // NOLINT(*-reserved-identifier)
 
+extern const uint8_t _binary_scope_js_start[]; // NOLINT(*-reserved-identifier)
+extern const uint8_t _binary_scope_js_end[]; // NOLINT(*-reserved-identifier)
+
 extern const uint8_t _binary_wifi_html_start[]; // NOLINT(*-reserved-identifier)
 extern const uint8_t _binary_wifi_html_end[]; // NOLINT(*-reserved-identifier)
 
@@ -46,6 +49,10 @@ const static_resource_t static_resources[] = { // NOLINT(*-interfaces-global-ini
     {
         "/uPlot.min.css", .data_start = (const char*)_binary_uPlot_min_css_start,
         .data_end = (const char*)_binary_uPlot_min_css_end, .type = "text/css"
+    },
+    {
+        "/scope.js", .data_start = (const char*)_binary_scope_js_start,
+        .data_end = (const char*)_binary_scope_js_end, .type = "text/javascript"
     },
     {
         "/uPlot.iife.min.js", .data_start = (const char*)_binary_uPlot_iife_min_js_start,
