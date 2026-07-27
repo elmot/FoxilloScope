@@ -1,116 +1,89 @@
-# Project: G4 Oscilloscope
+# Frontend Architecture & Technical Reference (`html/`)
 
-## Architecture
-- **Frontend**: Single `index.html` containing all HTML, CSS, and JS
-- **Charting**: uPlot with two y-axes (Ch A left, Ch B right), common time x-axis
-- **Data path**: MCU → serial → WebSerial or WebSockets → browser (base64 ADC → µV)
+This directory contains the single-page web frontend for the G4 Oscilloscope.
 
-## Key Files
-- `index.html` — the entire UI (HTML structure, CSS styling, all JS logic)
+---
 
-## Communication
-- Controls sent as `key=value\n` via WebSocket (sendAllCommands iterates `param._controls`)
-- Server responds with data frames (base64 samples + voltage range info)
+## 1. Multi-Transport Subsystem (`utils.js`)
 
-## UX Intentions
-- **Professional oscilloscope feel** — clean, no clutter; controls look like a real bench scope
-- **Single continuous sliders** — gain and bias each use ONE slider; the HW/SW split is an invisible implementation detail
-- **Logarithmic gain** — slider maps to log space so equal thumb travel = equal ratio change (×1 to ×504)
-- **No bias readout** — bias value is an implementation detail; the user sees the trace shift, not a number
-- **Channel coloring** — Ch A gold (#FFD600) left, Ch B cyan (#00E5FF) right; TRG green (#0f0) with Ch A since it's global
-- **Vertical side-by-side sliders** — gain/bias/trg sliders are vertical (`writing-mode: sideways-lr`)
-- **Full-screen fit** — page fills the viewport with zero scrolling; use flex/grid sizing, never `overflow:hidden`
-- **Session persistence** — slider positions survive page refresh via cookies; old-format cookies are migrated transparently
-- **Param system hygiene** — tracking data (gain log positions, bias totals) MUST NOT live in `param._values`; use `_track` object and `scope_track` cookie to prevent accidental WebSocket sends
-- **Zero-jump bias** — `Math.trunc` for HW split avoids the discontinuity that `Math.round` causes at ±0.5 boundaries
-- **Readability** — gain readout shows `×N.NN` in channel color, HW+SW breakdown in subdued gray (#686868)
+The application abstracts physical transport layers behind the unified `comm` object (`comm.switchTo(mode)`). 
 
-## Frontend Architecture
+### Supported Transports
+- **`wifi`**: WebSocket connection to `ws://${location.host}/ws`. Directly receives text frame buffers.
+- **`serial`**: WebSerial API (`navigator.serial`) running at **460800 baud**. Consumes continuous binary byte streams via `createFrameReader`.
+- **`ble`**: WebBluetooth GATT (`6623a8e1-77d3-4e35-a01c-4d649ff5fb07`).
+  - **TX Characteristic** (`...a8e2`): Receives notifications fed into `createFrameReader`.
+  - **RX Characteristic** (`...a8e3`): Uses an internal FIFO queue (`_writeQueue`) with non-blocking async `_flush()` calling `writeValueWithoutResponse()`.
 
-### Params System (`param` object in JS)
-- `param.register(id, element, updateFn)` — registers a control; adds to `_controls` map
-- `param.set(id, val)` — updates local value + sends `id=val\n` over WebSocket
-- `param._values` — raw value store (persisted in cookie `scope_params`)
-- `param._controls` — registered element map; used by `sendAllCommands()` to re-send on reconnect
-- **Only registered params are sent via WebSocket**
+### Frame Stream Parsing & Custom Base64 Decoding
+- **Stream Framing**: Stream chunks are aggregated into a line buffer and delimited by `#` (`createFrameReader`).
+- **Base64 Sample Decoding (`decode(s)`)**:
+  - ADC samples are binary-packed into 6-bit Base64 character pairs (2 chars per 12-bit sample).
+  - Lookup dictionary `_B64` decodes character pairs:
+    $$\text{Sample} = (\text{Base64}[c_0] \ll 6) \mid \text{Base64}[c_1]$$
 
-### Channel Colors (CSS custom properties)
-- `--ch-a`: `#FFD600` (gold)
-- `--ch-b`: `#00E5FF` (cyan)
-- TRG: green `#0f0`
+---
 
-### Gain Control (Custom — NOT param-slider)
-- **Class**: `gain-slider` (NOT `param-slider` — bypasses generic handler)
-- Single continuous slider per channel
-- Slider stores **log position** (0–1000), not gain value directly
-- `posToGain(pos)` = `exp(pos/1000 * ln(504))`, rounded to 0.01
-- `gainToPos(gain)` = inverse
-- `splitGain(totalGain)` → {hw, sw}: picks largest HW gain (63,31,15,7,3,1) ≤ total with SW zoom ≤ 8
-- HW gain sent to device (`gain.a` / `gain.b`)
-- SW zoom stored in `swState[ch].zoom`, applied in `updateDisplayRange()`
-- Tracking key: `gain.{ch}.pos` in `_track.gainPos`
-- Readout: `×N.NN` (gain, channel-colored), `HW+SW` (detail, gray)
+## 2. Parameter System & Hardware Controls (`scope.js`)
 
-### Bias Control (Custom — NOT param-slider)
-- **Class**: `bias-slider`
-- Continuous slider ±1,000,000, step 0.1
-- `Math.trunc(total)` → HW bias sent to device (`vbias.a` / `vbias.b`)
-- Residual fraction → SW offset in µV: `residual * range / 2000000`
-- No numeric readout shown
-- Tracking key: `vbias.{ch}.total` in `_track.biasTotal`
+Parameters are persisted in `localStorage` under `vslParameters` and managed via `Hardware`.
 
-### Trigger Control (Generic param-slider)
-- `trg.level` uses `param-slider`, registered by generic handler
-- `trg.chan` / `trg.type` use `button-switch-block`, registered by generic button handler
-- TRG slider is in left panel with Ch A, but colored green (not gold)
+### Logarithmic HW / SW Gain Splitting (`Gain` object)
+- Slider values represent logarithmic gain ($\text{min} = 0$, $\text{max} = \ln(504) \approx 6.22$).
+- Total Gain: $G_{\text{total}} = \text{clamp}(e^{\text{slider}}, 1, 504)$.
+- Display Range: $\text{range.uv} = \frac{V_{\text{base}}}{G_{\text{total}}}$, where $V_{\text{base}} = 3,300,000\,\mu\text{V}$.
+- **HW/SW Gain Split (`Gain.splitGain(total)`)**:
+  - Iterates hardware PGA steps: $\text{HW\_GAINS} = [64, 32, 16, 8, 4, 2, 1]$.
+  - Finds the largest $G_{\text{hw}} \le G_{\text{total}}$ such that software multiplier $G_{\text{sw}} = \frac{G_{\text{total}}}{G_{\text{hw}}} \le 8$.
+  - Hardware command sent to MCU: `gain.<channel>=<G_hw>`.
 
-### Display Range
-- `rawUvRange` = constant: {minA:-1650000, maxA:1650000, minB:-1650000, maxB:1650000}
-- `updateDisplayRange()` computes effective range: center ± halfRange/zoom, shifted by SW offset
-- Result stored in `vltg.minUv{A,B}` / `vltg.maxUv{A,B}`
-- Called in slider `apply()` + `uplot.redraw()`
+### Trigger Level & Vertical Offset Math
+- **Trigger Level (`trigger.lvl.ppm`)**: Stored as Parts Per Million (PPM) of the visible screen height ($-500,000$ to $+500,000$, i.e., $\pm 50\%$ span).
+- **PPM to $\mu\text{V}$ Mapping (`Hardware.triggerLevelUv()`)**:
+  $$V_{\text{trg}}(\mu\text{V}) = V_{\text{base.lvl}}(\mu\text{V}) + V_{\text{range}}(\mu\text{V}) \times \frac{\text{trigger.lvl.ppm}}{1,000,000}$$
+  *(uses $V_{\text{range}}$ and $V_{\text{base.lvl}}$ of the active trigger channel `trg.chan`)*.
+- **Hardware Command**: `trg.level=<ppm>` sent via `sendTriggerParameters()`.
 
-### Page Layout (Desktop / Landscape)
-```
-body {flex-direction: column}
-  #scope-wrap {flex:1; display:flex}
-    .v-controls-a (240px, gold)  →  #scope (flex:1)  →  .v-controls-b (160px, cyan)
-  #bottom-controls (sampling + trg shift)
-```
-- Sliders use `writing-mode: sideways-lr` for vertical orientation
-- Full-screen fit via flex sizing — never use `overflow:hidden`
+---
 
-### Page Layout (Portrait mobile, ≤900px)
-```
-#scope-wrap {display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr auto}
-  #scope        — row 1, full width (scope chart)
-  .v-controls-a — row 2, col 1 (Ch A controls, vertical sliders, 130px tall)
-  .v-controls-b — row 2, col 2 (Ch B controls, vertical sliders, 130px tall)
-```
-- Controls sit below the chart, side by side
-- Sliders remain vertical (`sideways-lr`)
-- `#footer` hidden
+## 3. Data Frame Protocol & Waveform Reconstruction
 
-### Page Layout (Landscape mobile, ≤500px height)
-```
-.v-controls-a — flex: 0 0 95px  (was 240px)
-.v-controls-b — flex: 0 0 70px  (was 160px)
-```
-- Side panels narrowed to give chart more horizontal space
-- Compact fonts, `#footer` hidden
+Incoming frame strings parsed in `onFrame(text)` deliver parameters and packed waveform buffers.
 
-### Cookie Persistence
-- Params cookie: `scope_params` (JSON encoded from `param._values` — only registered controls)
-- Tracking cookie: `scope_track` (JSON encoded from `_track` object — gain positions, bias totals)
-- Tracking data (`gainPos`, `biasTotal`) stored in `_track` object, never in `param._values`
-- On load: `param._loadCookie()` restores registered params; IIFE reads `scope_track` (via `_trackLoadCookie()`) to restore slider positions; falls back to old `gain.{ch}.total`/`vbias.{ch}.total` keys from `scope_params` for migration
+### Frame Control Commands
+- `param?`: Sent by MCU when re-initialized; frontend responds by executing `Hardware.sendAllParameters()`.
+- `keyframe=1`: Indicates keyframe storage. Rendered as a persistent ghost trace with opacity decaying over time:
+  $$\alpha = \max\left(30, 250 - \left\lceil 50 \times \frac{T_{\text{now}} - T_{\text{key}}}{T_{\text{frame\_duration}}} \right\rceil\right)$$
+- `head=1`: Signals the first segment of a new frame, resetting the sample buffer array. Subsequent chunks append until complete.
 
-## Important Conventions
-- Never store gain/bias tracking keys (`gainPos`, `biasTotal`) in `param._values` — use `_track` object instead (avoids cookie pollution and prevents accidental WebSocket sends)
-- Always call `_trackSaveCookie()` after modifying `_track`
-- Always call `uplot.redraw()` after changing display range
-- Use `Math.trunc` for bias HW split (not Math.round) to avoid zero-crossing discontinuities
-- `sendAllCommands()` iterates `param._controls`, not `param._values`
-- **`chart_server.py` is a simple WebSocket bridge — agents do not need to modify it**
-- **Never use `overflow:hidden`** for layout — use flex/grid sizing instead
-- **CSS must be mobile-friendly** — include `@media (orientation: portrait)` and `@media (orientation: landscape)` queries
+### ADC Sample to Microvolt Conversion (`updatePlot()`)
+Each raw sample $S[i] \in [0, \text{steps}]$ (typically 4096 steps) is mapped to voltage using MCU-calibrated minimum/maximum limits (`vltg.min.uv.<ch>`, `vltg.max.uv.<ch>`):
+$$V[i] = V_{\text{min}} + S[i] \times \frac{V_{\text{max}} - V_{\text{min}}}{\text{steps}}$$
+The resulting voltage is clamped to the channel's active display window $[V_{\text{base}} - \frac{V_{\text{range}}}{2}, V_{\text{base}} + \frac{V_{\text{range}}}{2}]$.
+
+---
+
+## 4. uPlot Custom Hooks & Gesture Interactions
+
+The chart uses [uPlot](https://github.com/leeoniya/uPlot) with 5 data series (Time, ChA Live, ChB Live, ChA Keyframe, ChB Keyframe).
+
+### Custom Canvas Drawing (`drawAxes` hook)
+- **Zero-Volt Baseline**: Computes $y = \text{valToPos}(0, \text{ch})$ for ChA and ChB; draws horizontal dashed lines in respective channel colors.
+- **Trigger Level Line**: Renders horizontal pink dashed line at $y = \text{valToPos}(V_{\text{trg}}, \text{ch})$.
+- **Time Shift Marker**: Renders vertical pink dashed line at the zero-time trigger offset point clipped within axis bounds.
+
+### Axis Direct Touch & Pointer Capture
+- **X-Axis Drag (`axes[0]`)**: Pointer drag adjusts horizontal trigger offset `vslParameters["trg.time.offset"]` (PPM).
+- **Y-Axes Drag (`axes[1]` for ChA, `axes[2]` for ChB)**: Pointer vertical drag modifies channel DC bias `vslParameters.channels[ch]["base.lvl.uv"]`.
+- **Measurement Cursor (`setCursor` hook)**: Displays live readout ($\Delta t$, $\Delta V_{\text{A}}$, $\Delta V_{\text{B}}$) when dragging a selection rectangle on the viewport.
+
+---
+
+## 5. Development & Modification Rules
+
+1. **DO NOT TOUCH `uPlot.iife.min.js` or `uPlot.min.css`**.
+2. **Preserve Single-Page Architecture**: Keep UI minimal, fast, and dependency-free (vanilla JS).
+3. **PPM vs $\mu\text{V}$ Discipline**:
+   - UI screen-relative controls (trigger position, horizontal offset) MUST use PPM.
+   - Hardware channel offsets and absolute voltages MUST use $\mu\text{V}$.
+4. **Logarithmic Scaling**: Always maintain log-space mapping for gain sliders to ensure consistent feel across large dynamic ranges.
