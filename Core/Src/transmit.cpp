@@ -58,6 +58,7 @@ constexpr auto to_constexpr_string_cr()
 static_assert(string_view(to_constexpr_string_cr<182>()) == string_view("182\n"));
 
 std::atomic<bool> transmitKeyBufferReady{false};
+
 extern "C" [[noreturn]] void startTransmitTask([[maybe_unused]] void* argument)
 {
     static array<char, ascii_buffer_size> asciiBufferA;
@@ -131,6 +132,11 @@ void writeUart(const string_view& str)
     // This is immune to the race condition because even if the flag is set 1 microsecond
     // BEFORE this line executes, osThreadFlagsWait reads the already-set flag and moves on.
     osThreadFlagsWait(UART_TX_BUSY, osFlagsWaitAny, osWaitForever);
+
+    while (!LL_LPUART_IsActiveFlag_TC(LPUART1) || !LL_USART_IsActiveFlag_TC(UART4))
+    {
+        osThreadYield();
+    }
 }
 
 static void uartTransferComplete()

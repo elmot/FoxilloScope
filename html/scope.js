@@ -286,7 +286,14 @@ const Hardware = {
         return base + range * vslParameters["trigger.lvl.ppm"] / 2000000
     },
     sendTriggerParameters() {
-        this._sendParameters("trg.type", "trg.chan", "trg.time.offset", "trigger.lvl.ppm")
+        this._sendParameters("trg.type", "trg.chan", "trg.time.offset");
+        const ch = vslParameters["trg.chan"] === 0 ? "a" : "b";
+        const range = vslParameters.channels[ch]["range.uv"];
+        const {hw} = Gain.splitGain(Gain.BASE_VOLTAGE_uV / range);
+        const base = vslParameters.channels[ch]["base.lvl.uv"];
+        const trgUv = this.triggerLevelUv();
+        const hwPpm = Math.round(clampValue((trgUv - base) * hw / (Gain.BASE_VOLTAGE_uV / 2) * 1000000, -1000000, 1000000));
+        comm.send(`trigger.lvl.ppm=${hwPpm}\n`);
     },
     sendTimingParameters() {
         this._sendParameters("sampling.ns")

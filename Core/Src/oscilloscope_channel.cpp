@@ -30,6 +30,8 @@ void CommandGainChannel_t::useNewValue() const
     HAL_OPAMP_Stop(opamp);
     HAL_OPAMP_Init(opamp);
     HAL_OPAMP_Start(opamp);
+
+    bias_command->useNewValue();
 }
 
 long CommandGainChannel_t::adjustValue(const long value) const

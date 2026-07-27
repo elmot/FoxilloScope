@@ -70,27 +70,30 @@ protected:
     virtual long adjustValue(const long aValue) const { return std::clamp(aValue, min, max); }
 };
 
+struct CommandBaseLevelUv_t;
 struct CommandGainChannel_t : Command_t
 {
-    constexpr CommandGainChannel_t(const char* name, OPAMP_HandleTypeDef * opamp) : Command_t(name, 1, 1, 63), opamp(opamp){}
+    constexpr CommandGainChannel_t(const Command_t* bias_command, const char* name, OPAMP_HandleTypeDef * opamp) : Command_t(name, 1, 1, 63), opamp(opamp), bias_command(bias_command){}
     void useNewValue() const override;
 protected:
-    OPAMP_HandleTypeDef  * opamp;
+    OPAMP_HandleTypeDef * const opamp;
+    const Command_t* bias_command;
     long adjustValue(long value) const override;
 };
 
 struct CommandBaseLevelUv_t : Command_t
 {
     constexpr CommandBaseLevelUv_t(const char* name, DAC_HandleTypeDef* dac, uint32_t dac_channel,
-        const CommandGainChannel_t& gain_cmd)
+        const char* gain_name, OPAMP_HandleTypeDef * gain_opamp)
         : Command_t(name, 0, -1'000L * static_cast<long>(VDD_VALUE) / 2L, 1'000L * VDD_VALUE / 2),
-          dac{dac}, dac_channel{dac_channel}, gain_cmd{gain_cmd}
+          dac{dac}, dac_channel{dac_channel}, gain_cmd{CommandGainChannel_t(this, gain_name, gain_opamp)}
     {
+
     }
 
     DAC_HandleTypeDef* dac;
     const uint32_t dac_channel;
-    const CommandGainChannel_t& gain_cmd;
+    const CommandGainChannel_t gain_cmd;
 
     void useNewValue() const override
     {

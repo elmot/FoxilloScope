@@ -1,4 +1,4 @@
-const unsigned short fake_signal [] = {
+const unsigned short fake_signal [] __attribute__((aligned(32))) = {
 1000 + 1055	,
 1000 + 1081	,
 1000 + 1100	,
