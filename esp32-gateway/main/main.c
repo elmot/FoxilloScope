@@ -282,7 +282,7 @@ static void wifi_init_apsta(void)
     ESP_ERROR_CHECK(esp_wifi_start());
 
     ESP_LOGI(TAG, "AP SSID: %s", ap_cfg.ap.ssid);
-    ESP_LOGI(TAG, "STA connecting to: %s", CONFIG_ESP_WIFI_REMOTE_AP_SSID);
+    ESP_LOGI(TAG, "STA connecting to: %s", sta_cfg.sta.ssid);
 }
 
 [[noreturn]] static void reconnect_task([[maybe_unused]] void*)

@@ -75,3 +75,14 @@ void led_init(void)
     rmt_enable(s_led_chan);
     led_set_rgb(20, 0, 20);
 }
+
+[[noreturn]] void led_blink_pink_loop(void)
+{
+    for (;;)
+    {
+        led_set_rgb(128, 0, 128);
+        vTaskDelay(pdMS_TO_TICKS(500));
+        led_set_rgb(0, 0, 0);
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+}

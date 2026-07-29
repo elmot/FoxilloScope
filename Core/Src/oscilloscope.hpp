@@ -140,6 +140,7 @@ void startUartInput();
 extern "C" void adcCalibration();
 extern "C" void startMainAdcs(bool interleaveSampling, uint16_t* bufferA, uint16_t* bufferB, size_t bufferLength);
 extern "C" size_t adcSamplesLeft();
+extern "C" void startSysBootloader(void);
 
 [[maybe_unused]]static uint32_t msec_to_ticks(const uint32_t msec) {
     const uint32_t ticks_per_sec = osKernelGetTickFreq();

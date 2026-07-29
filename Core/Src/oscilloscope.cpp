@@ -7,10 +7,12 @@
 #include "oscilloscope.hpp"
 #include <cstring>
 #include <algorithm>
+#include <climits>
 
 #include "cmsis_os2.h"
 #include "comp.h"
 #include "opamp.h"
+
 //todo fix 8Mhz sampling
 
 alignas(uint32_t) static std::array<uint16_t, data_frame_size * 2> adcBufferA{};
@@ -161,7 +163,25 @@ constexpr CommandBaseLevelUv_t CommandBaseLevelA{"base.lvl.a.uv", &hdac1,DAC_CHA
 
 constexpr CommandBaseLevelUv_t CommandBaseLevelB{"base.lvl.b.uv", &hdac1,DAC_CHANNEL_1, "gain.b", &hopamp3};
 
-constexpr std::array<const Command_t*, 9> commands{
+struct StartSysBootloader_t : Command_t{
+    static constexpr long MAGIC_NUMBER = 0xB007;//BOOT
+
+    StartSysBootloader_t() : Command_t("bootloader", 0, 0, LONG_MAX, false)
+    {
+    }
+
+    void useNewValue() const override
+    {
+        if (value==MAGIC_NUMBER)
+        {
+            startSysBootloader();
+        }
+    }
+
+};
+StartSysBootloader_t StartSysBootloader{};
+
+constexpr std::array<const Command_t*, 10> commands{
     &CommandBaseLevelA,
     &CommandBaseLevelB,
     &CommandBaseLevelA.gain_cmd,
@@ -170,7 +190,8 @@ constexpr std::array<const Command_t*, 9> commands{
     &trigger::CommandTriggerLevel,
     &trigger::CommandTriggerType,
     &trigger::CommandTriggerOffset,
-    &trigger::CommandTriggerChannel
+    &trigger::CommandTriggerChannel,
+    &StartSysBootloader,
 };
 
 void skipWhiteSpace(char* & ptr)

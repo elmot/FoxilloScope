@@ -1,8 +1,10 @@
 #include <stdint.h>
+#include <string.h>
 
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "gateway.h"
+#include "stm32_flasher.h"
 #include "cJSON.h"
 
 extern const uint8_t _binary_index_html_start[]; // NOLINT(*-reserved-identifier)
@@ -25,6 +27,9 @@ extern const uint8_t _binary_favicon_png_end[]; // NOLINT(*-reserved-identifier)
 
 extern const uint8_t _binary_wiring_png_start[]; // NOLINT(*-reserved-identifier)
 extern const uint8_t _binary_wiring_png_end[]; // NOLINT(*-reserved-identifier)
+
+extern const uint8_t _binary_FoxilloScope_bin_start[]; // NOLINT(*-reserved-identifier)
+extern const uint8_t _binary_FoxilloScope_bin_end[]; // NOLINT(*-reserved-identifier)
 
 typedef struct
 {
@@ -65,6 +70,10 @@ const static_resource_t static_resources[] = { // NOLINT(*-interfaces-global-ini
     {
         "/wiring.png", .data_start = (const char*)_binary_wiring_png_start,
         .data_end = (const char*)_binary_wiring_png_end, .type = "image/png"
+    },
+    {
+        "/FoxilloScope.bin", .data_start = (const char*)_binary_FoxilloScope_bin_start,
+        .data_end = (const char*)_binary_FoxilloScope_bin_end, .type = "application/octet-stream"
     },
 
     {.uri = nullptr}
@@ -157,6 +166,49 @@ static esp_err_t wifi_api_handler(httpd_req_t *req)
     esp_restart();
 }
 
+static esp_err_t upgrade_flash_handler(httpd_req_t *req)
+{
+    httpd_resp_set_type(req, "text/plain");
+
+    char content[64];
+    const int ret = httpd_req_recv(req, content, sizeof(content) - 1);
+    if (ret <= 0) {
+        httpd_resp_sendstr(req, "ERROR: No data received\n");
+        return ESP_OK;
+    }
+    content[ret] = '\0';
+
+    if (strstr(content, "BEEF=DEAD") == NULL) {
+        httpd_resp_sendstr(req, "ERROR: Invalid magic parameter\n");
+        return ESP_OK;
+    }
+
+    kick_out_ws_client();
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+    uart_write_str("\n\nbootloader=45063\n");
+    vTaskDelay(pdMS_TO_TICKS(200));
+
+    const size_t len = _binary_FoxilloScope_bin_end - _binary_FoxilloScope_bin_start;
+    const esp_err_t err = stm32_flash_binary(_binary_FoxilloScope_bin_start, len, 0x08000000, NULL);
+
+    if (err != ESP_OK) {
+        httpd_resp_sendstr(req, "ERROR: Erasing or flashing STM32 failed!\n");
+        return ESP_OK;
+    }
+
+    static constexpr char response_text[] =
+        "OK\n\n"
+        "STM32 MCU flashed successfully!\n"
+        "Please switch the device off and on (power cycle)\n";
+
+    httpd_resp_sendstr(req, response_text);
+
+    led_blink_pink_loop();
+
+    return ESP_OK;
+}
+
 static esp_err_t redirect_handler(httpd_req_t *req, [[maybe_unused]] httpd_err_code_t)
 {
     httpd_resp_set_status(req, "302 Found");
@@ -184,6 +236,9 @@ httpd_handle_t start_webserver(void)
         });
         httpd_register_uri_handler(hd, &(const httpd_uri_t){
             .uri = "/api/wifi", .method = HTTP_POST, .handler = wifi_api_handler
+        });
+        httpd_register_uri_handler(hd, &(const httpd_uri_t){
+            .uri = "/upgrade_flash", .method = HTTP_POST, .handler = upgrade_flash_handler
         });
         httpd_register_err_handler(hd, HTTPD_404_NOT_FOUND, redirect_handler);
         ESP_LOGI(TAG, "Web server started on port %d", cfg.server_port);

@@ -76,7 +76,20 @@
         <div id="msg"></div>
     </div>
 
+    <h2>Firmware Update</h2>
+    <div class="card">
+        <p style="color:#aaa;font-size:13px">Reflash STM32 MCU with embedded firmware (FoxilloScope.bin):</p>
+        <form id="flashForm" action="/upgrade_flash" method="POST">
+            <input type="hidden" name="BEEF" value="DEAD">
+            <button type="submit">Reflash STM32 MCU</button>
+        </form>
+    </div>
+
     <a href="/" class="back">&larr; Back to Oscilloscope</a>
+
+    <div id="overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);color:#0f0;align-items:center;justify-content:center;z-index:99;font-size:16px;text-align:center">
+        Flashing STM32 MCU in progress...<br>Please wait.
+    </div>
 
     <script>
         const $ = id => document.getElementById(id);
@@ -131,6 +144,17 @@
             }
             $('saveBtn').disabled = false;
         };
+
+        const flashForm = $('flashForm');
+        if (flashForm) {
+            flashForm.onsubmit = (e) => {
+                if (!confirm('Are you sure you want to reflash the STM32 MCU firmware?')) {
+                    e.preventDefault();
+                    return;
+                }
+                $('overlay').style.display = 'flex';
+            };
+        }
 
         fetchStatus();
         setInterval(fetchStatus, 5000);

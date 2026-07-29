@@ -13,6 +13,7 @@ extern void led_init(void);
 extern void led_refresh(void);
 
 void uart_init(void);
+void uart_prepare_for_flashing(void);
 
 httpd_handle_t start_webserver(void);
 esp_err_t ws_handler(httpd_req_t *req);
@@ -43,5 +44,7 @@ void ble_uart_init(void);
 void ble_transmit(const char *text, int len);
 
 void kick_out_ws_client();
+
+[[noreturn]] void led_blink_pink_loop(void);
 
 #endif //ESP32_GATEWAY_GATEWAY_H

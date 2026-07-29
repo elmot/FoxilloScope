@@ -63,7 +63,31 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void startSysBootloader(void)
+{
+  __disable_irq();
 
+  /* Stop peripherals, SysTick, DMA, etc. */
+
+  HAL_RCC_DeInit();
+  HAL_DeInit();
+
+  SysTick->CTRL = 0;
+  SysTick->LOAD = 0;
+  SysTick->VAL = 0;
+
+  /* Remap System Memory */
+  __HAL_SYSCFG_REMAPMEMORY_SYSTEMFLASH();
+
+  /* Load MSP from System Memory */
+  const uint32_t bootAddr = 0x1FFF0000;   // STM32G4 System Memory start
+  __set_MSP(*(uint32_t *)bootAddr);
+
+  /* Jump to Reset_Handler in System Memory */
+  void (*SysMemBootJump)(void) = (void (*)(void))(*(uint32_t*)(bootAddr + 4));
+  SysMemBootJump();
+
+}
 /* USER CODE END 0 */
 
 /**

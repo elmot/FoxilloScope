@@ -14,10 +14,28 @@
 
 static const char * TAG = "serial";
 static QueueHandle_t s_uart_queue = nullptr;
+static TaskHandle_t s_uart_rx_task_handle = nullptr;
 
 void uart_write_str(const char *str)
 {
     uart_write_bytes(UART_PORT, str, strlen(str));
+}
+
+void uart_prepare_for_flashing(void)
+{
+    if (s_uart_rx_task_handle != nullptr) {
+        vTaskSuspend(s_uart_rx_task_handle);
+    }
+    const uart_config_t flasher_cfg = {
+        .baud_rate = 115200,
+        .data_bits = UART_DATA_8_BITS,
+        .parity = UART_PARITY_EVEN,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .source_clk = UART_SCLK_DEFAULT,
+    };
+    ESP_ERROR_CHECK(uart_param_config(UART_PORT, &flasher_cfg));
+    uart_flush(UART_PORT);
 }
 
 [[noreturn]] static void uart_rx_task([[maybe_unused]] void *arg)
@@ -93,5 +111,5 @@ void uart_init(void)
     ESP_ERROR_CHECK(uart_param_config(UART_PORT, &cfg));
     ESP_ERROR_CHECK(uart_set_pin(UART_PORT, UART_TX_PIN, UART_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
     ESP_ERROR_CHECK(uart_driver_install(UART_PORT, 4096, 256, 20, &s_uart_queue, 0));
-    xTaskCreate(uart_rx_task, "uart_rx_evt", 4096, nullptr, 10, nullptr);
+    xTaskCreate(uart_rx_task, "uart_rx_evt", 4096, nullptr, 10, &s_uart_rx_task_handle);
 }
