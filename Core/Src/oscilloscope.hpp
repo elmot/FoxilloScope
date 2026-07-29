@@ -51,12 +51,16 @@ struct Command_t
     {
         writeUart(valueName);
         std::array<char,32> buffer{'='};
-        auto [ptr, _] = std::to_chars(&buffer[1], &buffer.back(),v);
-        *ptr++ ='\n';
-        writeUart(std::string_view(buffer.data(), ptr - buffer.data()));
+        auto [ptr, err] = std::to_chars(&buffer[1], buffer.end() - 1, v);
+        // Always verify to_chars succeeded before writing '\n'
+        if (err == std::errc{})
+        {
+            *ptr++ = '\n';
+            writeUart(std::string_view(buffer.data(), ptr - buffer.data()));
+        }
     }
 
-    void write() const
+    virtual void write() const
     {
         do_write_value(name, value);
     }

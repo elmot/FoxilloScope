@@ -50,7 +50,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         Core/Src/oscilloscope.cpp
         Core/Src/oscilloscope_channel.cpp
         Core/Src/transmit.cpp
-        Core/Src/data.c # todo remove
+        Core/Src/data.c
 )
 
 # Add include paths

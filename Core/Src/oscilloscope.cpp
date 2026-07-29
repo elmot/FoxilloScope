@@ -29,8 +29,9 @@ constexpr auto bufferHalves = std::array{
 
 void dmaMemToMemCallback(DMA_HandleTypeDef* dma_handle_type_def);
 
-void initialize_test_signal() //todo remove together with tim2 & hdacs wave generation
+void initialize_test_signal()
 {
+#ifdef DEBUG
     extern const unsigned short fake_signal[];
     HAL_DAC_Start_DMA(&hdac4, DAC_CHANNEL_1, reinterpret_cast<const uint32_t*>(fake_signal), 164, DAC_ALIGN_12B_R);
     HAL_DAC_Start(&hdac3, DAC_CHANNEL_1);
@@ -40,6 +41,7 @@ void initialize_test_signal() //todo remove together with tim2 & hdacs wave gene
     HAL_OPAMP_Start(&hopamp6);
     //__HAL_TIM_SET_PRESCALER(&htim15, 30000);
     HAL_TIM_Base_Start(&htim15);
+#endif
 }
 
 /** Oscilloscope commands
@@ -89,7 +91,7 @@ namespace trigger
 
     constexpr struct CommandTriggerLevel_t : Command_t
     {
-        constexpr CommandTriggerLevel_t() : Command_t("trigger.lvl.ppm", 200'000L/*todo 0*/, -1'000'000, 1'000'000)
+        constexpr CommandTriggerLevel_t() : Command_t("trigger.lvl.ppm", 0L, -1'000'000, 1'000'000)
         {
         }
 
@@ -144,11 +146,13 @@ namespace trigger
         if (CommandTriggerType.getValue() == 0)
         {
             HAL_NVIC_DisableIRQ(COMP1_2_3_IRQn);
+            HAL_NVIC_DisableIRQ(COMP7_IRQn);
         }
         else
         {
             trigger::state = TriggerState::DISARMED;
             HAL_NVIC_EnableIRQ(COMP1_2_3_IRQn);
+            HAL_NVIC_EnableIRQ(COMP7_IRQn);
         }
     }
 
@@ -177,7 +181,7 @@ struct StartSysBootloader_t : Command_t{
             startSysBootloader();
         }
     }
-
+    void write() const override {}
 };
 StartSysBootloader_t StartSysBootloader{};
 
@@ -258,7 +262,7 @@ static void executeIncomingCommand()
 
         long newValue;
         const auto [cookie_ptr,errc] = std::from_chars(ptr, ptr + strlen(ptr), newValue);
-        if (errc != std::errc{}) break;
+        if (errc != std::errc{}) continue;
         if (command->setValue(newValue))
         {
             requiresRestart |= command->requires_restart;
@@ -358,6 +362,7 @@ void HAL_COMP_TriggerCallback(COMP_HandleTypeDef* hcomp)
             trigger::state = TriggerState::TRIGGERED;
             __HAL_TIM_ENABLE(&htim1);
             HAL_NVIC_DisableIRQ(COMP1_2_3_IRQn);
+            HAL_NVIC_DisableIRQ(COMP7_IRQn);
         }
     }
     else

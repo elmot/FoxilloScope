@@ -201,6 +201,7 @@ static void wifi_event_handler([[maybe_unused]] void* arg, const esp_event_base_
     else if (base == WIFI_EVENT && id == WIFI_EVENT_STA_START)
     {
         s_sta_connected = false;
+        xEventGroupClearBits(s_wifi_event_group, WIFI_FAIL_BIT);
         led_refresh();
         esp_wifi_connect();
     }
@@ -214,6 +215,7 @@ static void wifi_event_handler([[maybe_unused]] void* arg, const esp_event_base_
         esp_wifi_sta_get_rssi(&rssi);
         s_sta_rssi = rssi;
         s_retry_num = 0;
+        xEventGroupClearBits(s_wifi_event_group, WIFI_FAIL_BIT);
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     }
     else if (base == WIFI_EVENT && id == WIFI_EVENT_STA_DISCONNECTED)

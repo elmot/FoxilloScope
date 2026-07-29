@@ -2,16 +2,16 @@ const _defVslParameters = {
     "trigger.lvl.ppm": 100000,
     "trg.type": 1,
     "trg.chan": 0,
-    "trg.time.offset": -200000, //ppm //todo 0
-    "sampling.ns": 250,//todo 5000
+    "trg.time.offset": 0, //ppm
+    "sampling.ns": 500000,
     "channels": {
         "a": {
-            "range.uv": 33000000,//todo 3300000
-            "base.lvl.uv": -1000000,//todo 0
+            "range.uv": 33000000,
+            "base.lvl.uv": 0,
         },
         "b": {
             "range.uv": 3300000,
-            "base.lvl.uv": 500000,//todo 0
+            "base.lvl.uv": 0,
         },
     }
 };
@@ -456,7 +456,7 @@ function initUplot() {
 
     function seriesColor(u, i) {
         const c = i % 2 === 0 ? COLORS.chB : COLORS.chA;
-        return c + (vslParameters["triggerg.type"] === 0 ? "A0" : "50");
+        return c + (vslParameters["trg.type"] === 0 ? "A0" : "50");
     }
 
     function keySeriesColor(u, i) {

@@ -109,6 +109,8 @@ void writeUart(const string_view& str)
     LL_DMA_ClearFlag_TE4(DMA1);
     LL_DMA_ClearFlag_TC7(DMA1);
     LL_DMA_ClearFlag_TE7(DMA1);
+    LL_LPUART_ClearFlag_TC(LPUART1);
+    LL_USART_ClearFlag_TC(UART4);
 
     LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_4, reinterpret_cast<uint32_t>(str.data()));
     LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_7, reinterpret_cast<uint32_t>(str.data()));

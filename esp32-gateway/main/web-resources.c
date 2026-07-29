@@ -205,8 +205,6 @@ static esp_err_t upgrade_flash_handler(httpd_req_t *req)
     httpd_resp_sendstr(req, response_text);
 
     led_blink_pink_loop();
-
-    return ESP_OK;
 }
 
 static esp_err_t redirect_handler(httpd_req_t *req, [[maybe_unused]] httpd_err_code_t)
