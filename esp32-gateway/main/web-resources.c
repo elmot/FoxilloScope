@@ -7,6 +7,8 @@
 #include "stm32_flasher.h"
 #include "cJSON.h"
 
+#include "version.h"
+
 extern const uint8_t _binary_index_html_start[]; // NOLINT(*-reserved-identifier)
 extern const uint8_t _binary_index_html_end[]; // NOLINT(*-reserved-identifier)
 
@@ -31,6 +33,9 @@ extern const uint8_t _binary_wiring_png_end[]; // NOLINT(*-reserved-identifier)
 extern const uint8_t _binary_FoxilloScope_bin_start[]; // NOLINT(*-reserved-identifier)
 extern const uint8_t _binary_FoxilloScope_bin_end[]; // NOLINT(*-reserved-identifier)
 
+extern const uint8_t _binary_version_txt_start[]; // NOLINT(*-reserved-identifier)
+extern const uint8_t _binary_version_txt_end[]; // NOLINT(*-reserved-identifier)
+
 typedef struct
 {
     const char * uri;
@@ -50,7 +55,6 @@ const static_resource_t static_resources[] = { // NOLINT(*-interfaces-global-ini
         "/wifi", .data_start = (const char*)_binary_wifi_html_start,
         .data_end = (const char*)_binary_wifi_html_end, .type = "text/html"
     },
-
     {
         "/uPlot.min.css", .data_start = (const char*)_binary_uPlot_min_css_start,
         .data_end = (const char*)_binary_uPlot_min_css_end, .type = "text/css"
@@ -74,6 +78,10 @@ const static_resource_t static_resources[] = { // NOLINT(*-interfaces-global-ini
     {
         "/FoxilloScope.bin", .data_start = (const char*)_binary_FoxilloScope_bin_start,
         .data_end = (const char*)_binary_FoxilloScope_bin_end, .type = "application/octet-stream"
+    },
+    {
+        "/version.txt", .data_start = (const char*)_binary_version_txt_start,
+        .data_end = (const char*)_binary_version_txt_end, .type = "text/plain"
     },
 
     {.uri = nullptr}
@@ -116,6 +124,15 @@ static esp_err_t wifi_status_handler(httpd_req_t *req)
     const int n = snprintf(buf, sizeof(buf),
         "{\"sta\":{\"status\":\"%s\",\"ssid\":\"%s\",\"ip\":\"%s\",\"rssi\":%d}}",
         status, s_sta_ssid, s_sta_ip, s_sta_rssi);
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_send(req, buf, n);
+    return ESP_OK;
+}
+
+static esp_err_t version_api_handler(httpd_req_t *req)
+{
+    static char buf[128];
+    const int n = snprintf(buf, sizeof(buf), "{\"version\":\"%s\"}", BUILD_VERSION);
     httpd_resp_set_type(req, "application/json");
     httpd_resp_send(req, buf, n);
     return ESP_OK;
@@ -166,6 +183,7 @@ static esp_err_t wifi_api_handler(httpd_req_t *req)
     esp_restart();
 }
 
+// ReSharper disable once CppDFAConstantFunctionResult
 static esp_err_t upgrade_flash_handler(httpd_req_t *req)
 {
     httpd_resp_set_type(req, "text/plain");
@@ -190,7 +208,7 @@ static esp_err_t upgrade_flash_handler(httpd_req_t *req)
     vTaskDelay(pdMS_TO_TICKS(200));
 
     const size_t len = _binary_FoxilloScope_bin_end - _binary_FoxilloScope_bin_start;
-    const esp_err_t err = stm32_flash_binary(_binary_FoxilloScope_bin_start, len, 0x08000000, NULL);
+    const esp_err_t err = stm32_flash_binary(_binary_FoxilloScope_bin_start, len, 0x08000000, nullptr);
 
     if (err != ESP_OK) {
         httpd_resp_sendstr(req, "ERROR: Erasing or flashing STM32 failed!\n");
@@ -231,6 +249,9 @@ httpd_handle_t start_webserver(void)
         });
         httpd_register_uri_handler(hd, &(const httpd_uri_t){
             .uri = "/api/wifi/status", .method = HTTP_GET, .handler = wifi_status_handler
+        });
+        httpd_register_uri_handler(hd, &(const httpd_uri_t){
+            .uri = "/api/version", .method = HTTP_GET, .handler = version_api_handler
         });
         httpd_register_uri_handler(hd, &(const httpd_uri_t){
             .uri = "/api/wifi", .method = HTTP_POST, .handler = wifi_api_handler

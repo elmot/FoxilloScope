@@ -3,6 +3,7 @@
 
 #include "cmsis_os.h"
 #include "oscilloscope.hpp"
+#include "version.h"
 #include "stm32g4xx_ll_usart.h"
 #include "string"
 #include "usart.h"
@@ -63,7 +64,7 @@ extern "C" [[noreturn]] void startTransmitTask([[maybe_unused]] void* argument)
 {
     static array<char, ascii_buffer_size> asciiBufferA;
     static array<char, ascii_buffer_size> asciiBufferB;
-    writeUart("\n#\nparam?\n");
+    writeUart("\n#\nversion=" BUILD_VERSION "\nparam?\n");
     osThreadFlagsSet(osThreadGetId(),THREAD_FLAG_READY_TO_TRANSMIT);
     while (true)
     {

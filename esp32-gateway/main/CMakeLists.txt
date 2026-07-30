@@ -1,5 +1,5 @@
 idf_component_register(SRCS "main.c" "serial.c" "led.c" "web-resources.c" "dns_server.c" "ble_uart.c" "stm32_flasher.c"
-                    INCLUDE_DIRS "."
+                    INCLUDE_DIRS "." "${CMAKE_CURRENT_LIST_DIR}/../version"
                     PRIV_REQUIRES esp_driver_uart esp_http_server nvs_flash esp_wifi esp_event esp_netif mdns esp_driver_rmt bt
         EMBED_FILES ../../html/index.html
                     ../../html/wifi.html
@@ -7,6 +7,7 @@ idf_component_register(SRCS "main.c" "serial.c" "led.c" "web-resources.c" "dns_s
                     ../../html/scope.js
                     ../../html/uPlot.min.css
                     ../../html/favicon.png
+                    ../../html/version.txt
                     ../../docs/wiring.png
                     ../../build/Release/FoxilloScope.bin
 )

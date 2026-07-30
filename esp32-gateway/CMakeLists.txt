@@ -13,3 +13,14 @@ list(PREPEND SDKCONFIG_DEFAULTS
 
 idf_build_set_property(MINIMAL_BUILD ON)
 project(esp32-gateway)
+
+set_source_files_properties(${CMAKE_CURRENT_LIST_DIR}/version/version.h PROPERTIES GENERATED TRUE)
+
+add_custom_target(generate_version ALL
+    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${CMAKE_CURRENT_LIST_DIR} -DBINARY_DIR=${CMAKE_BINARY_DIR} -P ${CMAKE_CURRENT_LIST_DIR}/../version.cmake
+    BYPRODUCTS ${CMAKE_CURRENT_LIST_DIR}/version/version.h
+    COMMENT "Generating version.h..."
+)
+
+add_dependencies(__idf_main generate_version)
+

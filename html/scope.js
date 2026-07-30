@@ -261,12 +261,14 @@ const ParametersStorage = {
 ParametersStorage.load();
 
 const Hardware = {
+    fwVersion: "unknown",
     sentParameters: {},
     sendAllParameters() {
         this.sendTimingParameters()
         this.sendChannelParameters("a")
         this.sendChannelParameters("b")
         this.sendTriggerParameters()
+        comm.send("version=1\n");
     },
     sendChannelParameters(channel) {
         const range = vslParameters.channels[channel]["range.uv"]
@@ -318,6 +320,10 @@ function onFrame(text) {
         }
         let [key, value] = l.split("=").map(s => s.trim());
         if (value === undefined) continue;
+        if (key === 'version') {
+            Hardware.fwVersion = value;
+            continue;
+        }
         if (key.startsWith('data.')) {
             cmds.samples[key.substring(5)] = decode(value);
         } else {
@@ -730,7 +736,7 @@ document.querySelectorAll('.transport-btn[data-mode]').forEach(btn => {
     btn.addEventListener('click', () => {
         const m = btn.dataset.mode;
         if (!window.isSecureContext && m !== 'wifi') {
-            window.open('https://elmot.xyz/oscilloscope', '_blank');
+            window.open('https://elmot.xyz/f-scope', '_blank');
             return;
         }
         // noinspection JSIgnoredPromiseFromCall
@@ -763,6 +769,19 @@ document.getElementById("pauseBtn").onclick = function () {
     this.textContent = paused ? "Resume" : "Pause";
     this.classList.toggle("paused", paused);
 };
+
+const versionLinkBtn = document.getElementById("version-link");
+if (versionLinkBtn) {
+    versionLinkBtn.onclick = async (e) => {
+        e.preventDefault();
+        let gwVer = '— (Offline/CDN)';
+        try {
+            const r = await fetch('/version.txt');
+            gwVer = await r.text();
+        } catch (err) {}
+        alert(`Firmware Version: ${Hardware.fwVersion}\nGateway Version: ${gwVer}`);
+    };
+}
 
 {
     const samplingInput = document.getElementById("sampling.ns");

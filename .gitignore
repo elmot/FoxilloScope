@@ -1,3 +1,5 @@
 build/
 .venv
 .claude/settings.json
+html/version.txt
+version/version.h
