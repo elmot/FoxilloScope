@@ -1,0 +1,99 @@
+name: Build Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    name: Build Firmware & Release Assets
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build tools and ARM GCC toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi
+
+      - name: Install ESP-IDF v6
+        uses: espressif/install-esp-idf-action@v1
+        with:
+          version: 'v6.0'
+
+      - name: Step 1 - Write fake credentials to sdkconfig.secrets
+        run: |
+          cp esp32-gateway/sdkconfig.secrets.template esp32-gateway/sdkconfig.secrets
+
+      - name: Step 2 - Build Debug config of root project
+        run: |
+          cmake --preset Debug
+          cmake --build --preset Debug
+
+      - name: Step 3 - Build Release config of root project
+        run: |
+          cmake --preset Release
+          cmake --build --preset Release
+
+      - name: Step 4 - Build Release config of esp32-gateway
+        run: |
+          idf.py -C esp32-gateway set-target esp32c3
+          idf.py -C esp32-gateway build
+
+      - name: Step 5 - Build merged bin in esp32-gateway
+        run: |
+          idf.py -C esp32-gateway merge-bin
+
+      - name: Collect release binaries into flat folder
+        run: |
+          mkdir -p release_assets
+          cp build/Debug/FoxilloScope.bin release_assets/FoxilloScope-Debug.bin
+          cp build/Debug/FoxilloScope.elf release_assets/FoxilloScope-Debug.elf
+          cp build/Release/FoxilloScope.bin release_assets/FoxilloScope-Production.bin
+          cp build/Release/FoxilloScope.elf release_assets/FoxilloScope-Production.elf
+          cp esp32-gateway/build/merged-binary.bin release_assets/esp32-gateway.bin
+
+      - name: Upload Firmware Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: foxilloscope-release-firmware
+          path: release_assets/
+
+      - name: Publish Binaries to GitHub Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release_assets/*
+
+      - name: Checkout elmot.github.io repository
+        if: github.event_name == 'release'
+        uses: actions/checkout@v4
+        with:
+          repository: elmot/elmot.github.io
+          ref: master
+          path: target-repo
+          token: ${{ secrets.GH_PAGES_REPO_TOKEN }}
+
+      - name: Sync web files to f-scope directory
+        if: github.event_name == 'release'
+        run: |
+          mkdir -p target-repo/f-scope
+          rsync -av \
+            --exclude="AGENTS.md" \
+            html/ target-repo/f-scope/
+
+      - name: Create Pull Request on elmot.github.io
+        if: github.event_name == 'release'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          path: target-repo
+          token: ${{ secrets.GH_PAGES_REPO_TOKEN }}
+          commit-message: "Update f-scope(Foxilloscope) web frontend for release ${{ github.event.release.tag_name }}"
+          branch: "update-f-scope"
+          title: "Update f-scope(Foxilloscope) web frontend (${{ github.event.release.tag_name }})"
+          body: "Automated PR from FoxilloScope release ${{ github.event.release.tag_name }} to publish updated web frontend files to `f-scope/`."
+          base: "master"
