@@ -1,22 +1,22 @@
 # Frontend Architecture & Technical Reference (`html/`)
 
-This directory contains the single-page web frontend for the G4 Oscilloscope.
+Single‑page web frontend for the G4 Oscilloscope.
 
 ---
 
-## 1. Multi-Transport Subsystem (`utils.js`)
+## 1. Multi-Transport Subsystem (`scope.js`)
 
-The application abstracts physical transport layers behind the unified `comm` object (`comm.switchTo(mode)`). 
+The `comm` object abstracts transports.
 
 ### Supported Transports
-- **`wifi`**: WebSocket connection to `ws://${location.host}/ws`. Directly receives text frame buffers.
-- **`serial`**: WebSerial API (`navigator.serial`) running at **460800 baud**. Consumes continuous binary byte streams via `createFrameReader`.
-- **`ble`**: WebBluetooth GATT (`6623a8e1-77d3-4e35-a01c-4d649ff5fb07`).
-  - **TX Characteristic** (`...a8e2`): Receives notifications fed into `createFrameReader`.
-  - **RX Characteristic** (`...a8e3`): Uses an internal FIFO queue (`_writeQueue`) with non-blocking async `_flush()` calling `writeValueWithoutResponse()`.
+- `wifi`: WebSocket `ws://${location.host}/ws`.
+- `serial`: WebSerial @ 460800 baud, binary stream via `createFrameReader`.
+- `ble`: WebBluetooth GATT (`6623a8e1-...`).
+  - TX (`...a8e2`): notifications to `createFrameReader`.
+  - RX (`...a8e3`): FIFO `_writeQueue`, async `_flush()`.
 
 ### Frame Stream Parsing & Custom Base64 Decoding
-- **Stream Framing**: Stream chunks are aggregated into a line buffer and delimited by `#` (`createFrameReader`).
+- **Stream Framing**: Stream chunks are aggregated into a line buffer and delimited by `#` (`createFrameReader`). The delimiter character is stripped; payloads must not contain a raw `#` because it would be interpreted as a frame boundary.
 - **Base64 Sample Decoding (`decode(s)`)**:
   - ADC samples are binary-packed into 6-bit Base64 character pairs (2 chars per 12-bit sample).
   - Lookup dictionary `_B64` decodes character pairs:
@@ -26,46 +26,39 @@ The application abstracts physical transport layers behind the unified `comm` ob
 
 ## 2. Parameter System & Hardware Controls (`scope.js`)
 
-Parameters are persisted in `localStorage` under `vslParameters` and managed via `Hardware`.
+Parameters stored in `localStorage` as `vslParameters`.
 
-### Logarithmic HW / SW Gain Splitting (`Gain` object)
-- Slider values represent logarithmic gain ($\text{min} = 0$, $\text{max} = \ln(504) \approx 6.22$).
-- Total Gain: $G_{\text{total}} = \text{clamp}(e^{\text{slider}}, 1, 504)$.
-- Display Range: $\text{range.uv} = \frac{V_{\text{base}}}{G_{\text{total}}}$, where $V_{\text{base}} = 3,300,000\,\mu\text{V}$.
-- **HW/SW Gain Split (`Gain.splitGain(total)`)**:
-  - Iterates hardware PGA steps: $\text{HW\_GAINS} = [64, 32, 16, 8, 4, 2, 1]$.
-  - Finds the largest $G_{\text{hw}} \le G_{\text{total}}$ such that software multiplier $G_{\text{sw}} = \frac{G_{\text{total}}}{G_{\text{hw}}} \le 8$.
-  - Hardware command sent to MCU: `gain.<channel>=<G_hw>`.
+### Logarithmic HW/SW Gain (`Gain`)
+- Slider: log gain (min 0, max ln 504≈6.22).
+- Total gain clamped to 1‑504.
+- Range: `range.uv = V_base / G_total` (V_base = 3.3 MV).
+- `Gain.splitGain` selects hardware PGA step from [64,32,16,8,4,2,1] and software multiplier ≤ 8.
+- MCU command: `gain.<channel>=<G_hw>`.
+- Voltage zoom software multiplier capped at 8 for 12‑bit ADC fidelity.
 
 ### Trigger Level & Vertical Offset Math
-- **Trigger Level (`trigger.lvl.ppm`)**: Stored as Parts Per Million (PPM) of the visible screen height ($-500,000$ to $+500,000$, i.e., $\pm 50\%$ span).
-- **PPM to $\mu\text{V}$ Mapping (`Hardware.triggerLevelUv()`)**:
-  $$V_{\text{trg}}(\mu\text{V}) = V_{\text{base.lvl}}(\mu\text{V}) + V_{\text{range}}(\mu\text{V}) \times \frac{\text{trigger.lvl.ppm}}{1,000,000}$$
-  *(uses $V_{\text{range}}$ and $V_{\text{base.lvl}}$ of the active trigger channel `trg.chan`)*.
-- **Hardware Command**: `trg.level=<ppm>` sent via `sendTriggerParameters()`.
+- Trigger level stored as PPM (‑500k to +500k).
+- `Hardware.triggerLevelUv()`: `V_trg = V_base.lvl + V_range * trigger.lvl.ppm / 1e6`.
+- Command: `trg.level=<ppm>`.
+- `trg.type`: 0 = none, 1 = rising, –1 = falling.
 
 ---
 
-## 3. Data Frame Protocol & Waveform Reconstruction
-
-Incoming frame strings parsed in `onFrame(text)` deliver parameters and packed waveform buffers.
-
-### Frame Control Commands
-- `param?`: Sent by MCU when re-initialized; frontend responds by executing `Hardware.sendAllParameters()`.
-- `keyframe=1`: Indicates keyframe storage. Rendered as a persistent ghost trace with opacity decaying over time:
-  $$\alpha = \max\left(30, 250 - \left\lceil 50 \times \frac{T_{\text{now}} - T_{\text{key}}}{T_{\text{frame\_duration}}} \right\rceil\right)$$
-- `head=1`: Signals the first segment of a new frame, resetting the sample buffer array. Subsequent chunks append until complete.
+## 3. Data Frame Protocol & Reconstruction
+- `onFrame(text)` parses incoming frames.
+### Control Commands
+- `param?`: MCU init request → `Hardware.sendAllParameters()`.
+- `keyframe=1`: Store keyframe; ghost trace fades.
+- `head=1`: Start new frame, reset buffer, then append chunks.
 
 ### ADC Sample to Microvolt Conversion (`updatePlot()`)
-Each raw sample $S[i] \in [0, \text{steps}]$ (typically 4096 steps) is mapped to voltage using MCU-calibrated minimum/maximum limits (`vltg.min.uv.<ch>`, `vltg.max.uv.<ch>`):
-$$V[i] = V_{\text{min}} + S[i] \times \frac{V_{\text{max}} - V_{\text{min}}}{\text{steps}}$$
-The resulting voltage is clamped to the channel's active display window $[V_{\text{base}} - \frac{V_{\text{range}}}{2}, V_{\text{base}} + \frac{V_{\text{range}}}{2}]$.
+- Decoded 12-bit ADC sample integers are mapped to microvolts ($\mu\text{V}$) according to active channel gain and DC baseline offset (`base.lvl.uv`) before plotting on uPlot canvas.
 
 ---
 
 ## 4. uPlot Custom Hooks & Gesture Interactions
 
-The chart uses [uPlot](https://github.com/leeoniya/uPlot) with 5 data series (Time, ChA Live, ChB Live, ChA Keyframe, ChB Keyframe).
+Chart uses [uPlot](https://github.com/leeoniya/uPlot) version **v1.6.x** 
 
 ### Custom Canvas Drawing (`drawAxes` hook)
 - **Zero-Volt Baseline**: Computes $y = \text{valToPos}(0, \text{ch})$ for ChA and ChB; draws horizontal dashed lines in respective channel colors.
@@ -75,15 +68,39 @@ The chart uses [uPlot](https://github.com/leeoniya/uPlot) with 5 data series (Ti
 ### Axis Direct Touch & Pointer Capture
 - **X-Axis Drag (`axes[0]`)**: Pointer drag adjusts horizontal trigger offset `vslParameters["trg.time.offset"]` (PPM).
 - **Y-Axes Drag (`axes[1]` for ChA, `axes[2]` for ChB)**: Pointer vertical drag modifies channel DC bias `vslParameters.channels[ch]["base.lvl.uv"]`.
+- Axes mapping: `axes[0]` = time (X), `axes[1]` = Y for Channel A, `axes[2]` = Y for Channel B.
 - **Measurement Cursor (`setCursor` hook)**: Displays live readout ($\Delta t$, $\Delta V_{\text{A}}$, $\Delta V_{\text{B}}$) when dragging a selection rectangle on the viewport.
 
 ---
 
 ## 5. Development & Modification Rules
 
-1. **DO NOT TOUCH `uPlot.iife.min.js` or `uPlot.min.css`**.
-2. **Preserve Single-Page Architecture**: Keep UI minimal, fast, and dependency-free (vanilla JS).
-3. **PPM vs $\mu\text{V}$ Discipline**:
-   - UI screen-relative controls (trigger position, horizontal offset) MUST use PPM.
-   - Hardware channel offsets and absolute voltages MUST use $\mu\text{V}$.
-4. **Logarithmic Scaling**: Always maintain log-space mapping for gain sliders to ensure consistent feel across large dynamic ranges.
+1. **Do not modify** `uPlot.iife.min.js` / `uPlot.min.css`
+2. **Single‑page**: keep UI minimal, fast, vanilla JS.
+3. **PPM vs μV**: UI offsets use PPM; hardware offsets use μV.
+4. **Logarithmic scaling**: maintain log‑space gain sliders.
+## 6. Deployment & Transport Security
+
+- Serve locally via the ESP32 gateway (`../esp32-gateway/AGENTS.md`) over HTTP.
+- GitHub Pages uses HTTPS; BLE and WebSerial work only in secure contexts.
+- Provide HTTPS on the gateway if BLE/Serial are required in production.
+
+## Resources
+- [scope.js](file:///d:/projects/foxilloscope/html/scope.js) – Transport abstraction, frame parsing, parameter handling, UI logic, and hardware commands.
+
+## Documentation Sources
+- The UI relies on **uPlot** for charting; its official documentation and example gallery are the primary knowledge source for any future UI changes.
+
+## Parameter Naming Conventions
+- Suffix **`.uv`** denotes values in **microvolts**.
+- Suffix **`.ns`** denotes values in **nanoseconds**.
+- Suffix **`ppm`** denotes **parts‑per‑million**.
+- All parameters are **numeric**; no strings or booleans are used.
+
+## Communication Session Init
+- Initial exchange after transport establishment: command strings negotiate capabilities and request parameters.
+
+## References
+- [Human-readable project description](../README.md)
+- [Agents instructions for STM32 part and general project ideas](../AGENTS.md)
+- [ESP32 serial <-> WebSocket/BLE gateway](../esp32-gateway/AGENTS.md)
