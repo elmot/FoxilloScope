@@ -48,6 +48,7 @@ Parameters stored in `localStorage` as `vslParameters`.
 - `onFrame(text)` parses incoming frames.
 ### Control Commands
 - `param?`: MCU init request → `Hardware.sendAllParameters()`.
+- `version=1`: Request FW version → MCU replies with textual `version=YYYYMMDD-#####` (date and short git commit hash).
 - `keyframe=1`: Store keyframe; ghost trace fades.
 - `head=1`: Start new frame, reset buffer, then append chunks.
 
@@ -95,7 +96,7 @@ Chart uses [uPlot](https://github.com/leeoniya/uPlot) version **v1.6.x**
 - Suffix **`.uv`** denotes values in **microvolts**.
 - Suffix **`.ns`** denotes values in **nanoseconds**.
 - Suffix **`ppm`** denotes **parts‑per‑million**.
-- All parameters are **numeric**; no strings or booleans are used.
+- All parameters are **numeric**; exception: `version` command (`version=1` sent to FW requests version reply; response is textual `version=YYYYMMDD-#####` with date and short git hash).
 
 ## Communication Session Init
 - Initial exchange after transport establishment: command strings negotiate capabilities and request parameters.

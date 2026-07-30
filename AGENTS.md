@@ -44,6 +44,9 @@ The single-page web UI (`html/index.html`) is designed for **dual deployment**:
 Command `bootloader=45063` (`0xB007` magic constant) triggers `startSysBootloader()` ([main.c](Core/Src/main.c#L66-L90)),
 that de-initializes HAL and IRQs, and then jumps to ST ROM bootloader.
 
+### Version Command Protocol Exception
+Command `version=1` sent to FW requests the firmware version reply. The response is a textual parameter string `version=YYYYMMDD-#####` (where `YYYYMMDD` is the build date and `#####` is the short git commit hash), serving as a protocol exception to standard numeric parameters.
+
 ### VREFINT Auto-Calibration
 - ADC1 injected rank 1 measures internal $V_{\text{refint}}$ (`ADC_CHANNEL_VREFINT`).
 

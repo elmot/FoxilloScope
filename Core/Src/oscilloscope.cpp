@@ -8,6 +8,7 @@
 #include <cstring>
 #include <algorithm>
 #include <climits>
+#include <version.h>
 
 #include "cmsis_os2.h"
 #include "comp.h"
@@ -185,7 +186,26 @@ struct StartSysBootloader_t : Command_t{
 };
 StartSysBootloader_t StartSysBootloader{};
 
-constexpr std::array<const Command_t*, 10> commands{
+struct ReadVersion_t : Command_t{
+    static constexpr long MAGIC_NUMBER = 0xB007;//BOOT
+
+    ReadVersion_t() : Command_t("version", 0, 0, 1, false)
+    {
+    }
+
+    void useNewValue() const override
+    {
+    }
+    void write() const override
+    {
+        if (value == 0) return;
+        value = 0;
+        writeUart("version=" BUILD_VERSION "\n");
+    }
+};
+ReadVersion_t ReadVersion{};
+
+constexpr std::array<const Command_t*, 11> commands{
     &CommandBaseLevelA,
     &CommandBaseLevelB,
     &CommandBaseLevelA.gain_cmd,
@@ -196,6 +216,7 @@ constexpr std::array<const Command_t*, 10> commands{
     &trigger::CommandTriggerOffset,
     &trigger::CommandTriggerChannel,
     &StartSysBootloader,
+    &ReadVersion,
 };
 
 void skipWhiteSpace(char* & ptr)

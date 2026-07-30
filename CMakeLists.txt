@@ -36,6 +36,17 @@ enable_language(C ASM)
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME})
 
+# Generated sources
+set_source_files_properties(${CMAKE_SOURCE_DIR}/version/version.h PROPERTIES GENERATED TRUE)
+
+# Build-time generation of version.h
+add_custom_target(generate_version ALL
+    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR} -DBINARY_DIR=${CMAKE_BINARY_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/version.cmake
+    BYPRODUCTS ${CMAKE_BINARY_DIR}/version.h ${CMAKE_CURRENT_SOURCE_DIR}/html/wifi.html
+    COMMENT "Generating version.h..."
+)
+add_dependencies(${CMAKE_PROJECT_NAME} generate_version)
+
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
 
@@ -55,6 +66,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+    ${CMAKE_SOURCE_DIR}/version
     # Add user defined include paths
 )
 

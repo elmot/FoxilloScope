@@ -31,7 +31,7 @@ struct Command_t
 
     virtual ~Command_t() = default;
 
-    std::string_view name;
+    const std::string_view name;
     const bool requires_restart{false};
 
     virtual void useNewValue() const = 0;
