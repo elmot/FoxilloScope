@@ -1,4 +1,4 @@
-# FoxilloScope (G4 Oscilloscope)
+# FoxilloScope (STM32G474 Oscilloscope)
 
 An accessible, dual-channel, 12-bit digital wireless oscilloscope built around low-cost off-the-shelf development hardware: the **ST Nucleo-G474RE** board and an **M5Stamp C3U** (ESP32-C3) module.
 
