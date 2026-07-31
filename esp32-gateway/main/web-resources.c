@@ -200,18 +200,18 @@ static esp_err_t wifi_api_handler(httpd_req_t *req)
 // ReSharper disable once CppDFAConstantFunctionResult
 static esp_err_t upgrade_flash_handler(httpd_req_t *req)
 {
-    httpd_resp_set_type(req, "text/plain");
+    httpd_resp_set_type(req, "text/html");
 
     char content[64];
     const int ret = httpd_req_recv(req, content, sizeof(content) - 1);
     if (ret <= 0) {
-        httpd_resp_sendstr(req, "ERROR: No data received\n");
+        httpd_resp_sendstr(req, "<h1>ERROR: No data received</h1>\n");
         return ESP_OK;
     }
     content[ret] = '\0';
 
     if (strstr(content, "BEEF=DEAD") == NULL) {
-        httpd_resp_sendstr(req, "ERROR: Invalid magic parameter\n");
+        httpd_resp_sendstr(req, "<h1>ERROR: Invalid magic parameter</h1>\n");
         return ESP_OK;
     }
 
@@ -225,14 +225,16 @@ static esp_err_t upgrade_flash_handler(httpd_req_t *req)
     const esp_err_t err = stm32_flash_binary(_binary_FoxilloScope_bin_start, len, 0x08000000, nullptr);
 
     if (err != ESP_OK) {
-        httpd_resp_sendstr(req, "ERROR: Erasing or flashing STM32 failed!\n");
+        httpd_resp_sendstr(req, "<h1>ERROR: Erasing or flashing STM32 failed!</h1>\n");
         return ESP_OK;
     }
 
     static constexpr char response_text[] =
-        "OK\n\n"
-        "STM32 MCU flashed successfully!\n"
-        "Please switch the device off and on (power cycle)\n";
+        "<h1>OK</h1>\n\n"
+        "<p>STM32 MCU flashed successfully!</p>"
+        "<p>Please switch the device off and on (power cycle)</p>"
+        "<p>An then <a href=\"http://f-scope.local/\">open FoxilloScope interface</a></p>"
+    ;
 
     httpd_resp_sendstr(req, response_text);
 
@@ -242,7 +244,7 @@ static esp_err_t upgrade_flash_handler(httpd_req_t *req)
 static esp_err_t redirect_handler(httpd_req_t *req, [[maybe_unused]] httpd_err_code_t)
 {
     httpd_resp_set_status(req, "302 Found");
-    httpd_resp_set_hdr(req, "Location", "/wifi");
+    httpd_resp_set_hdr(req, "Location", "http://f-scope.local/wifi");
     httpd_resp_send(req, nullptr, 0);
     return ESP_OK;
 }
