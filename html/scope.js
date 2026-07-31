@@ -177,12 +177,12 @@ const transports = {
 };
 
 function resetTransport() {
-    document.querySelectorAll('.transport-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
 }
 
 function activateTransport(mode) {
     resetTransport();
-    const b = document.querySelector(`.transport-btn[data-mode="${mode}"]`);
+    const b = document.querySelector(`.control-btn[data-mode="${mode}"]`);
     if (b) b.classList.add('active');
 }
 
@@ -731,8 +731,8 @@ function appendStatus(t) {
 }
 
 
-if (!window.isSecureContext) document.querySelectorAll('.transport-btn[data-mode="ble"],.transport-btn[data-mode="serial"]').forEach(b => b.classList.add('insecure'));
-document.querySelectorAll('.transport-btn[data-mode]').forEach(btn => {
+if (!window.isSecureContext) document.querySelectorAll('.control-btn[data-mode="ble"],.control-btn[data-mode="serial"]').forEach(b => b.classList.add('insecure'));
+document.querySelectorAll('.control-btn[data-mode]').forEach(btn => {
     btn.addEventListener('click', () => {
         const m = btn.dataset.mode;
         if (!window.isSecureContext && m !== 'wifi') {

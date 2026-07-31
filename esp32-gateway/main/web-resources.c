@@ -36,6 +36,12 @@ extern const uint8_t _binary_FoxilloScope_bin_end[]; // NOLINT(*-reserved-identi
 extern const uint8_t _binary_version_txt_start[]; // NOLINT(*-reserved-identifier)
 extern const uint8_t _binary_version_txt_end[]; // NOLINT(*-reserved-identifier)
 
+extern const uint8_t _binary_cheatsheet_html_start[]; // NOLINT(*-reserved-identifier)
+extern const uint8_t _binary_cheatsheet_html_end[]; // NOLINT(*-reserved-identifier)
+
+extern const uint8_t _binary_screenshot1_png_start[]; // NOLINT(*-reserved-identifier)
+extern const uint8_t _binary_screenshot1_png_end[]; // NOLINT(*-reserved-identifier)
+
 typedef struct
 {
     const char * uri;
@@ -74,6 +80,14 @@ const static_resource_t static_resources[] = { // NOLINT(*-interfaces-global-ini
     {
         "/wiring.png", .data_start = (const char*)_binary_wiring_png_start,
         .data_end = (const char*)_binary_wiring_png_end, .type = "image/png"
+    },
+    {
+        "/cheatsheet.html", .data_start = (const char*)_binary_cheatsheet_html_start,
+        .data_end = (const char*)_binary_cheatsheet_html_end, .type = "text/html"
+    },
+    {
+        "/screenshot1.png", .data_start = (const char*)_binary_screenshot1_png_start,
+        .data_end = (const char*)_binary_screenshot1_png_end, .type = "image/png"
     },
     {
         "/FoxilloScope.bin", .data_start = (const char*)_binary_FoxilloScope_bin_start,

@@ -74,17 +74,17 @@
         .step-control { display: flex; align-items: center; gap: 0; }
         #pauseBtn, #trgShiftReset { height: 1.5em; padding: 0 6px; white-space: nowrap; }
         #transport-widget { display: flex; gap: 3px; align-items: center; margin-right: auto; }
-        .transport-btn { width: 28px; height: 28px; background: #222; border: 1px solid #0f0; color: #0f0; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 3px; position: relative; transition: background 0.15s, color 0.15s, border-color 0.15s; padding: 0; }
-        .transport-btn:hover { border-color: #5f5; color: #5f5; }
-        .transport-btn.active { background: #0f0; color: #000; }
-        .transport-btn.insecure { border-color: #555; color: #555; cursor: default; }
-        .transport-btn.insecure:hover { background: #222; color: #555; border-color: #555; }
-        .transport-btn .icon { width: 16px; height: 16px; display: block; }
+        .control-btn { width: 28px; height: 28px; background: #222; border: 1px solid #0f0; color: #0f0; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 3px; position: relative; transition: background 0.15s, color 0.15s, border-color 0.15s; padding: 0; }
+        .control-btn:hover { border-color: #5f5; color: #5f5; }
+        .control-btn.active { background: #0f0; color: #000; }
+        .control-btn.insecure { border-color: #555; color: #555; cursor: default; }
+        .control-btn.insecure:hover { background: #222; color: #555; border-color: #555; }
+        .control-btn .icon { width: 20px; height: 20px; display: block; }
         #btn-fullscreen .icon-shrink { display: none; }
         #btn-fullscreen.active .icon-expand { display: none; }
         #btn-fullscreen.active .icon-shrink { display: block; }
-        .transport-btn .hint { display: none; position: absolute; bottom: calc(100% + 6px); left: 0; white-space: nowrap; background: #333; color: #f66; border: 1px solid #f66; padding: 3px 8px; border-radius: 3px; font-size: 10px; pointer-events: none; z-index: 100; }
-        .transport-btn.insecure:hover .hint { display: block; }
+        .control-btn .hint { display: none; position: absolute; bottom: calc(100% + 6px); left: 0; white-space: nowrap; background: #333; color: #f66; border: 1px solid #f66; padding: 3px 8px; border-radius: 3px; font-size: 10px; pointer-events: none; z-index: 100; }
+        .control-btn.insecure:hover .hint { display: block; }
 
         .button-switch-block { display: flex; gap: 2px; margin-top: 8px; background: #222; border: 1px solid #0f0; border-radius: 3px; padding: 2px; }
         .trg-btn-group { margin: 0; padding: 1px; gap: 1px; }
@@ -134,21 +134,27 @@
 </div>
 <div id="bottom-controls">
     <div id="transport-widget">
-        <button id="btn-ble" class="transport-btn" data-mode="ble">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></svg>
+        <button id="btn-ble" class="control-btn" data-mode="ble">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></svg>
             <span class="hint">You're viewing an unsecured page. Click here to switch to the secure version.</span>
         </button>
-        <button id="btn-wifi" class="transport-btn" data-mode="wifi">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01M2 8.82a15 15 0 0 1 20 0M5 12.86a10 10 0 0 1 14 0M8.5 16.43a5 5 0 0 1 7 0"/></svg>
+        <button id="btn-wifi" class="control-btn" data-mode="wifi">
+            <svg class="icon"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01M2 8.82a15 15 0 0 1 20 0M5 12.86a10 10 0 0 1 14 0M8.5 16.43a5 5 0 0 1 7 0"/></svg>
         </button>
-        <button id="btn-serial" class="transport-btn" data-mode="serial">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="1"/><circle cx="4" cy="20" r="1"/><path d="M4.7 19.3 19 5m2-2-3 1 2 2Z M9.26 7.68 5 12l2 5M10 14l5 2 3.5-3.5M18 12l1-1 1 1-1 1Z"/></svg>
+        <button id="btn-serial" class="control-btn" data-mode="serial">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="1"/><circle cx="4" cy="20" r="1"/><path d="M4.7 19.3 19 5m2-2-3 1 2 2Z M9.26 7.68 5 12l2 5M10 14l5 2 3.5-3.5M18 12l1-1 1 1-1 1Z"/></svg>
             <span class="hint">You're viewing an unsecured page. Click here to switch to the secure version.</span>
         </button>
-        <button id="btn-fullscreen" class="transport-btn" title="Toggle Fullscreen">
+        <button id="btn-fullscreen" class="control-btn" title="Toggle Fullscreen">
             <svg class="icon icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
             <svg class="icon icon-shrink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
         </button>
+        <a id="btn-help" href="cheatsheet.html" target="help" class="control-btn" title="Help" style="text-decoration: none;">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M12 17h.01"/><path d="M9.1 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3"/></svg>
+        </a>
+        <a id="btn-settings" href="/wifi" class="control-btn" title="Settings" style="text-decoration: none;">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.305 19.53.923-.382"/><path d="m15.228 16.852-.923-.383"/><path d="m16.852 15.228-.383-.923"/><path d="m16.852 20.772-.383.924"/><path d="m19.148 15.228.383-.923"/><path d="m19.53 21.696-.382-.924"/><path d="M2 7.82a15 15 0 0 1 20 0"/><path d="m20.772 16.852.924-.383"/><path d="m20.772 19.148.924.383"/><path d="M5 11.858a10 10 0 0 1 11.5-1.785"/><path d="M8.5 15.429a5 5 0 0 1 2.413-1.31"/><circle cx="18" cy="18" r="3"/></svg>
+        </a>
     </div>
     <div class="time-pause-wrap">
         <div class="switch-control">

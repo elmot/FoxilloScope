@@ -8,6 +8,8 @@ idf_component_register(SRCS "main.c" "serial.c" "led.c" "web-resources.c" "dns_s
                     ../../html/uPlot.min.css
                     ../../html/favicon.png
                     ../../html/version.txt
+                    ../../html/cheatsheet.html
+                    ../../html/screenshot1.png
                     ../../docs/wiring.png
                     ../../build/Release/FoxilloScope.bin
 )
