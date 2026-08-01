@@ -34,7 +34,7 @@ struct Command_t
     const std::string_view name;
     const bool requires_restart{false};
 
-    virtual void useNewValue() const = 0;
+    virtual void useNewValue() const {};
 
     long getValue() const { return value; }
 

@@ -64,12 +64,10 @@ extern "C" [[noreturn]] void startTransmitTask([[maybe_unused]] void* argument)
 {
     static array<char, ascii_buffer_size> asciiBufferA;
     static array<char, ascii_buffer_size> asciiBufferB;
+    osThreadFlagsWait(THREAD_FLAG_READY_TO_TRANSMIT, osFlagsWaitAny, osWaitForever);
     writeUart("\n#\nversion=" BUILD_VERSION "\nparam?\n");
-    osThreadFlagsSet(osThreadGetId(),THREAD_FLAG_READY_TO_TRANSMIT);
     while (true)
     {
-        osThreadFlagsWait(THREAD_FLAG_READY_TO_TRANSMIT, osFlagsWaitAny, osWaitForever);
-
         writeUart("#\nframe.size=");
         writeUart(string_view(to_constexpr_string_cr<data_frame_size>()));
         const bool keyBuffer = transmitKeyBufferReady.exchange(false);
@@ -91,6 +89,7 @@ extern "C" [[noreturn]] void startTransmitTask([[maybe_unused]] void* argument)
         writeUart(string_view{encodedB});
         osSemaphoreRelease(transmitBuffer.semaphore);
         osSemaphoreRelease(transmitKeyBuffer.semaphore);
+        osThreadFlagsWait(THREAD_FLAG_READY_TO_TRANSMIT, osFlagsWaitAny, osWaitForever);
     }
 }
 
@@ -194,5 +193,8 @@ void startUartInput()
 
 extern "C" void uartReadByte(const uint8_t rxByte)
 {
-    osMessageQueuePut(cmdRxQueueHandle, &rxByte, 0, 0);
+    if (std::isspace(rxByte) || std::isprint(rxByte)) //skip garbage bytes
+    {
+        osMessageQueuePut(cmdRxQueueHandle, &rxByte, 0, 0);
+    }
 }

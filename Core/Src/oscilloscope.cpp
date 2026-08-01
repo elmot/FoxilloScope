@@ -77,9 +77,6 @@ constexpr struct CommandTimeResolution_t : Command_t
         return static_cast<uint32_t>(fullDivider - 1);
     }
 
-    void useNewValue() const override
-    {
-    }
 } CommandTimeResolution{};
 
 
@@ -108,20 +105,13 @@ namespace trigger
 
     constexpr struct CommandTriggerType_t : Command_t
     {
-        constexpr CommandTriggerType_t() : Command_t("trg.type", 0, -1, 1)
-        {
-        }
+        constexpr CommandTriggerType_t() : Command_t("trg.type", 0, -1, 1, true){}
 
-        void useNewValue() const override { startSampling(); }
     } CommandTriggerType{};
 
     constexpr struct CommandTriggerOffset_t : Command_t
     {
-        constexpr CommandTriggerOffset_t() : Command_t("trg.time.offset", 0, -1'000'000, 1'000'000)
-        {
-        }
-
-        void useNewValue() const override { startSampling(); }
+        constexpr CommandTriggerOffset_t() : Command_t("trg.time.offset", 0, -1'000'000, 1'000'000, true) {}
 
         int timerShiftSamples() const
         {
@@ -132,14 +122,7 @@ namespace trigger
 
     constexpr struct CommandTriggerChannel_t : Command_t
     {
-        constexpr CommandTriggerChannel_t() : Command_t("trg.chan", 0, 0, 1)
-        {
-        }
-
-        void useNewValue() const override
-        {
-            startSampling();
-        }
+        constexpr CommandTriggerChannel_t() : Command_t("trg.chan", 0, 0, 1, true) {}
     } CommandTriggerChannel{};
 
     void enableTrigger()
@@ -171,9 +154,7 @@ constexpr CommandBaseLevelUv_t CommandBaseLevelB{"base.lvl.b.uv", &hdac1,DAC_CHA
 struct StartSysBootloader_t : Command_t{
     static constexpr long MAGIC_NUMBER = 0xB007;//BOOT
 
-    StartSysBootloader_t() : Command_t("bootloader", 0, 0, LONG_MAX, false)
-    {
-    }
+    StartSysBootloader_t() : Command_t("bootloader", 0, 0, LONG_MAX, false) {}
 
     void useNewValue() const override
     {
@@ -187,15 +168,8 @@ struct StartSysBootloader_t : Command_t{
 StartSysBootloader_t StartSysBootloader{};
 
 struct ReadVersion_t : Command_t{
-    static constexpr long MAGIC_NUMBER = 0xB007;//BOOT
+    ReadVersion_t() : Command_t("version", 0, 0, 1, false) {}
 
-    ReadVersion_t() : Command_t("version", 0, 0, 1, false)
-    {
-    }
-
-    void useNewValue() const override
-    {
-    }
     void write() const override
     {
         if (value == 0) return;
@@ -272,6 +246,7 @@ static void executeIncomingCommand()
 
     char* noSpacePtr = cmdBuffer;
     skipWhiteSpace(noSpacePtr);
+    if (strlen(noSpacePtr) == 0) return;
     bool requiresRestart = false;
     for (const auto& command : commands)
     {
@@ -287,7 +262,6 @@ static void executeIncomingCommand()
         if (command->setValue(newValue))
         {
             requiresRestart |= command->requires_restart;
-            break;
         }
     }
     if (requiresRestart)
@@ -295,6 +269,8 @@ static void executeIncomingCommand()
         startSampling();
     }
 }
+
+extern osThreadId_t transmitTaskHandle;
 
 [[noreturn]] void run_oscilloscope()
 {
@@ -328,6 +304,8 @@ static void executeIncomingCommand()
         command->useNewValue();
     }
     startUartInput();
+    osThreadFlagsSet(transmitTaskHandle,THREAD_FLAG_READY_TO_TRANSMIT);
+
     osTimerStart(partialFrameTimerHandle, msec_to_ticks(50));
     while (true)
     {
@@ -339,7 +317,6 @@ std::atomic<int> partialSamplesSent = false;
 
 void signalTransmit()
 {
-    extern osThreadId_t transmitTaskHandle;
     osThreadFlagsSet(transmitTaskHandle, THREAD_FLAG_READY_TO_TRANSMIT);
 }
 
