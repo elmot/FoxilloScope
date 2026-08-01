@@ -1,6 +1,6 @@
 Configuration	foxilloscope
 STM32CubeMX 	6.18.0
-Date	07/29/2026
+Date	08/01/2026
 MCU	STM32G474RETx
 
 
