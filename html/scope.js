@@ -264,6 +264,7 @@ const Hardware = {
     fwVersion: "unknown",
     sentParameters: {},
     sendAllParameters() {
+        comm.send("\n");
         this.sendTimingParameters()
         this.sendChannelParameters("a")
         this.sendChannelParameters("b")
@@ -337,6 +338,7 @@ function onFrame(text) {
     let currentFrame;
     // noinspection JSUnresolvedReference
     if (cmds.parameters.keyframe === 1) {
+        clearFrames();
         keyFrame.timestamp = Date.now();
         currentFrame = keyFrame;
     } else {

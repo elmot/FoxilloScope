@@ -117,7 +117,7 @@ struct CommandBaseLevelUv_t : Command_t
 constexpr uint32_t THREAD_FLAG_READY_TO_TRANSMIT = 0x20;
 constexpr uint32_t THREAD_FLAG_KEY_FRAME_DETECTED = 0x40;
 
-constexpr size_t data_frame_size = 200;
+constexpr size_t data_frame_size = 400;
 
 struct TransmitBuffer_t
 {   constexpr TransmitBuffer_t(osSemaphoreId_t& a_semaphore): semaphore(a_semaphore){}

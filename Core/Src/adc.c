@@ -589,12 +589,12 @@ void adcCalibration()
   {
     osThreadYield();
   }
-  uint32_t vRefReading = HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
+  const uint32_t vRefReading = HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
   analog_supply_voltage_mV = __LL_ADC_CALC_VREFANALOG_VOLTAGE(vRefReading , LL_ADC_RESOLUTION_12B);
 }
 
-/** sets DMA alignment 16 or 32 bit
- *@param dmaAlign DMA_Memory_data_size
+/** Sets DMA alignment 16 or 32 bit
+ *@param dmaAlign @DMA_Memory_data_size
  */
 static void setDmaDataAlign(const uint32_t dmaAlign)
 {
@@ -605,56 +605,79 @@ static void setDmaDataAlign(const uint32_t dmaAlign)
     hadc1.DMA_Handle->Init.MemDataAlignment = dmaAlign;
 }
 
-void startMainAdcs(bool interleaveSampling, uint16_t* bufferA, uint16_t* bufferB, size_t bufferLength)
+/** Sets Continuous Sampling Mode (== max sampling rate)
+ */
+static void setContinuousSampling(const bool q)
 {
-    HAL_ADC_Stop(&hadc2);
-    HAL_ADC_Stop(&hadc4);
+    const uint32_t bit = q ? ENABLE:DISABLE;
+    const uint32_t v = ADC_CFGR_CONTINUOUS(bit);
+
+    MODIFY_REG(hadc1.Instance->CFGR, ADC_CFGR_CONT_Msk, v);
+    MODIFY_REG(hadc3.Instance->CFGR, ADC_CFGR_CONT_Msk, v);
+    /* Useless, just for consistency */
+    hadc3.Init.ContinuousConvMode = bit;
+    hadc1.Init.ContinuousConvMode = bit;
+}
+
+void startMainAdcs(const bool interleaveSampling, uint16_t* bufferA, uint16_t* bufferB, const size_t bufferLength)
+{
+  const bool adc_independent_mode =
+    LL_ADC_GetMultimode(__LL_ADC_COMMON_INSTANCE(hadc1.Instance)) == LL_ADC_MULTI_INDEPENDENT;
+  if (adc_independent_mode)
+  {
     HAL_ADC_Stop_DMA(&hadc1);
     HAL_ADC_Stop_DMA(&hadc3);
-    HAL_TIM_Base_Stop(&htim2);
-    HAL_TIM_GenerateEvent(&htim1, TIM_EVENTSOURCE_UPDATE);
-    __HAL_TIM_CLEAR_FLAG(&htim1, TIM_FLAG_CC1);
-    if (interleaveSampling)
+  }
+  else
+  {
+    HAL_ADCEx_MultiModeStop_DMA(&hadc1);
+    HAL_ADCEx_MultiModeStop_DMA(&hadc3);
+  }
+  HAL_TIM_Base_Stop(&htim2);
+  HAL_TIM_GenerateEvent(&htim1, TIM_EVENTSOURCE_UPDATE);
+  __HAL_TIM_CLEAR_FLAG(&htim1, TIM_FLAG_CC1);
+  if (interleaveSampling)
+  {
+    if (adc_independent_mode)
     {
-        setDmaDataAlign(DMA_MDATAALIGN_WORD);
-        static const ADC_MultiModeTypeDef multimode = {
-            .Mode = ADC_DUALMODE_INTERL,
-            .DMAAccessMode = ADC_DMAACCESSMODE_12_10_BITS,
-            .TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_6CYCLES
-        };
-        if (HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode) != HAL_OK ||
-          HAL_ADCEx_MultiModeConfigChannel(&hadc3, &multimode) != HAL_OK)
-        {
-          Error_Handler();
-        }
-
-        if (HAL_ADC_Start(&hadc2) != HAL_OK || HAL_ADC_Start(&hadc4) != HAL_OK)
-        {
-            Error_Handler();
-        }
-        if (HAL_ADCEx_MultiModeStart_DMA(&hadc1, (uint32_t*)bufferA, bufferLength / 2) != HAL_OK ||
-          HAL_ADCEx_MultiModeStart_DMA(&hadc3, (uint32_t*)bufferB, bufferLength / 2) != HAL_OK)
-        {
-            Error_Handler();
-        }
+      setDmaDataAlign(DMA_MDATAALIGN_WORD);
+      setContinuousSampling(true);
+      static const ADC_MultiModeTypeDef multimode = {
+        .Mode = ADC_DUALMODE_INTERL,
+        .DMAAccessMode = ADC_DMAACCESSMODE_12_10_BITS,
+        .TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_6CYCLES
+      };
+      if (HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode) != HAL_OK ||
+        HAL_ADCEx_MultiModeConfigChannel(&hadc3, &multimode) != HAL_OK)
+      {
+        Error_Handler();
+      }
     }
-    else
+    if (HAL_ADCEx_MultiModeStart_DMA(&hadc1, (uint32_t*)bufferA, bufferLength / 2) != HAL_OK ||
+      HAL_ADCEx_MultiModeStart_DMA(&hadc3, (uint32_t*)bufferB, bufferLength / 2) != HAL_OK)
     {
-        setDmaDataAlign(DMA_MDATAALIGN_HALFWORD);
-        static const ADC_MultiModeTypeDef multimode = {.Mode = ADC_MODE_INDEPENDENT};
-        if (HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode) != HAL_OK ||
-          HAL_ADCEx_MultiModeConfigChannel(&hadc3, &multimode) != HAL_OK)
-        {
-            Error_Handler();
-        }
-
-        if (HAL_ADC_Start_DMA(&hadc1, (uint32_t*)bufferA, bufferLength) != HAL_OK ||
-        HAL_ADC_Start_DMA(&hadc3, (uint32_t*)bufferB, bufferLength) != HAL_OK)
-        {
-            Error_Handler();
-        }
-
+      Error_Handler();
     }
+  }
+  else
+  {
+    if (!adc_independent_mode)
+    {
+      setDmaDataAlign(DMA_MDATAALIGN_HALFWORD);
+      setContinuousSampling(false);
+      static const ADC_MultiModeTypeDef multimode = {.Mode = ADC_MODE_INDEPENDENT};
+      if (HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode) != HAL_OK ||
+        HAL_ADCEx_MultiModeConfigChannel(&hadc3, &multimode) != HAL_OK)
+      {
+        Error_Handler();
+      }
+    }
+    if (HAL_ADC_Start_DMA(&hadc1, (uint32_t*)bufferA, bufferLength) != HAL_OK ||
+      HAL_ADC_Start_DMA(&hadc3, (uint32_t*)bufferB, bufferLength) != HAL_OK)
+    {
+      Error_Handler();
+    }
+  }
 }
 
 size_t adcSamplesLeft()

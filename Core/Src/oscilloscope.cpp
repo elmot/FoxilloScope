@@ -10,15 +10,16 @@
 #include <climits>
 #include <version.h>
 
+#include "adc.h"
 #include "cmsis_os2.h"
 #include "comp.h"
 #include "opamp.h"
 
-//todo fix 8Mhz sampling
-
 alignas(uint32_t) static std::array<uint16_t, data_frame_size * 2> adcBufferA{};
 
 alignas(uint32_t) static std::array<uint16_t, data_frame_size * 2> adcBufferB{};
+
+std::atomic<int> partialSamplesSent = -1;
 
 constexpr auto bufferHalves = std::array{
     std::pair(std::span(adcBufferA).first<data_frame_size>(),
@@ -32,7 +33,7 @@ void dmaMemToMemCallback(DMA_HandleTypeDef* dma_handle_type_def);
 
 void initialize_test_signal()
 {
-#ifdef DEBUG
+//#ifdef DEBUG
     extern const unsigned short fake_signal[];
     HAL_DAC_Start_DMA(&hdac4, DAC_CHANNEL_1, reinterpret_cast<const uint32_t*>(fake_signal), 164, DAC_ALIGN_12B_R);
     HAL_DAC_Start(&hdac3, DAC_CHANNEL_1);
@@ -42,7 +43,7 @@ void initialize_test_signal()
     HAL_OPAMP_Start(&hopamp6);
     //__HAL_TIM_SET_PRESCALER(&htim15, 30000);
     HAL_TIM_Base_Start(&htim15);
-#endif
+//#endif
 }
 
 /** Oscilloscope commands
@@ -78,9 +79,6 @@ constexpr struct CommandTimeResolution_t : Command_t
     }
 
 } CommandTimeResolution{};
-
-
-static void startSampling();
 
 namespace trigger
 {
@@ -203,6 +201,7 @@ void skipWhiteSpace(char* & ptr)
 
 static void startSampling()
 {
+    partialSamplesSent = -1;
     if (trigger::CommandTriggerChannel.getValue() == 0)
     {
         __HAL_COMP_COMP2_EXTI_ENABLE_IT();
@@ -217,7 +216,7 @@ static void startSampling()
     if (arr < 0) arr = 0;
     if (CommandTimeResolution.isInterleaveSampling()) arr /= 2;
     arr = std::ranges::clamp(arr, 1, 1000);
-    __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_1, arr);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, arr);
     __HAL_TIM_SET_COUNTER(&htim1, 0);
     startMainAdcs(CommandTimeResolution.isInterleaveSampling(), adcBufferA.data(), adcBufferB.data(),
                   adcBufferA.size());
@@ -304,6 +303,7 @@ extern osThreadId_t transmitTaskHandle;
         command->useNewValue();
     }
     startUartInput();
+    startSampling();
     osThreadFlagsSet(transmitTaskHandle,THREAD_FLAG_READY_TO_TRANSMIT);
 
     osTimerStart(partialFrameTimerHandle, msec_to_ticks(50));
@@ -313,7 +313,6 @@ extern osThreadId_t transmitTaskHandle;
     }
 }
 
-std::atomic<int> partialSamplesSent = false;
 
 void signalTransmit()
 {
@@ -373,6 +372,8 @@ extern "C" void HAL_TIM_PWM_PulseFinishedCallback([[maybe_unused]] TIM_HandleTyp
 {
     HAL_TIM_Base_Stop_IT(&htim1);
     HAL_TIM_Base_Stop(&htim2);
+    HAL_DMA_Abort(hadc3.DMA_Handle);
+    HAL_DMA_Abort(hadc1.DMA_Handle);
     extern osThreadId_t keyFrameTaskHandle;
     osThreadFlagsSet(keyFrameTaskHandle, THREAD_FLAG_KEY_FRAME_DETECTED);
 }
@@ -481,7 +482,7 @@ extern "C" void partialFrameSend([[maybe_unused]] void*)
     const int subBufferIndex = dma_samples_left > data_frame_size ? 0 : 1;
     dma_samples_left %= data_frame_size;
 
-    constexpr int lastSubFrameThresholdLow = data_frame_size * 5 / 100;
+    constexpr int lastSubFrameThresholdLow = data_frame_size * 2 / 100;
     constexpr int lastSubFrameThresholdHigh = data_frame_size * 95 / 100;
     constexpr int garbageDmaTail = 1;
 

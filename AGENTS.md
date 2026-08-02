@@ -1,6 +1,6 @@
 # G4 Oscilloscope – Root & STM32 Architecture Reference
 
-4 MHz (8 MHz not implemented yet) sampling, dual-channel, 12-bit digital wireless oscilloscope powered by STM32G474 MCU and ESP32 module.
+8 MHz sampling, dual-channel, 12-bit digital wireless oscilloscope powered by STM32G474 MCU and ESP32 module.
 STM32G474 controls the on-chip analog front-end (AFE), FreeRTOS, and transfers data over UART. ESP32 receives the data and handles multi-transport streaming via Wi-Fi or BLE.
 ESP32-C3 is used for now; other chips like ESP32, ESP32-C (3,5,6), ESP32-S (2,3), and others may be used, but are untested. 
 
@@ -28,13 +28,10 @@ The single-page web UI (`html/index.html`) is designed for **dual deployment**:
   $$V_{\text{dac}} = V_{\text{DD}}/2 + \text{bias} \times \frac{G}{G - 1}$$
 - **Virtual Ground**: DAC generates virtual ground, buffered by OPAMP as a follower output.
 
-### ADC Acquisition ($\le 4\text{ MHz}$)
-- **ADC Allocation**: ADCs sample full buffers triggered by sampling timer TRGO.
-- **DMA Driver**: Master ADC DMA acts as interrupt driver (`HAL_ADC_ConvHalfCpltCallback` / `HAL_ADC_ConvCpltCallback`); `adcSamplesLeft()` monitors remaining transfer counts ([adc.c](Core/Src/adc.c#L602-L649)).
-
-### Hardware Comparator & Single-Pulse Trigger Engine
-- **Comparator Setup**: Hardware comparators compare AFE outputs against DAC threshold levels.
-- **Timer Trigger Chain**: Comparator edge interrupt (`HAL_COMP_TriggerCallback`) arms a single-pulse PWM timer that gates sampling timer clocking. Upon pulse completion (`HAL_TIM_PWM_PulseFinishedCallback`), timers stop, raising `THREAD_FLAG_KEY_FRAME_DETECTED` to capture pre/post trigger window ([oscilloscope.cpp](Core/Src/oscilloscope.cpp#L433-L458)).
+### ADC Acquisition & Trigger Engine
+- **$\le 4\text{ MHz}$ Sampling**: TIM2 operates in gated mode, triggering ADC1 (Ch A) and ADC3 (Ch B) while clocking TIM1. A channel comparator interrupt arms TIM1 (single-pulse PWM mode). After the pulse duration—which defines pre/post-trigger offset—TIM1 stops TIM2.
+- **$8\text{ MHz}$ Interleaved Mode**: ADC1+2 (Ch A) and ADC3+4 (Ch B) run in dual interleaved continuous sampling mode (hardware limitation: timers cannot directly drive interleaved ADC mode). TIM1+TIM2 trigger engine remains active.
+- **DMA & Framing**: Master ADC DMA acts as interrupt driver (`HAL_ADC_ConvHalfCpltCallback` / `HAL_ADC_ConvCpltCallback`); `adcSamplesLeft()` monitors remaining transfer counts ([adc.c](Core/Src/adc.c#L602-L649)). Upon trigger pulse completion, timers stop and raise `THREAD_FLAG_KEY_FRAME_DETECTED` ([oscilloscope.cpp](Core/Src/oscilloscope.cpp#L433-L458)).
 
 ### Parallel Dual-UART DMA Transmission
 - **Hardware Channels**: LPUART (USB Virtual COM) and UART (ESP32 Gateway interface) run in parallel via DMA (`writeUart`).

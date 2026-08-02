@@ -1,7 +1,15 @@
 # FoxilloScope (STM32G474 Oscilloscope)
 
-An accessible, dual-channel, 12-bit digital wireless oscilloscope built around low-cost off-the-shelf development hardware: the **ST Nucleo-G474RE** board and an **M5Stamp C3U** (ESP32-C3) module.
+An accessible, wireless oscilloscope built around low-cost development hardware: the **ST Nucleo-G474RE** board and an **M5Stamp C3U** (ESP32-C3) module.
 
+ - Bipolar signal measurement
+ - Dual-channel
+ - Up to 8 MHz sampling rate
+ - 12-bit resolution
+ - The user interface runs in a web browser on desktop and mobile devices
+ - Communication via Wi-Fi or Bluetooth Low Energy (BLE). Bluetooth requires a compatible browser (e.g., Google Chrome).
+ - No installable application required
+ 
 The goal of this project is to turn inexpensive, readily available development components into a practical, portable oscilloscope with live-streaming over Wi-Fi or Bluetooth LE — requiring minimal soldering and no custom PCBs.
 
 > 💡 **Developer Note**: For firmware compilation, hardware debug configurations, jumper setups, and local debug servers, see the **[Developer & Contributor Guide](DEVELOPMENT.md)**.

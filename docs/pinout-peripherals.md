@@ -32,8 +32,8 @@ FoxilloScope
 | ADC3        | ADC3_IN1                                     | CH2 normalized, connect to **PB14**             | PB1  | IN1 Single-ended                                |
 | ADC4        | ADC4_IN4                                     | CH2 normalized, connect to **PB1**              | PB14 | IN4 Single-ended                                |
 |             | **Clocking**                                 |                                                 |      |                                                 |
-| TIM2        | *(int)* TRGO->ADC3 trigger                   | Triggers ADC3/4 measurements                    | -    | Gated by ITR0(TIM1)                             |
-| TIM1        | *(int)* CH A PWM1 -> TRGO -> TIM3 clock gate | Stops TIM2 when keyframe ended                  | -    | Clocked by ITR1(TIM2)                           |
+| TIM2        | *(int)* TRGO->ADC1,ADC3 trigger              | Triggers ADC1/2 and ADC3/4 measurements         | -    | Gated by ITR0(TIM1)                             |
+| TIM1        | *(int)* CH A PWM1 -> TRGO -> TIM2 clock gate | Stops TIM2 when keyframe ended                  | -    | Clocked by ITR1(TIM2)                           |
 |             | **Communication**                            |                                                 |      |                                                 |
 | LPUART1     | Asynchronous TX                              | Data to PC (USB)                                | PA2  |                                                 |
 | LPUART1     | Asynchronous RX                              | Data from PC (USB)                              | PA3  |                                                 |
