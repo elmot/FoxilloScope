@@ -37,7 +37,7 @@ void initialize_test_signal() //todo remove  together with hdac2 triangle wave g
     initialize_test_signal();
 
     HAL_DMA_RegisterCallback(&hdma_memtomem_dma1_channel2, HAL_DMA_XFER_CPLT_CB_ID, dmaMemToMemCallback);
-    HAL_ADC_Start_DMA(&hadc2, reinterpret_cast<uint32_t*>(adcBuffer.data()), adcBuffer.size());
+    HAL_ADCEx_MultiModeStart_DMA(&hadc1, reinterpret_cast<uint32_t*>(adcBuffer.data()), adcBuffer.size() / 2);
     HAL_TIM_Base_Start(&htim3);
 
     while (true)

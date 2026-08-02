@@ -1,11 +1,12 @@
 Configuration	g4-oscilloscope-b
-STM32CubeMX 	6.17.0
-Date	06/14/2026
+STM32CubeMX 	6.18.0
+Date	08/02/2026
 MCU	STM32G474RETx
 
 
 
 PERIPHERALS	MODES	FUNCTIONS	PINS
+ADC1	IN1 Single-ended	ADC1_IN1	PA0
 ADC2	IN3 Single-ended	ADC2_IN3	PA6
 DAC2	Connected to external pin and to on chip-peripherals	DAC2_OUT1	PA6
 RCC	Crystal/Ceramic Resonator	RCC_OSC_IN	PF0-OSC_IN
@@ -25,12 +26,14 @@ Pin Nb	PINs	FUNCTIONs	LABELs
 4	PC15-OSC32_OUT*	RCC_OSC32_OUT	RCC_OSC32_OUT
 5	PF0-OSC_IN	RCC_OSC_IN	RCC_OSC_IN
 6	PF1-OSC_OUT	RCC_OSC_OUT	RCC_OSC_OUT
+12	PA0	ADC1_IN1	
 20	PA6	DAC2_OUT1 ADC2_IN3	
 28	VREF+	VREFBUF_OUT	
 49	PA13	SYS_JTMS-SWDIO	T_SWDIO
 50	PA14	SYS_JTCK-SWCLK	T_SWCLK
 56	PB3*	SYS_JTDO-SWO	T_SWO
 PERIPHERALS	MODES	FUNCTIONS	PINS
+ADC1	IN1 Single-ended	ADC1_IN1	PA0
 ADC2	IN3 Single-ended	ADC2_IN3	PA6
 DAC2	Connected to external pin and to on chip-peripherals	DAC2_OUT1	PA6
 RCC	Crystal/Ceramic Resonator	RCC_OSC_IN	PF0-OSC_IN
@@ -50,6 +53,7 @@ Pin Nb	PINs	FUNCTIONs	LABELs
 4	PC15-OSC32_OUT*	RCC_OSC32_OUT	RCC_OSC32_OUT
 5	PF0-OSC_IN	RCC_OSC_IN	RCC_OSC_IN
 6	PF1-OSC_OUT	RCC_OSC_OUT	RCC_OSC_OUT
+12	PA0	ADC1_IN1	
 20	PA6	DAC2_OUT1 ADC2_IN3	
 28	VREF+	VREFBUF_OUT	
 49	PA13	SYS_JTMS-SWDIO	T_SWDIO
@@ -62,7 +66,7 @@ SOFTWARE PROJECT
 
 Project Settings : 
 Project Name : g4-oscilloscope-b
-Project Folder : D:\projects\g4-oscilloscope-b
+Project Folder : D:\projects\foxilloscope
 Toolchain / IDE : CMake
 Firmware Package Name and Version : STM32Cube FW_G4 V1.6.3
 
