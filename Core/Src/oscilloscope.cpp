@@ -9,7 +9,7 @@
 #include "span"
 using namespace std;
 
-constexpr size_t data_frame_size = 200;
+constexpr size_t data_frame_size = 1000;
 
 alignas(uint32_t) static array<uint16_t, data_frame_size * 2> adcBuffer{};
 
@@ -22,6 +22,9 @@ extern osSemaphoreId_t transmitBufferBusyHandle;
 extern osSemaphoreId_t readyToTransmitHandle;
 
 
+volatile int dma_completion_time_us = 0;
+volatile int dma_completion_cycles = 0;
+
 void dmaMemToMemCallback(DMA_HandleTypeDef* dma_handle_type_def);
 
 void initialize_test_signal() //todo remove  together with hdac2 triangle wave generation
@@ -33,6 +36,10 @@ void initialize_test_signal() //todo remove  together with hdac2 triangle wave g
 [[noreturn]] void run_oscilloscope()
 {
     BSP_COM_SelectLogPort(COM1);
+
+    // Enable DWT Cycle Counter for high-precision timing
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
     initialize_test_signal();
 
@@ -59,13 +66,28 @@ static void initFrameTransfer(const span<uint16_t, data_frame_size>& from)
                      transmitBuffer.size() / 2);
 }
 
+static void updateDmaTiming()
+{
+    static uint32_t last_cycle = 0;
+    uint32_t now = DWT->CYCCNT;
+    if (last_cycle != 0)
+    {
+        uint32_t elapsed = now - last_cycle;
+        dma_completion_cycles = static_cast<int>(elapsed);
+        dma_completion_time_us = static_cast<int>(elapsed / (SystemCoreClock / 1000000U));
+    }
+    last_cycle = now;
+}
+
 extern "C" void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
+    updateDmaTiming();
     initFrameTransfer(adc2ndHalf);
 }
 
 extern "C" void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
 {
+    updateDmaTiming();
     initFrameTransfer(adc1stHalf);
 }
 
