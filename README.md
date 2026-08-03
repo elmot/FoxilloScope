@@ -69,16 +69,13 @@ The goal of this project is to turn inexpensive, readily available development c
    3. Set up Wi-Fi credentials (Until ESP32-C6 gateway is used, only 2.4 GHz Wi-Fi is supported).
    4. Reconnect back to your Wi-Fi.
    5. Open `http://f-scope.local/` in your browser.
+6. **Printable Device Label**_(optional)_:
+   1. Open [Sticker Generator](https://elmot.xyz/f-scope/sticker/) in your web browser.
+   2. Enter the 4-digit hex MAC ID (`xxxx`) of your device.
+   3. Print the label to attach to your board or enclosure.
 
 *(where xxxx represents the device ID – the last four hex digits of the ESP32 MAC address)*
 
----
-
-### Printable Device Label Generator
-You can generate a custom 50 mm × 90 mm label/sticker with QR codes for quick Wi-Fi pairing and web URLs:
-1. Open [sticker/index.html](https://html-preview.github.io/?url=https://github.com/elmot/FoxilloScope/blob/master/sticker/index.html) in your web browser.
-2. Enter the 4-digit hex MAC ID (`xxxx`) of your device.
-3. Print the label to attach to your board or enclosure.
 
 ---
 

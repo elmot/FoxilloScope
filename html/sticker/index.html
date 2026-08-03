@@ -64,8 +64,8 @@
     </style>
 </head>
 <body>
-
-<div class="card">
+<h2>Print this page</h2>
+<div class="card" style="position: relative">
     <div id="qr-wifi-name"></div>
     <div id="qr-wifi-url"></div>
     <div id="qr-global-url"></div>
@@ -101,8 +101,13 @@
     }
 </script>
 <p>
-<label for="uniq-hex">Unique hex number(XXXX):</label>
+<label for="uniq-hex">Unique hex number(XXXX):</label><br>
     <input type="text" id="uniq-hex" oninput="updateCodes(this.value)">
+<hr>
+<div style="margin: 12px 0;">
+    <a href="../index.html" style="color: #000; text-decoration: none; font-size: 14px; font-family: monospace;">&larr; Back to Index</a>
+</div>
+
 </p>
 </body>
 </html>
