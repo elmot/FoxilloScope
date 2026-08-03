@@ -9,8 +9,8 @@
 
 #include "version.h"
 
-extern const uint8_t _binary_index_html_start[]; // NOLINT(*-reserved-identifier)
-extern const uint8_t _binary_index_html_end[]; // NOLINT(*-reserved-identifier)
+extern const uint8_t _binary_scope_html_start[]; // NOLINT(*-reserved-identifier)
+extern const uint8_t _binary_scope_html_end[]; // NOLINT(*-reserved-identifier)
 
 extern const uint8_t _binary_scope_js_start[]; // NOLINT(*-reserved-identifier)
 extern const uint8_t _binary_scope_js_end[]; // NOLINT(*-reserved-identifier)
@@ -54,8 +54,8 @@ static const char *TAG = "gateway";
 
 const static_resource_t static_resources[] = { // NOLINT(*-interfaces-global-init)
     {
-        .uri = "/", .data_start = (const char*)_binary_index_html_start,
-        .data_end = (const char*)_binary_index_html_end, .type = "text/html"
+        .uri = "/", .data_start = (const char*)_binary_scope_html_start,
+        .data_end = (const char*)_binary_scope_html_end, .type = "text/html"
     },
     {
         "/wifi", .data_start = (const char*)_binary_wifi_html_start,

@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoxilloScope - ESP32-C3 Web Flasher</title>
+    <meta name="description" content="Firmware flasher for FoxilloScope ESP32-C3 wireless gateway">
+    <style>
+        :root {
+            --bg-card: #1e293b;
+            --bg-card-border: #334155;
+            --bg-input: #0f172a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #38bdf8;
+            --primary-hover: #0284c7;
+            --success: #4ade80;
+            --danger: #f87171;
+            --warning: #fbbf24;
+            --radius: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #0f172a;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Header */
+        .app-header {
+            text-align: center;
+            padding-bottom: 8px;
+        }
+
+        .app-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .subtitle {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Alert Banner */
+        .alert-banner {
+            padding: 12px 16px;
+            background: rgba(251, 191, 36, 0.15);
+            border: 1px solid var(--warning);
+            border-radius: var(--radius);
+            color: var(--warning);
+            font-size: 0.875rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Main Flasher Card */
+        .flasher-card {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Firmware Metadata Row */
+        .fw-info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-input);
+            padding: 12px 14px;
+            border-radius: var(--radius);
+            border: 1px solid var(--bg-card-border);
+            font-size: 0.875rem;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .fw-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .meta-label {
+            color: var(--text-muted);
+        }
+
+        .status-tag {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .status-tag.downloading {
+            background: rgba(251, 191, 36, 0.2);
+            color: var(--warning);
+        }
+
+        .status-tag.ready {
+            background: rgba(74, 222, 128, 0.2);
+            color: var(--success);
+        }
+
+        .status-tag.error {
+            background: rgba(248, 113, 113, 0.2);
+            color: var(--danger);
+        }
+
+        /* Options Row */
+        .flasher-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
+        }
+
+        .form-group label {
+            color: var(--text-muted);
+        }
+
+        .custom-select {
+            background: var(--bg-input);
+            color: var(--text-main);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius);
+            padding: 6px 12px;
+            font-size: 0.875rem;
+            outline: none;
+        }
+
+        .custom-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .custom-checkbox input {
+            accent-color: var(--primary);
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Primary Action Button */
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: #000;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+            color: #fff;
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Progress Section */
+        .progress-section {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+        }
+
+        .progress-bar-track {
+            width: 100%;
+            height: 10px;
+            background: var(--bg-input);
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid var(--bg-card-border);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0;
+            background: var(--primary);
+            transition: width 0.1s linear;
+        }
+
+        .progress-subtext {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: right;
+        }
+
+        /* Terminal Console Section */
+        .terminal-card {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid var(--bg-card-border);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .btn-term-action {
+            background: transparent;
+            border: 1px solid var(--bg-card-border);
+            color: var(--text-muted);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .btn-term-action:hover {
+            color: var(--text-main);
+            border-color: var(--text-muted);
+        }
+
+        .terminal-body {
+            height: 180px;
+            overflow-y: auto;
+            padding: 12px;
+            font-size: 0.8rem;
+            background: #090d16;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .log-entry {
+            line-height: 1.4;
+            word-break: break-all;
+        }
+
+        .log-entry.info {
+            color: #cbd5e1;
+        }
+
+        .log-entry.success {
+            color: var(--success);
+        }
+
+        .log-entry.warn {
+            color: var(--warning);
+        }
+
+        .log-entry.error {
+            color: var(--danger);
+        }
+
+        .log-entry.system {
+            color: #38bdf8;
+        }
+
+        .monospace {
+            font-family: monospace;
+        }
+
+        /* Links */
+        a {
+            color: var(--primary);
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            font-weight: 500;
+            transition: color 0.15s ease, text-decoration-color 0.15s ease;
+        }
+
+        a:visited {
+            color: var(--primary);
+        }
+
+        a:hover, a:focus {
+            color: #7dd3fc;
+            text-decoration: underline;
+        }
+
+        /* Footer */
+        .app-footer {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .app-footer a {
+            color: var(--primary);
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .app-footer a:hover {
+            color: #7dd3fc;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app-container">
+    <div style="text-align: left;">
+        <a href="index.html" style="color: var(--primary); text-decoration: none; font-size: 0.875rem; display: inline-flex; align-items: center; gap: 4px;">&larr; Back to Index</a>
+    </div>
+
+    <!-- Header -->
+    <header class="app-header">
+        <h1><a href="https://github.com/elmot/foxilloscope">FoxilloScope</a><br> Flasher</h1>
+        <p class="subtitle"><b>ESP32-C3</b>(<a href="https://docs.m5stack.com/en/core/stamp_c3u">M5Stamp-C3U</a>
+            recommended) Gateway Firmware Utility</p>
+    </header>
+
+    <!-- Browser Warning -->
+    <div id="browser-warning" class="alert-banner hidden">
+        ⚠️ Web Serial API is not supported in this browser. Please use Chrome, Edge, or Brave on desktop.
+    </div>
+
+    <!-- Main Flasher Panel -->
+    <main class="flasher-card">
+        <div class="fw-info-bar">
+            <div class="fw-meta-item">
+                <span class="meta-label">Firmware File:</span>
+                <strong id="fw-name">esp32-gateway.bin</strong>
+            </div>
+            <div class="fw-meta-item">
+                <span class="meta-label">Version:</span>
+                <strong id="fw-version">unknown</strong>
+            </div>
+            <div class="fw-meta-item">
+                <span class="meta-label">Status:</span>
+                <span id="fw-status-text" class="status-tag downloading">Loading...</span>
+            </div>
+            <div class="fw-meta-item">
+                <span class="meta-label">Size:</span>
+                <span id="fw-size">-- KB</span>
+            </div>
+        </div>
+
+        <div class="flasher-options">
+            <div class="form-group">
+                <label for="baud-rate">Baud Rate:</label>
+                <select id="baud-rate" class="custom-select">
+                    <option value="921600">921,600</option>
+                    <option value="460800" selected>460,800</option>
+                    <option value="230400">230,400</option>
+                    <option value="115200">115,200</option>
+                </select>
+            </div>
+
+            <div class="checkbox-group">
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="erase-flash">
+                    Erase flash before writing
+                </label>
+            </div>
+        </div>
+
+        <!-- Single Action Button -->
+        <button id="btn-connect-flash" class="btn btn-primary" disabled>
+            ⚡ Connect & Flash ESP32-C3
+        </button>
+
+        <!-- Progress Bar -->
+        <div class="progress-section hidden" id="progress-container">
+            <div class="progress-header">
+                <span id="progress-step-text">Flashing...</span>
+                <span id="progress-percent" class="monospace">0%</span>
+            </div>
+            <div class="progress-bar-track">
+                <div class="progress-bar-fill" id="progress-bar"></div>
+            </div>
+            <div class="progress-subtext" id="progress-subtext">0 / 0 KB</div>
+        </div>
+    </main>
+
+    <!-- Terminal Console Section -->
+    <section class="terminal-card">
+        <div class="terminal-header">
+            <span class="terminal-title">Console Log</span>
+            <button id="btn-clear-term" class="btn-term-action">Clear</button>
+        </div>
+        <div class="terminal-body" id="terminal">
+            <div class="log-entry system">[SYSTEM] Ready. Loading local firmware...</div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p>FoxilloScope ESP32-C3 Online Flasher &bull; <a href="index.html">Index</a> &bull; Powered by <a href="https://github.com/espressif/esptool-js"
+                                                                     target="_blank" rel="noopener">esptool-js</a></p>
+    </footer>
+</div>
+
+<script type="module" src="flasher.js"></script>
+</body>
+
+</html>

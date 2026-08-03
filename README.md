@@ -42,10 +42,8 @@ The goal of this project is to turn inexpensive, readily available development c
       - **JP1**: Closed
       - **JP5 & JP3**: Open
 2. **Flash the M5Stamp C3U**:
-   1. Connect the M5Stamp C3U board to your computer via USB.
-   2. Open the [Espressif Web Flasher](https://espressif.github.io/esptool-js/).
-   3. Click **Connect** and select the M5Stamp UART port.
-   4. Flash the gateway binary from the latest release assets to the ESP32 at **Flash&nbsp;Address** `0`. 
+   1. Connect the _M5Stamp C3U_ or another ESP32-C3 board to your computer via USB.
+   2. Use the [Foxilloscope ESP32 Web Flasher](https://elmot.xyz/f-scope/flahser.html) to upload ESP32 part of the oscilloscope 
 3. **Solder Protection & Connections**: 
    1. Prepare the signal conditioning components:
       - **Schottky Diodes**: 6× Schottky diodes (BAS40-04 dual-diode sets were used, but almost any Schottky diodes with reverse voltage $V_R \ge 40\text{ V}$ and minimal junction capacitance fit).

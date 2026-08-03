@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../favicon.png" />
+    <title>FoxilloScope - Wi-Fi Settings</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #111;
+            color: #0f0;
+            font: 14px monospace;
+            padding: 24px;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+        h1 { font-size: 20px; margin-bottom: 12px; color: #0f0; }
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 16px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+            color: #ccc;
+        }
+        .note {
+            color: #fbbf24;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .links {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .back {
+            display: inline-block;
+            color: #0f0;
+            text-decoration: none;
+            border: 1px solid #0f0;
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: background 0.15s, color 0.15s;
+        }
+        .back:hover {
+            background: #0f0;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <h1>FoxilloScope Wi-Fi Settings</h1>
+    
+    <div class="card">
+        <p class="note">⚠️ Wi-Fi configuration is not relevant for the web-deployed scope UI.</p>
+        <p>
+            Wi-Fi settings are only available when connected directly to the local ESP32 hardware access point or local gateway (e.g., at <code>http://f-scope.local/wifi</code> or <code>http://192.168.4.1/wifi</code>).
+        </p>
+    </div>
+
+    <div class="links">
+        <a href="../index.html" class="back">&larr; Back to Index</a>
+        <a href="../scope.html" class="back">&larr; Back to Oscilloscope</a>
+    </div>
+</body>
+</html>

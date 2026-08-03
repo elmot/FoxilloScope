@@ -1,194 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!--
-        Contains icons from the Lucide project (https://lucide.dev).
-        Copyright (c) 2026 Lucide Icons and Contributors
-        Full license text: https://lucide.dev/license
-    -->
-    <link rel="icon" type="image/png" href="favicon.png" />
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="favicon.png" />
     <title>FoxilloScope</title>
-    <link rel="stylesheet" href="uPlot.min.css">
-    <meta name="description" content="FoxilloScope - Real-time web-based oscilloscope with Wi‑Fi, Serial, and BLE transports.">
-    <meta name="author" content="me@elmot.xyz">
     <style>
-        :root { --ch-a: #FFD600; --ch-b: #00E5FF; --ch-a-key: #FFF59D; --ch-b-key: #84FFFF; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; display: flex; }
-        body { margin: 0; background: #111; color: #0f0; font: 14px monospace; flex-direction: column; }
-        #scope-wrap { overflow: auto; min-width: 0; min-height: 0; display: flex; flex: 1; background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 4px; }
-        #scope-wrap div#scope { min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; width: 100%; height: 100%; flex: 1 1 0; }
-        #scope-wrap, #scope-wrap * { touch-action: none; }
-        .v-controls-a, .v-controls-b { display: grid; align-self: stretch; min-height: 0; }
-        .v-controls-a { flex: 0 1 auto; border-right: 1px solid #2a2a2a; grid: auto 1fr auto / 1fr 1fr; }
-        .v-controls-b { flex: 0 1 auto; border-left: 1px solid #2a2a2a; grid: auto 1fr auto / 1fr; }
-        .v-controls-a .label, .v-controls-b .label { text-align: center; }
-        .v-controls-a .label { color: var(--ch-a); }
-        .v-controls-b .label { color: var(--ch-b); }
-        .v-controls-a .val { color: var(--ch-a); }
-        .v-controls-b .val { color: var(--ch-b); }
-        .v-controls-a .trglabel { color: #0f0; }
-        .v-controls-b input { border-color: var(--ch-b); }
-        .v-controls-a .slider-cell, .v-controls-b .slider-cell,
-        .v-controls-a .rdout-cell, .v-controls-b .rdout-cell { display: flex; flex-direction: column; align-items: center; padding: 0 6px; }
-        .v-controls-a .slider-cell { min-height: 0; }
-        .v-controls-a .slider-cell input, .v-controls-b .slider-cell input { flex: 1; width: 100%; min-height: 20px; background: #222; color: #0f0; border: 1px solid #0f0; padding: 5px; font: inherit; writing-mode: sideways-lr; }
-        .v-controls-b .rdout-cell { justify-content: center; }
-        .detail { color: #686868; font-size: 9px; line-height: 1; }
-        .trg-btn, .trg-btn-sm { background: transparent; color: #0f0; cursor: pointer; font: inherit; border-radius: 2px; text-align: center; transition: background 0.15s, color 0.15s; }
-        .trg-btn { font-size: 11px; padding: 2px 6px; line-height: 1; min-width: 20px; border: none; }
-        .trg-btn-sm { font-size: 9px; padding: 0 3px; line-height: 1.4; min-width: 16px; border: 1px solid #555; }
-        .trg-btn-sm:hover, .trg-btn-sm.active { background: #0f0; color: #000; }
-        .h-control-container { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; }
-        .h-control-container input { width: 100%; background: #222; color: #0f0; border: 1px solid #0f0; padding: 2px 5px; font: inherit; }
-
-        #footer { display: flex; align-items: center; padding: 4px; flex-shrink: 0; border-top: 1px solid #2a2a2a; height: 20px; min-height: 20px; flex-basis: 20px; }
-
-        #footer-left, #cursor-info { flex: 1; color: #888; font-size: 13px; }
-        #footer-left { display: flex; }
-        #cursor-info { text-align: center; }
-        #status.error { color: #f00; }
-        .u-select { background: rgba(0, 255, 0, 0.15) !important; }
-        .sel-label { position: absolute; pointer-events: none; color: #0f0; font-size: 11px; white-space: nowrap; background: rgba(0,0,0,0.75); padding: 1px 5px; border-radius: 3px; z-index: 10; transform: translateX(-50%); }
-
-
-        #pauseBtn { background: #333; color: #0f0; border: 1px solid #0f0; cursor: pointer; font: inherit; padding: 1px 10px; border-radius: 3px; width: 10ex; transition: background 0.15s, color 0.15s; }
-        #pauseBtn:hover { background: #0f0; color: #000; }
-        #pauseBtn.paused { border-color: #ff0; color: #ff0; }
-        #pauseBtn.paused:hover { background: #ff0; color: #000; }
-
-        .label { color: #888; text-wrap: nowrap; }
-        .val { color: #0f0; font-size: 11px; }
-
-        #bottom-controls { display: flex; justify-content: center; align-items: flex-start; padding: 2px 10px; background: #1a1a1a; gap: 0.8em; flex-shrink: 0; flex-wrap: wrap; border-top: 1px solid #2a2a2a; }
-
-        .switch-control { display: flex; align-items: center; gap: 4px; }
-        .time-pause-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
-        .switch-control select { min-width: 3em; height: 1.5em; text-align: center; color: #0f0; background: #222; border: 1px solid #0f0; font: inherit; font-weight: bold; cursor: pointer; }
-        .switch-control button { background: #222; border: 1px solid #0f0; color: #0f0; font: inherit; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
-        .switch-control button:hover { background: #0f0; color: #000; }
-        .switch-control button:focus-visible { outline: 1px solid #0f0; }
-        .switch-control .arrow { width: 1.5em; height: 1.5em; padding: 0; }
-        .step-control { display: flex; align-items: center; gap: 0; }
-        #pauseBtn, #trgShiftReset { height: 1.5em; padding: 0 6px; white-space: nowrap; }
-        #transport-widget { display: flex; gap: 3px; align-items: center; margin-right: auto; }
-        .control-btn { width: 28px; height: 28px; background: #222; border: 1px solid #0f0; color: #0f0; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 3px; position: relative; transition: background 0.15s, color 0.15s, border-color 0.15s; padding: 0; }
-        .control-btn:hover { border-color: #5f5; color: #5f5; }
-        .control-btn.active { background: #0f0; color: #000; }
-        .control-btn.insecure { border-color: #555; color: #555; cursor: default; }
-        .control-btn.insecure:hover { background: #222; color: #555; border-color: #555; }
-        .control-btn .icon { width: 20px; height: 20px; display: block; }
-        #btn-fullscreen .icon-shrink { display: none; }
-        #btn-fullscreen.active .icon-expand { display: none; }
-        #btn-fullscreen.active .icon-shrink { display: block; }
-        .control-btn .hint { display: none; position: absolute; bottom: calc(100% + 6px); left: 0; white-space: nowrap; background: #333; color: #f66; border: 1px solid #f66; padding: 3px 8px; border-radius: 3px; font-size: 10px; pointer-events: none; z-index: 100; }
-        .control-btn.insecure:hover .hint { display: block; }
-
-        .button-switch-block { display: flex; gap: 2px; margin-top: 8px; background: #222; border: 1px solid #0f0; border-radius: 3px; padding: 2px; }
-        .trg-btn-group { margin: 0; padding: 1px; gap: 1px; }
-        .trg-btn-group > button { flex: 1; }
-        .trg-btns-wrap { display: flex; flex-direction: column; gap: 1px; }
-
-        .trg-btn { background: transparent; color: #0f0; border: none; cursor: pointer; font: inherit; font-size: 11px; padding: 2px 6px; border-radius: 2px; line-height: 1; min-width: 20px; text-align: center; transition: background 0.15s, color 0.15s; }
-        .trg-btn:hover { background: #222; color: #fff; }
-        .trg-btn.active { background: #0f0; color: #000; }
-        .trg-btn.channel-a { --ch: var(--ch-a); }
-        .trg-btn.channel-b { --ch: var(--ch-b); }
-        .trg-btn.channel-a, .trg-btn.channel-b { color: var(--ch); }
-        .trg-btn.channel-a:hover, .trg-btn.channel-b:hover { background: #222; color: #fff; }
-        .trg-btn.channel-a.active, .trg-btn.channel-b.active { background: var(--ch); color: #000; }
-
-        #version-link {color: #666; margin-left: 12px; text-decoration: none; }
-
+        body {
+            background: #111;
+            color: #0f0;
+            font: 14px monospace;
+            padding: 24px;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+        h1 { font-size: 22px; margin-bottom: 6px; color: #0f0; }
+        .tagline { color: #888; margin-bottom: 20px; font-size: 13px; }
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 14px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            color: #ccc;
+        }
+        ul.nav-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        ul.nav-links li a {
+            display: block;
+            background: #1a1a1a;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 12px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 15px;
+            transition: background 0.15s, color 0.15s;
+        }
+        ul.nav-links li a:hover {
+            background: #0f0;
+            color: #000;
+        }
+        ul.nav-links li a small {
+            display: block;
+            color: #888;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        ul.nav-links li a:hover small {
+            color: #222;
+        }
+        footer {
+            margin-top: 28px;
+            color: #666;
+            font-size: 12px;
+        }
+        footer a { color: #888; }
     </style>
 </head>
 <body>
-<div id="scope-wrap">
-    <div class="v-controls-a">
-        <span class="label">Gain A</span>
-        <span class="label trglabel">Trigger</span>
-        <div class="slider-cell"><input type="range" id="gain.a" step="0.01"></div>
-        <div class="slider-cell"><input type="range" id="trg.level" class="trgborder"
-               value="0" min="-1000000" max="1000000"></div>
-        <div class="rdout-cell"><span id="gain.a.val" class="val">×1.0</span><span id="gain.a.detail" class="detail">1+1.0</span></div>
-        <div class="rdout-cell"><div class="trg-btns-wrap">
-            <div class="button-switch-block trg-btn-group" id="trg.chan">
-                <button class="trg-btn active channel-a" data-val="0">A</button>
-                <button class="trg-btn channel-b" data-val="1">B</button>
-            </div>
-            <div class="button-switch-block trg-btn-group" id="trg.type">
-                <button class="trg-btn-sm active" data-val="0">∅</button>
-                <button class="trg-btn-sm" data-val="1">↗</button>
-                <button class="trg-btn-sm" data-val="-1">↘</button>
-            </div>
-        </div></div>
+    <h1>FoxilloScope</h1>
+    <div class="card">
+        A dual-channel, 8 MHz sampling, 12-bit wireless digital oscilloscope.
+        Built around low-cost hardware (ST Nucleo-G474RE &amp; ESP32-C3).
+        Real-time signal streaming in your browser over Wi-Fi or Bluetooth LE (BLE).
     </div>
-    <div id="scope"></div>
-    <div class="v-controls-b">
-        <span class="label">Gain B</span>
-        <div class="slider-cell"><input type="range" id="gain.b" step="0.01"></div>
-        <div class="rdout-cell"><span id="gain.b.val" class="val">×1.0</span><span id="gain.b.detail" class="detail">1+1.0</span></div>
-    </div>
-</div>
-<div id="bottom-controls">
-    <div id="transport-widget">
-        <button id="btn-ble" class="control-btn" data-mode="ble">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></svg>
-            <span class="hint">You're viewing an unsecured page. Click here to switch to the secure version.</span>
-        </button>
-        <button id="btn-wifi" class="control-btn" data-mode="wifi">
-            <svg class="icon"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01M2 8.82a15 15 0 0 1 20 0M5 12.86a10 10 0 0 1 14 0M8.5 16.43a5 5 0 0 1 7 0"/></svg>
-        </button>
-        <button id="btn-serial" class="control-btn" data-mode="serial">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="1"/><circle cx="4" cy="20" r="1"/><path d="M4.7 19.3 19 5m2-2-3 1 2 2Z M9.26 7.68 5 12l2 5M10 14l5 2 3.5-3.5M18 12l1-1 1 1-1 1Z"/></svg>
-            <span class="hint">You're viewing an unsecured page. Click here to switch to the secure version.</span>
-        </button>
-        <button id="btn-fullscreen" class="control-btn" title="Toggle Fullscreen">
-            <svg class="icon icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-            <svg class="icon icon-shrink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
-        </button>
-        <a id="btn-help" href="cheatsheet.html" target="help" class="control-btn" title="Help" style="text-decoration: none;">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M12 17h.01"/><path d="M9.1 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3"/></svg>
-        </a>
-        <a id="btn-settings" href="/wifi" class="control-btn" title="Settings" style="text-decoration: none;">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.305 19.53.923-.382"/><path d="m15.228 16.852-.923-.383"/><path d="m16.852 15.228-.383-.923"/><path d="m16.852 20.772-.383.924"/><path d="m19.148 15.228.383-.923"/><path d="m19.53 21.696-.382-.924"/><path d="M2 7.82a15 15 0 0 1 20 0"/><path d="m20.772 16.852.924-.383"/><path d="m20.772 19.148.924.383"/><path d="M5 11.858a10 10 0 0 1 11.5-1.785"/><path d="M8.5 15.429a5 5 0 0 1 2.413-1.31"/><circle cx="18" cy="18" r="3"/></svg>
-        </a>
-    </div>
-    <div class="time-pause-wrap">
-        <div class="switch-control">
-            <span class="step-control"><button data-val="-1" class="arrow">&lt;</button>
-            <select id="sampling.ns">
-                <option value="50000000">50ms</option>
-                <option value="20000000">20ms</option>
-                <option value="10000000">10ms</option>
-                <option value="5000000">5ms</option>
-                <option value="2000000">2ms</option>
-                <option value="1000000">1ms</option>
-                <option value="500000" selected="selected">500&micro;s</option>
-                <option value="200000">200&micro;s</option>
-                <option value="100000">100&micro;s</option>
-                <option value="50000">50&micro;s</option>
-                <option value="20000">20&micro;s</option>
-                <option value="10000">10&micro;s</option>
-                <option value="5000">5&micro;s</option>
-                <option value="2000">2&micro;s</option>
-                <option value="1000">1&micro;s</option>
-                <option value="500">0.5&micro;s</option>
-                <option value="250">250ns</option>
-                <option value="125">125ns</option>
-            </select>
-            <button class="arrow" data-val="1">&gt;</button></span>
-            <button id="pauseBtn">Pause</button>
-            <button id="trgShiftReset" title="Reset to centre">Trigger @ Start |◀</button>
-        </div>
-    </div>
-</div>
-<div id="footer"><span id="footer-left"><span id="status">connecting...</span>
-<a id="version-link" href="#" >version</a></span><span id="cursor-info"></span></div>
 
-<script src="uPlot.iife.min.js"></script>
-<script src="scope.js"></script>
+    <ul class="nav-links">
+        <li>
+            <a href="scope.html">
+                Oscilloscope UI
+                <small>Main real-time waveform display and controls</small>
+            </a>
+        </li>
+        <li>
+            <a href="cheatsheet.html">
+                UI Cheat Sheet
+                <small>Interactive guide for controls and gesture shortcuts</small>
+            </a>
+        </li>
+        <li>
+            <a href="https://github.com/elmot/FoxilloScope/blob/master/README.md" target="_blank" rel="noopener">
+                Getting Started Guide (README.md)
+                <small>Hardware setup, wiring diagrams, and quick start guide on GitHub</small>
+            </a>
+        </li>
+        <li>
+            <a href="https://github.com/elmot/FoxilloScope" target="_blank" rel="noopener">
+                GitHub Repository
+                <small>Source code, schematics, and developer documentation</small>
+            </a>
+        </li>
+        <li>
+            <a href="flasher.html">
+                ESP32 Web Flasher
+                <small>Firmware flasher utility for ESP32-C3 part</small>
+            </a>
+        </li>
+        <li>
+            <a href="/">
+                Elmot Home Page
+            </a>
+        </li>
+    </ul>
+
 </body>
 </html>

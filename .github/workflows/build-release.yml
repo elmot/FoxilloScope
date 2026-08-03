@@ -84,7 +84,7 @@ jobs:
           mkdir -p target-repo/f-scope
           rsync -av \
             --exclude="AGENTS.md" \
-            html/ target-repo/f-scope/
+            html/ release_assets/esp32-gateway.bin target-repo/f-scope/
 
       - name: Create Pull Request on elmot.github.io
         if: github.event_name == 'release'
