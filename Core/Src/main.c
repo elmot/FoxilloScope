@@ -134,6 +134,8 @@ int main(void)
   MX_OPAMP6_Init();
   MX_OPAMP1_Init();
   MX_OPAMP4_Init();
+  MX_OPAMP3_Init();
+  MX_OPAMP5_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */

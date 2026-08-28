@@ -134,7 +134,7 @@ namespace trigger
 
     uint32_t comparatorValue()
     {
-        return CommandTriggerType.getValue() == -1 ? COMP_OUTPUT_LEVEL_LOW : COMP_OUTPUT_LEVEL_HIGH;
+     //todo migrate to awd?   return CommandTriggerType.getValue() == -1 ? COMP_OUTPUT_LEVEL_LOW : COMP_OUTPUT_LEVEL_HIGH;
     }
 
 }
@@ -196,6 +196,7 @@ void skipWhiteSpace(char* & ptr)
 static void startSampling()
 {
     partialSamplesSent = -1;
+    /* //todo migrate to awd?
     if (trigger::CommandTriggerChannel.getValue() == 0)
     {
         __HAL_COMP_COMP2_EXTI_ENABLE_IT();
@@ -206,6 +207,7 @@ static void startSampling()
         __HAL_COMP_COMP7_EXTI_ENABLE_IT();
         __HAL_COMP_COMP2_EXTI_DISABLE_IT();
     }
+    */
     int arr = trigger::CommandTriggerOffset.timerShiftSamples() + static_cast<int>(data_frame_size);
     if (arr < 0) arr = 0;
     if (CommandTimeResolution.isInterleaveSampling()) arr /= 2;
@@ -271,7 +273,7 @@ extern osThreadId_t transmitTaskHandle;
     adcCalibration();
     HAL_DMA_RegisterCallback(&hdma_memtomem_dma1_channel2, HAL_DMA_XFER_CPLT_CB_ID, dmaMemToMemCallback);
 
-    for (const auto opamp : {&STAGE_1_1_OPAMP, &STAGE_1_2_OPAMP, &STAGE_2_1_OPAMP, &STAGE_2_2_OPAMP, &VGND_OPAMP})
+    for (const auto opamp : {&STAGE_A1_OPAMP, &STAGE_A2_OPAMP, &STAGE_B1_OPAMP, &STAGE_B2_OPAMP, &VGND_OPAMP})
     {
         HAL_OPAMP_Start(opamp);
         HAL_OPAMP_SelfCalibrate(opamp);
@@ -284,8 +286,8 @@ extern osThreadId_t transmitTaskHandle;
         HAL_DAC_Start(&VGND_DAC, VGND_DAC_CHANNEL_2);
         HAL_DAC_SetValue(&VGND_DAC, VGND_DAC_CHANNEL_2, DAC_ALIGN_12B_R, (DAC_MAX_VALUE + 1) / 2);
     }
-    HAL_DAC_Start(&BIAS_DAC, BIAS_DAC_CHANNEL_1);
-    HAL_DAC_Start(&BIAS_DAC, BIAS_DAC_CHANNEL_2);
+    HAL_DAC_Start(&BIAS_DAC, BIAS_DAC_CHANNEL_A);
+    HAL_DAC_Start(&BIAS_DAC, BIAS_DAC_CHANNEL_B);
     TIM_CCxChannelCmd(htim1.Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
     HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
     HAL_TIM_Base_Start(&htim1);
@@ -341,6 +343,8 @@ void dmaMemToMemCallback([[maybe_unused]] DMA_HandleTypeDef* dma_handle_type_def
 }
 
 // ReSharper disable once CppParameterMayBeConstPtrOrRef
+/*
+//todo migrate to awd?
 void HAL_COMP_TriggerCallback(COMP_HandleTypeDef* hcomp)
 {
     if (trigger::pre_arming > 0) return;
@@ -360,6 +364,7 @@ void HAL_COMP_TriggerCallback(COMP_HandleTypeDef* hcomp)
     }
 }
 
+*/
 extern "C" void HAL_TIM_PWM_PulseFinishedCallback([[maybe_unused]] TIM_HandleTypeDef* htim)
 {
     HAL_TIM_Base_Stop_IT(&htim1);

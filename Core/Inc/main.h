@@ -75,15 +75,15 @@ void Error_Handler(void);
 #define TEST_SIGNAL_DAC_CHANNEL DAC_CHANNEL_1
 #define VGND_DAC_CHANNEL_1 DAC_CHANNEL_1
 #define VGND_DAC_CHANNEL_2 DAC_CHANNEL_2
-#define STAGE_1_2_OPAMP hopamp1
+#define STAGE_A2_OPAMP hopamp1
 #define BIAS_DAC hdac1
-#define BIAS_DAC_CHANNEL_1 DAC_CHANNEL_1
-#define BIAS_DAC_CHANNEL_2 DAC_CHANNEL_2
-#define STAGE_1_1_OPAMP hopamp4
-#define RCC_OSC_IN_Pin GPIO_PIN_0
-#define RCC_OSC_IN_GPIO_Port GPIOF
-#define RCC_OSC_OUT_Pin GPIO_PIN_1
-#define RCC_OSC_OUT_GPIO_Port GPIOF
+#define BIAS_DAC_CHANNEL_A DAC_CHANNEL_1
+#define BIAS_DAC_CHANNEL_B DAC_CHANNEL_2
+#define STAGE_A1_OPAMP hopamp4
+#define STAGE_B2_OPAMP hopamp3
+#define STAGE_B1_OPAMP hopamp5
+#define INPUT_B_Pin GPIO_PIN_3
+#define INPUT_B_GPIO_Port GPIOC
 #define SIGNAL_A_Pin GPIO_PIN_0
 #define SIGNAL_A_GPIO_Port GPIOA
 #define SIGNAL_AA2_Pin GPIO_PIN_2
@@ -98,6 +98,8 @@ void Error_Handler(void);
 #define TEST_SIGNAL_GPIO_Port GPIOA
 #define SIGNAL_B_Pin GPIO_PIN_1
 #define SIGNAL_B_GPIO_Port GPIOB
+#define STAGE_B_Pin GPIO_PIN_2
+#define STAGE_B_GPIO_Port GPIOB
 #define BIAS_AB10_Pin GPIO_PIN_10
 #define BIAS_AB10_GPIO_Port GPIOB
 #define VGND_Pin GPIO_PIN_11
@@ -108,10 +110,10 @@ void Error_Handler(void);
 #define INPUT_A_GPIO_Port GPIOB
 #define SIGNAL_BB14_Pin GPIO_PIN_14
 #define SIGNAL_BB14_GPIO_Port GPIOB
-#define T_SWDIO_Pin GPIO_PIN_13
-#define T_SWDIO_GPIO_Port GPIOA
-#define T_SWCLK_Pin GPIO_PIN_14
-#define T_SWCLK_GPIO_Port GPIOA
+#define BIAS_BB15_Pin GPIO_PIN_15
+#define BIAS_BB15_GPIO_Port GPIOB
+#define STAGE_BA8_Pin GPIO_PIN_8
+#define STAGE_BA8_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 
