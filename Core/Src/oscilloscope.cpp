@@ -87,6 +87,7 @@ namespace trigger
 
         void useNewValue() const override
         {
+            //todo migrate to awd?
             constexpr long long dac_max_long_long = DAC_MAX_VALUE;
             const uint16_t dac_bias = std::ranges::clamp((value - min) * dac_max_long_long / (max - min), 0LL, dac_max_long_long);
             HAL_DAC_SetValue(&hdac3, DAC_CHANNEL_2,DAC_ALIGN_12B_R, dac_bias);
@@ -139,9 +140,9 @@ namespace trigger
 
 }
 
-constexpr CommandBaseLevelUv_t CommandBaseLevelA{"base.lvl.a.uv", &hdac1,DAC_CHANNEL_2, "gain.a", &hopamp2};
+constexpr CommandBaseLevelUv_t CommandBaseLevelA{"base.lvl.a.uv", &BIAS_DAC,BIAS_DAC_CHANNEL_A, "gain.a", &STAGE_A1_OPAMP, &STAGE_A2_OPAMP};
 
-constexpr CommandBaseLevelUv_t CommandBaseLevelB{"base.lvl.b.uv", &hdac1,DAC_CHANNEL_1, "gain.b", &hopamp3};
+constexpr CommandBaseLevelUv_t CommandBaseLevelB{"base.lvl.b.uv", &BIAS_DAC,BIAS_DAC_CHANNEL_B, "gain.b", &STAGE_B1_OPAMP, &STAGE_B2_OPAMP};
 
 struct StartSysBootloader_t : Command_t{
     static constexpr long MAGIC_NUMBER = 0xB007;//BOOT
