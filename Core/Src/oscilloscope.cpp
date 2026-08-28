@@ -12,7 +12,6 @@
 
 #include "adc.h"
 #include "cmsis_os2.h"
-#include "comp.h"
 #include "opamp.h"
 
 alignas(uint32_t) static std::array<uint16_t, data_frame_size * 2> adcBufferA{};
@@ -35,12 +34,7 @@ void initialize_test_signal()
 {
 //#ifdef DEBUG
     extern const unsigned short fake_signal[];
-    HAL_DAC_Start_DMA(&hdac4, DAC_CHANNEL_1, reinterpret_cast<const uint32_t*>(fake_signal), 164, DAC_ALIGN_12B_R);
-    HAL_DAC_Start(&hdac3, DAC_CHANNEL_1);
-    HAL_OPAMP_SelfCalibrate(&hopamp4);
-    HAL_OPAMP_SelfCalibrate(&hopamp6);
-    HAL_OPAMP_Start(&hopamp4);
-    HAL_OPAMP_Start(&hopamp6);
+    HAL_DAC_Start_DMA(&TEST_SIGNAL_DAC, TEST_SIGNAL_DAC_CHANNEL, reinterpret_cast<const uint32_t*>(fake_signal), 164, DAC_ALIGN_12B_R);
     //__HAL_TIM_SET_PRESCALER(&htim15, 30000);
     HAL_TIM_Base_Start(&htim15);
 //#endif
@@ -277,27 +271,28 @@ extern osThreadId_t transmitTaskHandle;
     adcCalibration();
     HAL_DMA_RegisterCallback(&hdma_memtomem_dma1_channel2, HAL_DMA_XFER_CPLT_CB_ID, dmaMemToMemCallback);
 
-    for (const auto opamp : {&hopamp2, &hopamp3, &hopamp4, &hopamp5})
+    for (const auto opamp : {&hopamp1, &hopamp3, &hopamp4, &hopamp5, &hopamp6})
     {
         HAL_OPAMP_Start(opamp);
         HAL_OPAMP_SelfCalibrate(opamp);
     }
 
     {  // Virtual ground
-        HAL_DAC_Start(&hdac4, DAC_CHANNEL_2);
-        HAL_DAC_SetValue(&hdac4, DAC_CHANNEL_2, DAC_ALIGN_12B_R, (DAC_MAX_VALUE + 1) / 2);
+        HAL_DAC_Start(&VGND_DAC, VGND_DAC_CHANNEL_1);
+        HAL_DAC_SetValue(&VGND_DAC, VGND_DAC_CHANNEL_2, DAC_ALIGN_12B_R, (DAC_MAX_VALUE + 1) / 2);
+        HAL_OPAMP_Start(&VGND_OPAMP);
+        HAL_DAC_Start(&VGND_DAC, VGND_DAC_CHANNEL_2);
+        HAL_DAC_SetValue(&VGND_DAC, VGND_DAC_CHANNEL_2, DAC_ALIGN_12B_R, (DAC_MAX_VALUE + 1) / 2);
     }
-    HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
-    HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
-    HAL_DAC_Start(&hdac2, DAC_CHANNEL_1);
-    HAL_DAC_Start(&hdac2, DAC_CHANNEL_2);
-    HAL_DAC_Start(&hdac3, DAC_CHANNEL_2);
+    HAL_DAC_Start(&hdac1a, DAC_CHANNEL_1);
+    HAL_DAC_Start(&hdac1a, DAC_CHANNEL_2);
+    HAL_DAC_Start(&hdac2a, DAC_CHANNEL_1);
+    HAL_DAC_Start(&hdac2a, DAC_CHANNEL_2);
+    HAL_DAC_Start(&hdac3a, DAC_CHANNEL_2);
     TIM_CCxChannelCmd(htim1.Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
     HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
     HAL_TIM_Base_Start(&htim1);
     startSampling();
-    HAL_COMP_Start(&hcomp2);
-    HAL_COMP_Start(&hcomp7);
     for (const auto& command : commands)
     {
         command->useNewValue();

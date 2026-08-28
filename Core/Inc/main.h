@@ -69,36 +69,34 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define VGND_DAC hdac3
+#define VGND_OPAMP hopamp6
+#define TEST_SIGNAL_DAC hdac2
+#define TEST_SIGNAL_DAC_CHANNEL DAC_CHANNEL_1
+#define VGND_DAC_CHANNEL_1 DAC_CHANNEL_1
+#define VGND_DAC_CHANNEL_2 DAC_CHANNEL_2
 #define RCC_OSC_IN_Pin GPIO_PIN_0
 #define RCC_OSC_IN_GPIO_Port GPIOF
 #define RCC_OSC_OUT_Pin GPIO_PIN_1
 #define RCC_OSC_OUT_GPIO_Port GPIOF
 #define SIGNAL_A_Pin GPIO_PIN_0
 #define SIGNAL_A_GPIO_Port GPIOA
-#define IN_B_Pin GPIO_PIN_1
-#define IN_B_GPIO_Port GPIOA
+#define SIGNAL_AA2_Pin GPIO_PIN_2
+#define SIGNAL_AA2_GPIO_Port GPIOA
 #define BIAS_B_Pin GPIO_PIN_4
 #define BIAS_B_GPIO_Port GPIOA
 #define BIAS_A_Pin GPIO_PIN_5
 #define BIAS_A_GPIO_Port GPIOA
-#define SIGNAL_AA6_Pin GPIO_PIN_6
-#define SIGNAL_AA6_GPIO_Port GPIOA
 #define SIGNAL_AA7_Pin GPIO_PIN_7
 #define SIGNAL_AA7_GPIO_Port GPIOA
 #define IN_A_Pin GPIO_PIN_0
 #define IN_A_GPIO_Port GPIOB
 #define SIGNAL_B_Pin GPIO_PIN_1
 #define SIGNAL_B_GPIO_Port GPIOB
-#define BIAS_BB2_Pin GPIO_PIN_2
-#define BIAS_BB2_GPIO_Port GPIOB
-#define TEST_2_Pin GPIO_PIN_11
-#define TEST_2_GPIO_Port GPIOB
-#define TEST_1_Pin GPIO_PIN_12
-#define TEST_1_GPIO_Port GPIOB
+#define VGND_Pin GPIO_PIN_11
+#define VGND_GPIO_Port GPIOB
 #define SIGNAL_BB14_Pin GPIO_PIN_14
 #define SIGNAL_BB14_GPIO_Port GPIOB
-#define V_GND_Pin GPIO_PIN_8
-#define V_GND_GPIO_Port GPIOA
 #define T_SWDIO_Pin GPIO_PIN_13
 #define T_SWDIO_GPIO_Port GPIOA
 #define T_SWCLK_Pin GPIO_PIN_14
