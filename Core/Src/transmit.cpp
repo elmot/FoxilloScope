@@ -109,7 +109,7 @@ void writeUart(const string_view& str)
     LL_DMA_ClearFlag_TE4(DMA1);
     LL_DMA_ClearFlag_TC7(DMA1);
     LL_DMA_ClearFlag_TE7(DMA1);
-    LL_LPUART_ClearFlag_TC(LPUART1);
+    LL_USART_ClearFlag_TC(USART1);
     LL_USART_ClearFlag_TC(UART4);
 
     LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_4, reinterpret_cast<uint32_t>(str.data()));
@@ -117,7 +117,7 @@ void writeUart(const string_view& str)
     LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_4, str.size());
     LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_7, str.size());
 
-    LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_4, reinterpret_cast<uint32_t>(&LPUART1->TDR));
+    LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_4, reinterpret_cast<uint32_t>(&USART1->TDR));
     LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_7, reinterpret_cast<uint32_t>(&UART4->TDR));
 
     // Clear any pending notifications before starting the hardware
@@ -128,14 +128,14 @@ void writeUart(const string_view& str)
     LL_USART_EnableDMAReq_TX(UART4);
     LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_4);
     LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_4);
-    LL_LPUART_EnableDMAReq_TX(LPUART1);
+    LL_USART_EnableDMAReq_TX(USART1);
 
     // Wait for the specific thread flag to be set by the ISR
     // This is immune to the race condition because even if the flag is set 1 microsecond
     // BEFORE this line executes, osThreadFlagsWait reads the already-set flag and moves on.
     osThreadFlagsWait(UART_TX_BUSY, osFlagsWaitAny, osWaitForever);
 
-    while (!LL_LPUART_IsActiveFlag_TC(LPUART1) || !LL_USART_IsActiveFlag_TC(UART4))
+    while (!LL_USART_IsActiveFlag_TC(USART1) || !LL_USART_IsActiveFlag_TC(UART4))
     {
         osThreadYield();
     }
@@ -144,7 +144,7 @@ void writeUart(const string_view& str)
 static void uartTransferComplete()
 {
     if (transmittingTaskHandle != nullptr &&
-        !LL_LPUART_IsEnabledDMAReq_TX(LPUART1)&&
+        !LL_USART_IsEnabledDMAReq_TX(USART1)&&
         !LL_USART_IsEnabledDMAReq_TX(UART4))
     {
         // Signal the waiting task directly
@@ -152,7 +152,7 @@ static void uartTransferComplete()
     }
 
 }
-extern "C" void lpuart1TransferComplete()
+extern "C" void usart1TransferComplete()
 {
     if (LL_DMA_IsActiveFlag_TC4(DMA1))
     {
@@ -160,7 +160,7 @@ extern "C" void lpuart1TransferComplete()
         LL_DMA_ClearFlag_TC4(DMA1);
 
         // Disable the UART DMA TX Request bit
-        LL_LPUART_DisableDMAReq_TX(LPUART1);
+        LL_USART_DisableDMAReq_TX(USART1);
 
         // Disable the DMA Channel (required before re-configuring NDTR for the next block)
         LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_4);
@@ -187,7 +187,7 @@ extern "C" void uart4TransferComplete()
 
 void startUartInput()
 {
-    LL_LPUART_EnableIT_RXNE(LPUART1);
+    LL_USART_EnableIT_RXNE(USART1);
     LL_USART_EnableIT_RXNE(UART4);
 }
 

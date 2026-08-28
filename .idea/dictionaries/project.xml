@@ -8,6 +8,7 @@
       <w>lpuart</w>
       <w>opamp</w>
       <w>uPlot</w>
+      <w>usart</w>
       <w>vbias</w>
       <w>vltg</w>
     </words>

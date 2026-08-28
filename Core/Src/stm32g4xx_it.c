@@ -65,6 +65,8 @@ extern DAC_HandleTypeDef hdac4;
 extern DMA_HandleTypeDef hdma_memtomem_dma1_channel2;
 extern DMA_HandleTypeDef hdma_memtomem_dma1_channel6;
 extern TIM_HandleTypeDef htim1;
+extern DMA_HandleTypeDef hdma_usart1_tx;
+extern UART_HandleTypeDef huart1;
 extern TIM_HandleTypeDef htim7;
 
 /* USER CODE BEGIN EV */
@@ -217,9 +219,10 @@ void DMA1_Channel3_IRQHandler(void)
 void DMA1_Channel4_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel4_IRQn 0 */
-  extern void lpuart1TransferComplete();
-  lpuart1TransferComplete();
+  extern void usart1TransferComplete();
+  usart1TransferComplete();
   /* USER CODE END DMA1_Channel4_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart1_tx);
   /* USER CODE BEGIN DMA1_Channel4_IRQn 1 */
 
   /* USER CODE END DMA1_Channel4_IRQn 1 */
@@ -265,6 +268,20 @@ void TIM1_CC_IRQHandler(void)
   /* USER CODE BEGIN TIM1_CC_IRQn 1 */
 
   /* USER CODE END TIM1_CC_IRQn 1 */
+}
+
+/**
+  * @brief This function handles USART1 global interrupt / USART1 wake-up interrupt through EXTI line 25.
+  */
+void USART1_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART1_IRQn 0 */
+
+  /* USER CODE END USART1_IRQn 0 */
+  HAL_UART_IRQHandler(&huart1);
+  /* USER CODE BEGIN USART1_IRQn 1 */
+
+  /* USER CODE END USART1_IRQn 1 */
 }
 
 /**
@@ -334,30 +351,6 @@ void COMP7_IRQHandler(void)
   /* USER CODE BEGIN COMP7_IRQn 1 */
 
   /* USER CODE END COMP7_IRQn 1 */
-}
-
-/**
-  * @brief This function handles LPUART1 global interrupt.
-  */
-void LPUART1_IRQHandler(void)
-{
-  /* USER CODE BEGIN LPUART1_IRQn 0 */
-  // Check if RXNE flag is set AND if RXNE interrupt is enabled
-  if (LL_LPUART_IsActiveFlag_RXNE(LPUART1) && LL_LPUART_IsEnabledIT_RXNE(LPUART1))
-  {
-    uartReadByte(LL_LPUART_ReceiveData8(LPUART1));
-  }
-
-  // Optional but recommended: Handle Error Flags (Overrun, Noise, Framing)
-  // If an Overrun error (ORE) occurs, it can freeze the RXNE interrupt until cleared!
-  if (LL_LPUART_IsActiveFlag_ORE(LPUART1))
-  {
-    LL_LPUART_ClearFlag_ORE(LPUART1); // Clear overrun flag
-  }
-  /* USER CODE END LPUART1_IRQn 0 */
-  /* USER CODE BEGIN LPUART1_IRQn 1 */
-
-  /* USER CODE END LPUART1_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
