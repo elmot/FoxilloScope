@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Nucleo-G474RE Wiring Diagram</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #1e1e1e;
+      color: #ddd;
+      margin: 20px;
+    }
+    h2 {
+      margin-bottom: 6px;
+    }
+    .legend {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 12px;
+      font-size: 11px;
+      font-weight: bold;
+      flex-wrap: wrap;
+      max-width: 700px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-line {
+      width: 16px;
+      height: 3px;
+      opacity: 0.7;
+      border-radius: 2px;
+    }
+    .diagram-container {
+      position: relative;
+      width: 593px;
+      height: 530px;
+      border: 1px solid #444;
+      background: url('nucleo-g474re-pinout.png') no-repeat top left;
+      background-size: 593px 530px;
+      margin-bottom: 24px;
+    }
+    .diagram-container svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 593px;
+      height: 530px;
+    }
+    .wire {
+      fill: none;
+      stroke-opacity: 0.55;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .wire-ext {
+      fill: none;
+      stroke-opacity: 0.65;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .sb-section {
+      max-width: 593px;
+      background: #282828;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 16px;
+      font-size: 12px;
+    }
+    .sb-section h3 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      color: #f59e0b;
+    }
+    .sb-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      margin-bottom: 16px;
+      font-size: 11px;
+    }
+    .sb-table th, .sb-table td {
+      border: 1px solid #444;
+      padding: 5px 8px;
+      text-align: left;
+    }
+    .sb-table th {
+      background: #333;
+    }
+    .badge-on {
+      color: #22c55e;
+      font-weight: bold;
+    }
+    .badge-off {
+      color: #f43f5e;
+      font-weight: bold;
+    }
+    .bottom-photo-container {
+      position: relative;
+      width: 593px;
+      height: 547px;
+      border: 1px solid #444;
+      background: url('nucleo-g474re-bottom.jpg') no-repeat top left;
+      background-size: 593px 547px;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .bottom-photo-container svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 593px;
+      height: 547px;
+    }
+    .sb-box-on {
+      fill: rgba(34, 197, 94, 0.35);
+      stroke: #22c55e;
+      stroke-width: 2.5;
+    }
+    .sb-box-off {
+      fill: rgba(244, 63, 94, 0.35);
+      stroke: #f43f5e;
+      stroke-width: 2.5;
+    }
+  </style>
+</head>
+<body>
+  <h2>Nucleo-G474RE Wiring Diagram</h2>
+  <div class="legend">
+    <div class="legend-item"><span class="legend-line" style="background: #38bdf8;"></span> CH1 Stage (PB12 - PA3)</div>
+    <div class="legend-item"><span class="legend-line" style="background: #22c55e;"></span> CH1 Bias (PB10 - PA4)</div>
+    <div class="legend-item"><span class="legend-line" style="background: #a855f7;"></span> CH2 Bias (PB15 - PA5)</div>
+    <div class="legend-item"><span class="legend-line" style="background: #f59e0b;"></span> CH1 ADC (PA1 - PA2)</div>
+    <div class="legend-item"><span class="legend-line" style="background: #f43f5e;"></span> CH2 ADC (PB1 - PB14)</div>
+    <div class="legend-item"><span class="legend-line" style="background: #06b6d4;"></span> VGND (PB11)</div>
+    <div class="legend-item"><span class="legend-line" style="background: #eab308;"></span> IN A (PB13)</div>
+    <div class="legend-item"><span class="legend-line" style="background: #ec4899;"></span> IN B (PC3)</div>
+    <div class="legend-item"><span class="legend-line" style="background: #10b981;"></span> TEST SIGNAL (PA6)</div>
+  </div>
+
+  <!-- TOP VIEW PINOUT & WIRING -->
+  <div class="diagram-container">
+    <svg viewBox="0 0 593 530">
+      <!-- INTERNAL WIRES -->
+      <g id="wires-internal">
+        <!-- 1. CH1 Stage: PB12 (CN10-16: 505, 283) -> PA3 (CN10-37: 414, 447) -->
+        <path class="wire" d="M 505 283 C 455 283, 460 410, 414 447" stroke="#38bdf8"/>
+
+        <!-- 2. CH1 Bias: PB10 (CN10-25: 414, 357) -> PA4 (CN7-32: 173, 402) -->
+        <path class="wire" d="M 414 357 C 300 350, 260 395, 173 402" stroke="#22c55e"/>
+
+        <!-- 3. CH2 Bias: PB15 (CN10-26: 505, 357) -> PA5 (CN10-11: 414, 246) -->
+        <path class="wire" d="M 505 357 C 460 357, 460 246, 414 246" stroke="#a855f7"/>
+
+        <!-- 4. CH1 ADC: PA1 (CN7-30: 173, 387) -> PA2 (CN10-35: 414, 432) -->
+        <path class="wire" d="M 173 387 C 250 375, 330 440, 414 432" stroke="#f59e0b"/>
+
+        <!-- 5. CH2 ADC: PB1 (CN10-24: 505, 342.5) -> PB14 (CN10-28: 505, 372) -->
+        <path class="wire" d="M 505 342.5 C 535 342.5, 535 372, 505 372" stroke="#f43f5e"/>
+      </g>
+
+      <!-- EXTERNAL CONNECTIONS -->
+      <g id="wires-external">
+        <!-- 6. VGND: PB11 (CN10-18: 505, 298) -> Out Right -->
+        <path class="wire-ext" d="M 505 298 L 565 298" stroke="#06b6d4"/>
+        <text x="568" y="301" font-size="8" font-family="sans-serif" font-weight="bold" fill="#06b6d4" text-anchor="start">VGND</text>
+
+        <!-- 7. IN A: PB13 (CN10-30: 505, 387) -> Out Right -->
+        <path class="wire-ext" d="M 505 387 L 565 387" stroke="#eab308"/>
+        <text x="568" y="390" font-size="8" font-family="sans-serif" font-weight="bold" fill="#eab308" text-anchor="start">IN A</text>
+
+        <!-- 8. IN B: PC3 (CN7-37: 83, 447) -> Out Left -->
+        <path class="wire-ext" d="M 83 447 L 25 447" stroke="#ec4899"/>
+        <text x="22" y="450" font-size="8" font-family="sans-serif" font-weight="bold" fill="#ec4899" text-anchor="end">IN B</text>
+
+        <!-- 9. TEST SIGNAL: PA6 (CN10-13: 414, 261) -> Into clear area below title -->
+        <path class="wire-ext" d="M 414 261 C 350 261, 300 205, 300 165" stroke="#10b981"/>
+        <text x="300" y="157" font-size="8" font-family="sans-serif" font-weight="bold" fill="#10b981" text-anchor="middle">TEST SIGNAL</text>
+      </g>
+
+      <!-- ENDPOINT DOTS (Color-matched to each net) -->
+      <g id="endpoints">
+        <!-- Internal nets -->
+        <!-- CH1 Stage (Blue #38bdf8) -->
+        <circle cx="505" cy="283" r="3.5" fill="#38bdf8"/>
+        <circle cx="414" cy="447" r="3.5" fill="#38bdf8"/>
+
+        <!-- CH1 Bias (Green #22c55e) -->
+        <circle cx="414" cy="357" r="3.5" fill="#22c55e"/>
+        <circle cx="173" cy="402" r="3.5" fill="#22c55e"/>
+
+        <!-- CH2 Bias (Purple #a855f7) -->
+        <circle cx="505" cy="357" r="3.5" fill="#a855f7"/>
+        <circle cx="414" cy="246" r="3.5" fill="#a855f7"/>
+
+        <!-- CH1 ADC (Amber #f59e0b) -->
+        <circle cx="173" cy="387" r="3.5" fill="#f59e0b"/>
+        <circle cx="414" cy="432" r="3.5" fill="#f59e0b"/>
+
+        <!-- CH2 ADC (Red #f43f5e) -->
+        <circle cx="505" cy="342.5" r="3.5" fill="#f43f5e"/>
+        <circle cx="505" cy="372" r="3.5" fill="#f43f5e"/>
+
+        <!-- External nets -->
+        <!-- VGND (Cyan #06b6d4) -->
+        <circle cx="505" cy="298" r="3.5" fill="#06b6d4"/>
+        <circle cx="565" cy="298" r="2.5" fill="#06b6d4"/>
+
+        <!-- IN A (Yellow #eab308) -->
+        <circle cx="505" cy="387" r="3.5" fill="#eab308"/>
+        <circle cx="565" cy="387" r="2.5" fill="#eab308"/>
+
+        <!-- IN B (Pink #ec4899) -->
+        <circle cx="83" cy="447" r="3.5" fill="#ec4899"/>
+        <circle cx="25" cy="447" r="2.5" fill="#ec4899"/>
+
+        <!-- TEST SIGNAL (Green #10b981) -->
+        <circle cx="414" cy="261" r="3.5" fill="#10b981"/>
+        <circle cx="300" cy="165" r="2.5" fill="#10b981"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- SOLDER BRIDGES CONFIGURATION & BOTTOM PHOTO -->
+  <div class="sb-section">
+    <h3>Solder Bridge Changes: Remap ST-LINK VCOM to PC4 / PC5 (USART1)</h3>
+    <p style="margin: 0 0 6px 0; color: #bbb;">
+      According to UM2505 &sect;7.6.5 (Tables 10 & 11) and MB1367 schematic:
+    </p>
+
+    <table class="sb-table">
+      <thead>
+        <tr>
+          <th>Solder Bridge</th>
+          <th>Required State</th>
+          <th>Connected Path</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>SB12, SB20</strong></td>
+          <td><span class="badge-on">ON (Close / Solder)</span></td>
+          <td>PC4 (TX) &amp; PC5 (RX) &harr; ST-LINK VCOM</td>
+          <td>Connects USART1 (PC4/PC5) to ST-LINK Virtual COM port</td>
+        </tr>
+        <tr>
+          <td><strong>SB17, SB23</strong></td>
+          <td><span class="badge-off">OFF (Open / Desolder)</span></td>
+          <td>PA2 (TX) &amp; PA3 (RX) &harr; ST-LINK VCOM</td>
+          <td>Disconnects LPUART1 (PA2/PA3) from ST-LINK Virtual COM port</td>
+        </tr>
+        <tr>
+          <td><strong>SB13, SB19</strong></td>
+          <td><span class="badge-off">OFF (Open / Desolder)</span></td>
+          <td>PC4 (TX) &amp; PC5 (RX) &harr; ARDUINO D1/D0</td>
+          <td>Disconnects USART1 (PC4/PC5) from ARDUINO D1/D0 &amp; Morpho CN10-35/37</td>
+        </tr>
+        <tr>
+          <td><strong>SB18, SB22</strong></td>
+          <td><span class="badge-on">ON (Close / Solder)</span></td>
+          <td>PA2 (TX) &amp; PA3 (RX) &harr; ARDUINO D1/D0</td>
+          <td>Connects LPUART1 (PA2/PA3) to ARDUINO D1/D0 &amp; Morpho CN10-35/37</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="font-weight: bold; margin-bottom: 8px; color: #ddd;">
+      Bottom View Solder Bridge States (<span style="color: #22c55e;">GREEN = ON</span>, <span style="color: #f43f5e;">RED = OFF</span>):
+    </div>
+
+    <!-- BOTTOM PCB PHOTO WITH SVG OVERLAY -->
+    <div class="bottom-photo-container">
+      <svg viewBox="0 0 1280 1181">
+        <!-- SB22: ON (Green) -->
+        <rect class="sb-box-on" x="336" y="501" width="24" height="14" rx="2"/>
+
+        <!-- SB23: OFF (Red) -->
+        <rect class="sb-box-off" x="336" y="528" width="24" height="14" rx="2"/>
+
+        <!-- SB19: OFF (Red) -->
+        <rect class="sb-box-off" x="384" y="501" width="24" height="14" rx="2"/>
+
+        <!-- SB20: ON (Green) -->
+        <rect class="sb-box-on" x="384" y="528" width="24" height="14" rx="2"/>
+
+        <!-- SB17: OFF (Red) -->
+        <rect class="sb-box-off" x="392" y="561" width="24" height="14" rx="2"/>
+
+        <!-- SB18: ON (Green) -->
+        <rect class="sb-box-on" x="392" y="583" width="24" height="14" rx="2"/>
+
+        <!-- SB12: ON (Green) -->
+        <rect class="sb-box-on" x="440" y="561" width="24" height="14" rx="2"/>
+
+        <!-- SB13: OFF (Red) -->
+        <rect class="sb-box-off" x="440" y="583" width="24" height="14" rx="2"/>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>

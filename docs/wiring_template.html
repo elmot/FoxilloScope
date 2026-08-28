@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<!--
+  =============================================================================
+  INSTRUCTIONS FOR AGENTS GENERATING WIRING DIAGRAMS:
+  =============================================================================
+  1. DO NOT ADD JAVASCRIPT, INTERACTIVITY, BUTTONS, OR ANIMATIONS.
+  2. PURE STATIC HTML + SVG ONLY.
+  3. ALL WIRES MUST BE 50% TRANSPARENT:
+     Use class="wire" or stroke-opacity="0.5" (with stroke-width="2.5").
+  4. MINIMIZE WIRE OVERLAPS:
+     - Use curved paths: <path class="wire" d="M x1 y1 Q cx cy, x2 y2" stroke="..." />
+     - Route wire arcs outward or around pin headers.
+     - Use distinct colors for different nets.
+  5. CONTAINER SIZE IS EXACTLY 593px x 530px WITH nucleo-g474re-pinout.png AS BACKGROUND.
+  6. PIN COORDINATES REFERENCE (DO NOT GUESS OR ALTER):
+    CN7 Pins:
+      Pin 1: name=PC10, x=83, y=178.5, side=left
+      Pin 2: name=PC11, x=173, y=178.5, side=right
+      Pin 3: name=PC12, x=83, y=193.5, side=left
+      Pin 4: name=PD2, x=173, y=193.5, side=right
+      Pin 5: name=VDD, x=83, y=208.5, side=left
+      Pin 6: name=E5V, x=173, y=208.5, side=right
+      Pin 7: name=PB8-BOOT0, x=83, y=223, side=left
+      Pin 8: name=GND, x=173, y=223, side=right
+      Pin 12: name=IOREF, x=173, y=253, side=right
+      Pin 13: name=PA13, x=83, y=268, side=left
+      Pin 14: name=NRST, x=173, y=268, side=right
+      Pin 15: name=PA14, x=83, y=283, side=left
+      Pin 16: name=+3V3, x=173, y=283, side=right
+      Pin 17: name=PA15, x=83, y=298, side=left
+      Pin 18: name=+5V, x=173, y=298, side=right
+      Pin 19: name=GND, x=83, y=313, side=left
+      Pin 20: name=GND, x=173, y=313, side=right
+      Pin 21: name=PB7, x=83, y=327.5, side=left
+      Pin 22: name=GND, x=173, y=327.5, side=right
+      Pin 23: name=PC13, x=83, y=342.5, side=left
+      Pin 24: name=VIN, x=173, y=342.5, side=right
+      Pin 25: name=PC14, x=83, y=357, side=left
+      Pin 27: name=PC15, x=83, y=372, side=left
+      Pin 28: name=PA0, x=173, y=372, side=right
+      Pin 29: name=PF0, x=83, y=387, side=left
+      Pin 30: name=PA1, x=173, y=387, side=right
+      Pin 31: name=PF1, x=83, y=402, side=left
+      Pin 32: name=PA4, x=173, y=402, side=right
+      Pin 33: name=VBAT, x=83, y=417, side=left
+      Pin 34: name=PB0, x=173, y=417, side=right
+      Pin 35: name=PC2, x=83, y=432, side=left
+      Pin 36: name=PC1/PB9, x=173, y=432, side=right
+      Pin 37: name=PC3, x=83, y=447, side=left
+      Pin 38: name=PC0/PA15, x=173, y=447, side=right
+
+    CN10 Pins:
+      Pin 1: name=PC9, x=414, y=172, side=left
+      Pin 2: name=PC8, x=505, y=178.5, side=right
+      Pin 3: name=PB8, x=414, y=186, side=left
+      Pin 4: name=PC6, x=505, y=193.5, side=right
+      Pin 5: name=PB9, x=414, y=201, side=left
+      Pin 6: name=PC5, x=505, y=208.5, side=right
+      Pin 7: name=AVDD, x=414, y=216, side=left
+      Pin 8: name=5V_USB_CHGR, x=505, y=223, side=right
+      Pin 9: name=GND, x=414, y=231, side=left
+      Pin 11: name=PA5, x=414, y=246, side=left
+      Pin 12: name=PA12, x=505, y=253, side=right
+      Pin 13: name=PA6, x=414, y=261, side=left
+      Pin 14: name=PA11, x=505, y=268, side=right
+      Pin 15: name=PA7, x=414, y=276, side=left
+      Pin 16: name=PB12, x=505, y=283, side=right
+      Pin 17: name=PB6, x=414, y=291, side=left
+      Pin 18: name=PB11, x=505, y=298, side=right
+      Pin 19: name=PC7, x=414, y=305, side=left
+      Pin 20: name=GND, x=505, y=313, side=right
+      Pin 21: name=PA9, x=414, y=320, side=left
+      Pin 22: name=PB2, x=505, y=327.5, side=right
+      Pin 23: name=PA8, x=414, y=342.5, side=left
+      Pin 24: name=PB1, x=505, y=342.5, side=right
+      Pin 25: name=PB10, x=414, y=357, side=left
+      Pin 26: name=PB15, x=505, y=357, side=right
+      Pin 27: name=PB4, x=414, y=372, side=left
+      Pin 28: name=PB14, x=505, y=372, side=right
+      Pin 29: name=PB5, x=414, y=387, side=left
+      Pin 30: name=PB13, x=505, y=387, side=right
+      Pin 31: name=PB3, x=414, y=402, side=left
+      Pin 32: name=AGND, x=505, y=402, side=right
+      Pin 33: name=PA10, x=414, y=417, side=left
+      Pin 34: name=PC4, x=505, y=417, side=right
+      Pin 35: name=PC4/PA2, x=414, y=432, side=left
+      Pin 37: name=PC5/PA3, x=414, y=447, side=left
+
+  =============================================================================
+-->
+<head>
+  <meta charset="utf-8">
+  <title>Nucleo-G474RE Wiring Diagram</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #1e1e1e;
+      color: #ddd;
+      margin: 20px;
+    }
+    .diagram-container {
+      position: relative;
+      width: 593px;
+      height: 530px;
+      border: 1px solid #444;
+      background: url('nucleo-g474re-pinout.png') no-repeat top left;
+      background-size: 593px 530px;
+    }
+    svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 593px;
+      height: 530px;
+    }
+    .wire {
+      fill: none;
+      stroke-opacity: 0.5;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  </style>
+</head>
+<body>
+  <h2>Nucleo-G474RE Wiring Diagram</h2>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 593 530">
+      <!-- DRAW WIRING PATHS HERE (stroke-opacity="0.5", curved to minimize overlaps) -->
+      <g id="wires">
+        <!-- Example: <path class="wire" d="M 83 268 Q 200 200, 414 246" stroke="#00ff00"/> -->
+      </g>
+
+      <!-- PIN DOTS (CN7: Cyan, CN10: Magenta) -->
+      <g id="pins">
+      <circle cx='83' cy='178.5' r='2' fill='#00ffff'/>
+      <circle cx='173' cy='178.5' r='2' fill='#00ffff'/>
+      <circle cx='83' cy='193.5' r='2' fill='#00ffff'/>
+      <circle cx='173' cy='193.5' r='2' fill='#00ffff'/>
+      <circle cx='83' cy='208.5' r='2' fill='#00ffff'/>
+      <circle cx='173' cy='208.5' r='2' fill='#00ffff'/>
+      <circle cx='83' cy='223' r='2' fill='#00ffff'/>
+      <circle cx='173' cy='223' r='2' fill='#00ffff'/>
+      <circle cx='173' cy='253' r='2' fill='#00ffff'/>
+      <circle cx='83' cy='268' r='2' fill='#00ffff'/>
+      <circle cx='173' cy='268' r='2' fill='#00ffff'/>
+      <circle cx='83' cy='283' r='2' fill='#00ffff'/>
+      <circle cx='173' cy='283' r='2' fill='#00ffff'/>
+      <circle cx='83' cy='298' r='2' fill='#00ffff'/>
+      <circle cx='173' cy='298' r='2' fill='#00ffff'/>
+      <circle cx='83' cy='313' r='2' fill='#00ffff'/>
+      <circle cx='173' cy='313' r='2' fill='#00ffff'/>
+      <circle cx='83' cy='327.5' r='2' fill='#00ffff'/>
+      <circle cx='173' cy='327.5' r='2' fill='#00ffff'/>
+      <circle cx='83' cy='342.5' r='2' fill='#00ffff'/>
+      <circle cx='173' cy='342.5' r='2' fill='#00ffff'/>
+      <circle cx='83' cy='357' r='2' fill='#00ffff'/>
+      <circle cx='83' cy='372' r='2' fill='#00ffff'/>
+      <circle cx='173' cy='372' r='2' fill='#00ffff'/>
+      <circle cx='83' cy='387' r='2' fill='#00ffff'/>
+      <circle cx='173' cy='387' r='2' fill='#00ffff'/>
+      <circle cx='83' cy='402' r='2' fill='#00ffff'/>
+      <circle cx='173' cy='402' r='2' fill='#00ffff'/>
+      <circle cx='83' cy='417' r='2' fill='#00ffff'/>
+      <circle cx='173' cy='417' r='2' fill='#00ffff'/>
+      <circle cx='83' cy='432' r='2' fill='#00ffff'/>
+      <circle cx='173' cy='432' r='2' fill='#00ffff'/>
+      <circle cx='83' cy='447' r='2' fill='#00ffff'/>
+      <circle cx='173' cy='447' r='2' fill='#00ffff'/>
+      <circle cx='414' cy='172' r='2' fill='#ff00ff'/>
+      <circle cx='505' cy='178.5' r='2' fill='#ff00ff'/>
+      <circle cx='414' cy='186' r='2' fill='#ff00ff'/>
+      <circle cx='505' cy='193.5' r='2' fill='#ff00ff'/>
+      <circle cx='414' cy='201' r='2' fill='#ff00ff'/>
+      <circle cx='505' cy='208.5' r='2' fill='#ff00ff'/>
+      <circle cx='414' cy='216' r='2' fill='#ff00ff'/>
+      <circle cx='505' cy='223' r='2' fill='#ff00ff'/>
+      <circle cx='414' cy='231' r='2' fill='#ff00ff'/>
+      <circle cx='414' cy='246' r='2' fill='#ff00ff'/>
+      <circle cx='505' cy='253' r='2' fill='#ff00ff'/>
+      <circle cx='414' cy='261' r='2' fill='#ff00ff'/>
+      <circle cx='505' cy='268' r='2' fill='#ff00ff'/>
+      <circle cx='414' cy='276' r='2' fill='#ff00ff'/>
+      <circle cx='505' cy='283' r='2' fill='#ff00ff'/>
+      <circle cx='414' cy='291' r='2' fill='#ff00ff'/>
+      <circle cx='505' cy='298' r='2' fill='#ff00ff'/>
+      <circle cx='414' cy='305' r='2' fill='#ff00ff'/>
+      <circle cx='505' cy='313' r='2' fill='#ff00ff'/>
+      <circle cx='414' cy='320' r='2' fill='#ff00ff'/>
+      <circle cx='505' cy='327.5' r='2' fill='#ff00ff'/>
+      <circle cx='414' cy='342.5' r='2' fill='#ff00ff'/>
+      <circle cx='505' cy='342.5' r='2' fill='#ff00ff'/>
+      <circle cx='414' cy='357' r='2' fill='#ff00ff'/>
+      <circle cx='505' cy='357' r='2' fill='#ff00ff'/>
+      <circle cx='414' cy='372' r='2' fill='#ff00ff'/>
+      <circle cx='505' cy='372' r='2' fill='#ff00ff'/>
+      <circle cx='414' cy='387' r='2' fill='#ff00ff'/>
+      <circle cx='505' cy='387' r='2' fill='#ff00ff'/>
+      <circle cx='414' cy='402' r='2' fill='#ff00ff'/>
+      <circle cx='505' cy='402' r='2' fill='#ff00ff'/>
+      <circle cx='414' cy='417' r='2' fill='#ff00ff'/>
+      <circle cx='505' cy='417' r='2' fill='#ff00ff'/>
+      <circle cx='414' cy='432' r='2' fill='#ff00ff'/>
+      <circle cx='414' cy='447' r='2' fill='#ff00ff'/>
+
+      </g>
+    </svg>
+  </div>
+</body>
+</html>

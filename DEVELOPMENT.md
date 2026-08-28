@@ -84,4 +84,4 @@ This bridges the STM32's USB Virtual COM port (LPUART1) directly to a local WebS
 - **STM32 Architecture Reference**: [AGENTS.md](AGENTS.md)
 - **ESP32 Gateway Architecture Reference**: [esp32-gateway/AGENTS.md](esp32-gateway/AGENTS.md)
 - **Frontend Architecture Reference**: [html/AGENTS.md](html/AGENTS.md)
-- **Pinout & Wiring Mapping**: [docs/pinout-peripherals.md](docs/pinout-peripherals.md) & [docs/wiring.png](docs/wiring.png)
+- **Pinout & Wiring Mapping**: [docs/pinout-peripherals.md](docs/pinout-peripherals.md) & [docs/wiring_diagram.html](docs/wiring_diagram.html)

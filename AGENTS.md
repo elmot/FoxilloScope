@@ -15,7 +15,7 @@ The project consists of three core subsystems:
 
 ### Dual-Use Web Frontend Context
 The single-page web UI (`html/index.html`) is designed for **dual deployment**:
-1. **Local ESP32 Gateway**: Served directly by the ESP32 over HTTP (`http://f-scope.local/`), communicating via WebSocket (`ws://${location.host}/ws`).
+1. **Local ESP32 Gateway**: Served directly by the ESP32 over HTTP (`http://f-scope.local/`), communicating via WebSocket (`/ws`).
 2. **Static CDN / GitHub Pages**: Hosted externally over HTTPS, communicating directly with hardware via WebBluetooth GATT (`6623a8e1-...`) or WebSerial (460,800 baud USB COM port).
 
 ---
@@ -53,5 +53,5 @@ Command `version=1` sent to FW requests the firmware version reply. The response
 
 For complete signal routing, pinout diagrams, and peripheral configurations, refer directly to `/docs`:
 - **Peripheral & Pin Mapping**: [docs/pinout-peripherals.md](docs/pinout-peripherals.md) – Pin table for OPAMPs, DACs, ADCs, COMPs, TIMers, and UARTs.
-- **Physical Wiring Diagram**: [docs/wiring.png](docs/wiring.png)
+- **Physical Wiring Diagram**: [docs/wiring_diagram.html](docs/wiring_diagram.html)
 - **Board Pinout Map**: [docs/nucleo-g474re-pinout.png](docs/nucleo-g474re-pinout.png)
