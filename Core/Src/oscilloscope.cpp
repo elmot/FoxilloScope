@@ -271,7 +271,7 @@ extern osThreadId_t transmitTaskHandle;
     adcCalibration();
     HAL_DMA_RegisterCallback(&hdma_memtomem_dma1_channel2, HAL_DMA_XFER_CPLT_CB_ID, dmaMemToMemCallback);
 
-    for (const auto opamp : {&hopamp1, &hopamp3, &hopamp4, &hopamp5, &hopamp6})
+    for (const auto opamp : {&STAGE_1_1_OPAMP, &STAGE_1_2_OPAMP, &STAGE_2_1_OPAMP, &STAGE_2_2_OPAMP, &VGND_OPAMP})
     {
         HAL_OPAMP_Start(opamp);
         HAL_OPAMP_SelfCalibrate(opamp);
@@ -284,11 +284,8 @@ extern osThreadId_t transmitTaskHandle;
         HAL_DAC_Start(&VGND_DAC, VGND_DAC_CHANNEL_2);
         HAL_DAC_SetValue(&VGND_DAC, VGND_DAC_CHANNEL_2, DAC_ALIGN_12B_R, (DAC_MAX_VALUE + 1) / 2);
     }
-    HAL_DAC_Start(&hdac1a, DAC_CHANNEL_1);
-    HAL_DAC_Start(&hdac1a, DAC_CHANNEL_2);
-    HAL_DAC_Start(&hdac2a, DAC_CHANNEL_1);
-    HAL_DAC_Start(&hdac2a, DAC_CHANNEL_2);
-    HAL_DAC_Start(&hdac3a, DAC_CHANNEL_2);
+    HAL_DAC_Start(&BIAS_DAC, BIAS_DAC_CHANNEL_1);
+    HAL_DAC_Start(&BIAS_DAC, BIAS_DAC_CHANNEL_2);
     TIM_CCxChannelCmd(htim1.Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
     HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
     HAL_TIM_Base_Start(&htim1);

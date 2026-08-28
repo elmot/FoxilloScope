@@ -132,6 +132,8 @@ int main(void)
   MX_DAC2_Init();
   MX_USART1_UART_Init();
   MX_OPAMP6_Init();
+  MX_OPAMP1_Init();
+  MX_OPAMP4_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
