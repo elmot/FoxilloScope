@@ -12,14 +12,14 @@
 
 #include "adc.h"
 #include "cmsis_os2.h"
-#include "comp.h"
 #include "opamp.h"
 
 alignas(uint32_t) static std::array<uint16_t, data_frame_size * 2> adcBufferA{};
 
 alignas(uint32_t) static std::array<uint16_t, data_frame_size * 2> adcBufferB{};
 
-std::atomic<int> partialSamplesSent = -1;
+// ReSharper disable once CppTemplateArgumentsCanBeDeduced
+static std::atomic<int> partialSamplesSent = -1;
 
 constexpr auto bufferHalves = std::array{
     std::pair(std::span(adcBufferA).first<data_frame_size>(),
@@ -29,153 +29,180 @@ constexpr auto bufferHalves = std::array{
               std::span(adcBufferB).last<data_frame_size>())
 };
 
-void dmaMemToMemCallback(DMA_HandleTypeDef* dma_handle_type_def);
+static void dmaMemToMemCallback(DMA_HandleTypeDef* dma_handle_type_def);
 
-void initialize_test_signal()
+static void initialize_test_signal()
 {
-//#ifdef DEBUG
+    //#ifdef DEBUG
     extern const unsigned short fake_signal[];
-    HAL_DAC_Start_DMA(&hdac4, DAC_CHANNEL_1, reinterpret_cast<const uint32_t*>(fake_signal), 164, DAC_ALIGN_12B_R);
-    HAL_DAC_Start(&hdac3, DAC_CHANNEL_1);
-    HAL_OPAMP_SelfCalibrate(&hopamp4);
-    HAL_OPAMP_SelfCalibrate(&hopamp6);
-    HAL_OPAMP_Start(&hopamp4);
-    HAL_OPAMP_Start(&hopamp6);
+    HAL_DAC_Start_DMA(&TEST_SIGNAL_DAC, TEST_SIGNAL_DAC_CHANNEL, reinterpret_cast<const uint32_t*>(fake_signal), 164,
+                      DAC_ALIGN_12B_R);
     //__HAL_TIM_SET_PRESCALER(&htim15, 30000);
     HAL_TIM_Base_Start(&htim15);
-//#endif
+    //#endif
 }
 
 /** Oscilloscope commands
  *
  */
-
-constexpr struct CommandTimeResolution_t : Command_t
+namespace
 {
-    static constexpr long minAdcTime = 1'000'000'000LL / 4'000'000; // 4 MHz ADC max sampling
-
-    constexpr CommandTimeResolution_t() : Command_t("sampling.ns", 250,
-                                                  1'000'000'000LL / 8'000'000, // 8 MHz max sampling freq in nsec
-                                                  1'000'000'000LL / 20, // 20 Hz min sampling freq in nsec
-                                                  true) {}
-
-    bool isInterleaveSampling() const
+    constexpr struct CommandTimeResolution_t : Command_t
     {
-        return value < minAdcTime;
-    }
+        static constexpr long minAdcTime = 1'000'000'000LL / 4'000'000; // 4 MHz ADC max sampling
 
-    uint32_t clockDivider() const
-    {
-        if (LL_RCC_GetAPB1Prescaler() != LL_RCC_APB1_DIV_1)
+        constexpr CommandTimeResolution_t() : Command_t("sampling.ns", 250,
+                                                        1'000'000'000LL / 8'000'000, // 8 MHz max sampling freq in nsec
+                                                        1'000'000'000LL / 20, // 20 Hz min sampling freq in nsec
+                                                        true)
         {
-            //APB1 divider must be 1
-            Error_Handler();
         }
-        // twice slower if interleaved sampling
-        unsigned long long fullDivider = (isInterleaveSampling()) ? 2 : 1;
-        fullDivider = fullDivider * (500'000'000ULL + HAL_RCC_GetPCLK1Freq() * static_cast<unsigned long long>(value)) /
-            1'000'000'000ULL;
-        return static_cast<uint32_t>(fullDivider - 1);
-    }
 
-} CommandTimeResolution{};
+        bool isInterleaveSampling() const
+        {
+            return value < minAdcTime;
+        }
+
+        uint32_t clockDivider() const
+        {
+            if (LL_RCC_GetAPB1Prescaler() != LL_RCC_APB1_DIV_1)
+            {
+                //APB1 divider must be 1
+                Error_Handler();
+            }
+            // twice slower if interleaved sampling
+            unsigned long long fullDivider = isInterleaveSampling() ? 2 : 1;
+            fullDivider = fullDivider * (500'000'000ULL + HAL_RCC_GetPCLK1Freq() * static_cast<unsigned long long>(
+                    value)) /
+                1'000'000'000ULL;
+            return static_cast<uint32_t>(fullDivider - 1);
+        }
+    } CommandTimeResolution{};
+}
 
 namespace trigger
 {
-    std::atomic<TriggerState> state  = TriggerState::DISARMED;
-    std::atomic<int> pre_arming  = 0;
+    // ReSharper disable once CppTemplateArgumentsCanBeDeduced
+    static std::atomic<TriggerState> state = TriggerState::DISARMED;
+    // ReSharper disable once CppTemplateArgumentsCanBeDeduced
+    static std::atomic<int> pre_arming = 0;
 
-    constexpr struct CommandTriggerLevel_t : Command_t
+    namespace
     {
-        constexpr CommandTriggerLevel_t() : Command_t("trigger.lvl.ppm", 0L, -1'000'000, 1'000'000)
+        constexpr struct CommandTriggerLevel_t : Command_t
+        {
+            constexpr CommandTriggerLevel_t() : Command_t("trigger.lvl.ppm", 0L, -1'000'000, 1'000'000)
+            {
+            }
+
+            void useNewValue() const override
+            {
+                constexpr long long dac_max_long_long = DAC_MAX_VALUE;
+                const uint16_t dac_trg_bias = std::ranges::clamp((max - value) * dac_max_long_long / (max - min), 0LL,
+                                                             dac_max_long_long);
+                HAL_DAC_SetValue(&VGND_TRG_A_DAC, TRG_A_DAC_CHANNEL,DAC_ALIGN_12B_R, dac_trg_bias);
+                HAL_DAC_SetValue(&TRG_B_DAC, TRG_B_DAC_CHANNEL,DAC_ALIGN_12B_R, dac_trg_bias);
+            }
+        } CommandTriggerLevel{};
+
+        constexpr struct CommandTriggerType_t : Command_t
+        {
+            constexpr CommandTriggerType_t() : Command_t("trg.type", 0, -1, 1, true)
+            {
+            }
+        } CommandTriggerType{};
+
+        constexpr struct CommandTriggerOffset_t : Command_t
+        {
+            constexpr CommandTriggerOffset_t() : Command_t("trg.time.offset", 0, -1'000'000, 1'000'000, true)
+            {
+            }
+
+            int timerShiftSamples() const
+            {
+                constexpr long range = data_frame_size;
+                return static_cast<int>(range * value / max);
+            }
+        } CommandTriggerOffset{};
+
+        constexpr struct CommandTriggerChannel_t : Command_t
+        {
+            constexpr CommandTriggerChannel_t() : Command_t("trg.chan", 0, 0, 1, true)
+            {
+            }
+        } CommandTriggerChannel{};
+
+        void enableTrigger()
+        {
+            if (CommandTriggerType.getValue() == 0)
+            {
+                HAL_NVIC_DisableIRQ(COMP1_2_3_IRQn);
+                HAL_NVIC_DisableIRQ(COMP7_IRQn);
+            }
+            else
+            {
+                state = TriggerState::DISARMED;
+                HAL_NVIC_EnableIRQ(COMP1_2_3_IRQn);
+                HAL_NVIC_EnableIRQ(COMP7_IRQn);
+            }
+        }
+    }
+
+    static uint32_t comparatorValue()
+    {
+        return CommandTriggerType.getValue() == -1 ? COMP_OUTPUT_LEVEL_HIGH : COMP_OUTPUT_LEVEL_LOW;
+    }
+}
+
+constexpr CommandBaseLevelUv_t CommandBaseLevelA{
+    "base.lvl.a.uv", &BIAS_DAC,BIAS_DAC_CHANNEL_A, "gain.a", &STAGE_A1_OPAMP, &STAGE_A2_OPAMP
+};
+
+constexpr CommandBaseLevelUv_t CommandBaseLevelB{
+    "base.lvl.b.uv", &BIAS_DAC,BIAS_DAC_CHANNEL_B, "gain.b", &STAGE_B1_OPAMP, &STAGE_B2_OPAMP
+};
+
+namespace
+{
+    struct StartSysBootloader_t : Command_t
+    {
+        static constexpr long MAGIC_NUMBER = 0xB007; //BOOT
+
+        StartSysBootloader_t() : Command_t("bootloader", 0, 0, LONG_MAX, false)
         {
         }
 
         void useNewValue() const override
         {
-            constexpr long long dac_max_long_long = DAC_MAX_VALUE;
-            const uint16_t dac_bias = std::ranges::clamp((value - min) * dac_max_long_long / (max - min), 0LL, dac_max_long_long);
-            HAL_DAC_SetValue(&hdac3, DAC_CHANNEL_2,DAC_ALIGN_12B_R, dac_bias);
-            HAL_DAC_SetValue(&hdac2, DAC_CHANNEL_1,DAC_ALIGN_12B_R, dac_bias);
+            if (value == MAGIC_NUMBER)
+            {
+                startSysBootloader();
+            }
         }
-    } CommandTriggerLevel{};
 
-
-    constexpr struct CommandTriggerType_t : Command_t
-    {
-        constexpr CommandTriggerType_t() : Command_t("trg.type", 0, -1, 1, true){}
-
-    } CommandTriggerType{};
-
-    constexpr struct CommandTriggerOffset_t : Command_t
-    {
-        constexpr CommandTriggerOffset_t() : Command_t("trg.time.offset", 0, -1'000'000, 1'000'000, true) {}
-
-        int timerShiftSamples() const
+        void write() const override
         {
-            constexpr long range = data_frame_size;
-            return static_cast<int>(range * value / max);
         }
-    } CommandTriggerOffset{};
+    };
 
-    constexpr struct CommandTriggerChannel_t : Command_t
-    {
-        constexpr CommandTriggerChannel_t() : Command_t("trg.chan", 0, 0, 1, true) {}
-    } CommandTriggerChannel{};
+    StartSysBootloader_t StartSysBootloader{};
 
-    void enableTrigger()
+    struct ReadVersion_t : Command_t
     {
-        if (CommandTriggerType.getValue() == 0)
+        ReadVersion_t() : Command_t("version", 0, 0, 1, false)
         {
-            HAL_NVIC_DisableIRQ(COMP1_2_3_IRQn);
-            HAL_NVIC_DisableIRQ(COMP7_IRQn);
         }
-        else
+
+        void write() const override
         {
-            trigger::state = TriggerState::DISARMED;
-            HAL_NVIC_EnableIRQ(COMP1_2_3_IRQn);
-            HAL_NVIC_EnableIRQ(COMP7_IRQn);
+            if (value == 0) return;
+            value = 0;
+            writeUart("version=" BUILD_VERSION "\n");
         }
-    }
-
-    uint32_t comparatorValue()
-    {
-        return CommandTriggerType.getValue() == -1 ? COMP_OUTPUT_LEVEL_LOW : COMP_OUTPUT_LEVEL_HIGH;
-    }
-
+    };
 }
 
-constexpr CommandBaseLevelUv_t CommandBaseLevelA{"base.lvl.a.uv", &hdac1,DAC_CHANNEL_2, "gain.a", &hopamp2};
-
-constexpr CommandBaseLevelUv_t CommandBaseLevelB{"base.lvl.b.uv", &hdac1,DAC_CHANNEL_1, "gain.b", &hopamp3};
-
-struct StartSysBootloader_t : Command_t{
-    static constexpr long MAGIC_NUMBER = 0xB007;//BOOT
-
-    StartSysBootloader_t() : Command_t("bootloader", 0, 0, LONG_MAX, false) {}
-
-    void useNewValue() const override
-    {
-        if (value==MAGIC_NUMBER)
-        {
-            startSysBootloader();
-        }
-    }
-    void write() const override {}
-};
-StartSysBootloader_t StartSysBootloader{};
-
-struct ReadVersion_t : Command_t{
-    ReadVersion_t() : Command_t("version", 0, 0, 1, false) {}
-
-    void write() const override
-    {
-        if (value == 0) return;
-        value = 0;
-        writeUart("version=" BUILD_VERSION "\n");
-    }
-};
-ReadVersion_t ReadVersion{};
+static ReadVersion_t ReadVersion{};
 
 constexpr std::array<const Command_t*, 11> commands{
     &CommandBaseLevelA,
@@ -190,14 +217,6 @@ constexpr std::array<const Command_t*, 11> commands{
     &StartSysBootloader,
     &ReadVersion,
 };
-
-void skipWhiteSpace(char* & ptr)
-{
-    while (isspace(static_cast<unsigned char>(*ptr)))
-    {
-        ptr++;
-    }
-}
 
 static void startSampling()
 {
@@ -216,7 +235,14 @@ static void startSampling()
     if (arr < 0) arr = 0;
     if (CommandTimeResolution.isInterleaveSampling()) arr /= 2;
     arr = std::ranges::clamp(arr, 1, 1000);
+#ifdef __CLION_IDE__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-volatile"
+#endif
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, arr);
+#ifdef __CLION_IDE__
+#pragma clang diagnostic pop
+#endif
     __HAL_TIM_SET_COUNTER(&htim1, 0);
     startMainAdcs(CommandTimeResolution.isInterleaveSampling(), adcBufferA.data(), adcBufferB.data(),
                   adcBufferA.size());
@@ -256,8 +282,8 @@ static void executeIncomingCommand()
         if (*ptr++ != '=') continue;
 
         long newValue;
-        const auto [cookie_ptr,errc] = std::from_chars(ptr, ptr + strlen(ptr), newValue);
-        if (errc != std::errc{}) continue;
+        const auto [cookie_ptr,err_code] = std::from_chars(ptr, ptr + strlen(ptr), newValue);
+        if (err_code != std::errc{}) continue;
         if (command->setValue(newValue))
         {
             requiresRestart |= command->requires_restart;
@@ -277,34 +303,33 @@ extern osThreadId_t transmitTaskHandle;
     adcCalibration();
     HAL_DMA_RegisterCallback(&hdma_memtomem_dma1_channel2, HAL_DMA_XFER_CPLT_CB_ID, dmaMemToMemCallback);
 
-    for (const auto opamp : {&hopamp2, &hopamp3, &hopamp4, &hopamp5})
+    for (const auto opamp : {&STAGE_A1_OPAMP, &STAGE_A2_OPAMP, &STAGE_B1_OPAMP, &STAGE_B2_OPAMP, &VGND_OPAMP})
     {
-        HAL_OPAMP_Start(opamp);
         HAL_OPAMP_SelfCalibrate(opamp);
     }
 
     {  // Virtual ground
-        HAL_DAC_Start(&hdac4, DAC_CHANNEL_2);
-        HAL_DAC_SetValue(&hdac4, DAC_CHANNEL_2, DAC_ALIGN_12B_R, (DAC_MAX_VALUE + 1) / 2);
+        HAL_DAC_Start(&VGND_TRG_A_DAC, VGND_DAC_CHANNEL);
+        HAL_DAC_SetValue(&VGND_TRG_A_DAC, VGND_DAC_CHANNEL, DAC_ALIGN_12B_R, (DAC_MAX_VALUE + 1) / 2);
+        HAL_OPAMP_Start(&VGND_OPAMP);
     }
-    HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
-    HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
-    HAL_DAC_Start(&hdac2, DAC_CHANNEL_1);
-    HAL_DAC_Start(&hdac2, DAC_CHANNEL_2);
-    HAL_DAC_Start(&hdac3, DAC_CHANNEL_2);
+    HAL_DAC_Start(&VGND_TRG_A_DAC, TRG_A_DAC_CHANNEL);
+    HAL_DAC_Start(&TRG_B_DAC, TRG_B_DAC_CHANNEL);
+    HAL_DAC_Start(&BIAS_DAC, BIAS_DAC_CHANNEL_A);
+    HAL_DAC_Start(&BIAS_DAC, BIAS_DAC_CHANNEL_B);
     TIM_CCxChannelCmd(htim1.Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
     HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
     HAL_TIM_Base_Start(&htim1);
     startSampling();
-    HAL_COMP_Start(&hcomp2);
-    HAL_COMP_Start(&hcomp7);
+    HAL_COMP_Start(&COMP_A);
+    HAL_COMP_Start(&COMP_B);
     for (const auto& command : commands)
     {
         command->useNewValue();
     }
     startUartInput();
     startSampling();
-    osThreadFlagsSet(transmitTaskHandle,THREAD_FLAG_READY_TO_TRANSMIT);
+    osThreadFlagsSet(transmitTaskHandle, THREAD_FLAG_READY_TO_TRANSMIT);
 
     osTimerStart(partialFrameTimerHandle, msec_to_ticks(50));
     while (true)
@@ -313,13 +338,12 @@ extern osThreadId_t transmitTaskHandle;
     }
 }
 
-
-void signalTransmit()
+static void signalTransmit()
 {
     osThreadFlagsSet(transmitTaskHandle, THREAD_FLAG_READY_TO_TRANSMIT);
 }
 
-void initPartialFrameTransfer(const int subBufferIndex,const int start_index, const size_t length)
+static void initPartialFrameTransfer(const int subBufferIndex, const int start_index, const size_t length)
 {
     --trigger::pre_arming;
     const auto& [fromA, fromB] = bufferHalves[subBufferIndex];
@@ -338,7 +362,7 @@ void initPartialFrameTransfer(const int subBufferIndex,const int start_index, co
 
 extern "C" void initFrameTransfer(const int subBufferIndex)
 {
-    initPartialFrameTransfer(subBufferIndex,0, data_frame_size);
+    initPartialFrameTransfer(subBufferIndex, 0, data_frame_size);
     partialSamplesSent = -1;
 }
 
@@ -390,7 +414,7 @@ extern "C" [[noreturn]] void keyFramesProcessing([[maybe_unused]] void*)
         const auto dma_samples_left = adcSamplesLeft();
         if (dma_samples_left <= data_frame_size)
         {
-            const auto frame_start_position = (adcBufferA.size() - dma_samples_left) - data_frame_size;
+            const auto frame_start_position = adcBufferA.size() - dma_samples_left - data_frame_size;
             memcpy(&transmitKeyBuffer.samplesA[0], &adcBufferA[frame_start_position],
                    data_frame_size * sizeof (adcBufferA[0]));
             memcpy(&transmitKeyBuffer.samplesB[0], &adcBufferB[frame_start_position],
@@ -418,9 +442,10 @@ extern "C" [[noreturn]] void keyFramesProcessing([[maybe_unused]] void*)
     }
 }
 
-constexpr static std::pair<long, long> calculate_min_max_uV(const long gain, const long bias, const long supply_voltage_uV)
+constexpr static std::pair<long, long> calculate_min_max_uV(const long gain, const long bias,
+                                                            const long supply_voltage_uV)
 {
-    if (gain == 1) { return {- supply_voltage_uV/2, supply_voltage_uV/2};}
+    if (gain == 1) { return {-supply_voltage_uV / 2, supply_voltage_uV / 2}; }
     const long long amplitude_uV = supply_voltage_uV / gain;
     long long min_uV = bias - amplitude_uV / 2;
     long long max_uV = bias + amplitude_uV / 2;
@@ -429,7 +454,7 @@ constexpr static std::pair<long, long> calculate_min_max_uV(const long gain, con
 
 static std::pair<long, long> calculate_min_max_uV(const CommandBaseLevelUv_t& bias)
 {
-    return  calculate_min_max_uV(bias.gain_cmd.getValue(), bias.getValue(), analog_supply_voltage_mV * 1000L);
+    return calculate_min_max_uV(bias.gain_cmd.getValue(), bias.getValue(), analog_supply_voltage_mV * 1000L);
 }
 
 /**
@@ -438,18 +463,21 @@ static std::pair<long, long> calculate_min_max_uV(const CommandBaseLevelUv_t& bi
  * **/
 namespace Test
 {
-    constexpr void test_min_max()
+    [[maybe_unused]] static constexpr void test_min_max()
     {
         {
+            // ReSharper disable once CppUseStructuredBinding
             constexpr auto bounds = calculate_min_max_uV(32, 500'000, 2'500'000);
             static_assert(bounds.first == 460'938);
             static_assert(bounds.second == 539'062);
         }
         {
+            // ReSharper disable once CppUseStructuredBinding
             constexpr auto bounds = calculate_min_max_uV(32, 0, 3'500'000);
             static_assert(bounds.first == -54'687);
             static_assert(bounds.second == 54'687);
         }
+        // ReSharper disable once CppUseStructuredBinding
         constexpr auto bounds = calculate_min_max_uV(16, -1'000'000, 3'300'000);
         static_assert(bounds.first == -1'103'125);
         static_assert(bounds.second == -896'875);
@@ -486,7 +514,7 @@ extern "C" void partialFrameSend([[maybe_unused]] void*)
     constexpr int lastSubFrameThresholdHigh = data_frame_size * 95 / 100;
     constexpr int garbageDmaTail = 1;
 
-    const int measuredSamples = static_cast<int>(data_frame_size) - dma_samples_left - garbageDmaTail;
+    const int measuredSamples = static_cast<int>(data_frame_size) - dma_samples_left - garbageDmaTail; // NOLINT(cppcoreguidelines-narrowing-conversions)
 
     if (measuredSamples > lastSubFrameThresholdLow
         && measuredSamples < lastSubFrameThresholdHigh

@@ -59,7 +59,6 @@ extern DMA_HandleTypeDef hdma_adc1;
 extern DMA_HandleTypeDef hdma_adc3;
 extern COMP_HandleTypeDef hcomp2;
 extern COMP_HandleTypeDef hcomp7;
-extern DMA_HandleTypeDef hdma_dac4_ch1;
 extern DAC_HandleTypeDef hdac2;
 extern DAC_HandleTypeDef hdac4;
 extern DMA_HandleTypeDef hdma_memtomem_dma1_channel2;
@@ -170,20 +169,6 @@ void DebugMon_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles DMA1 channel1 global interrupt.
-  */
-void DMA1_Channel1_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
-
-  /* USER CODE END DMA1_Channel1_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_dac4_ch1);
-  /* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
-
-  /* USER CODE END DMA1_Channel1_IRQn 1 */
-}
-
-/**
   * @brief This function handles DMA1 channel2 global interrupt.
   */
 void DMA1_Channel2_IRQHandler(void)
@@ -217,8 +202,8 @@ void DMA1_Channel3_IRQHandler(void)
 void DMA1_Channel4_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel4_IRQn 0 */
-  extern void lpuart1TransferComplete();
-  lpuart1TransferComplete();
+  extern void usart1TransferComplete();
+  usart1TransferComplete();
   /* USER CODE END DMA1_Channel4_IRQn 0 */
   /* USER CODE BEGIN DMA1_Channel4_IRQn 1 */
 
@@ -237,6 +222,20 @@ void DMA1_Channel5_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Channel5_IRQn 1 */
 
   /* USER CODE END DMA1_Channel5_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA1 channel6 global interrupt.
+  */
+void DMA1_Channel6_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Channel6_IRQn 0 */
+
+  /* USER CODE END DMA1_Channel6_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_memtomem_dma1_channel6);
+  /* USER CODE BEGIN DMA1_Channel6_IRQn 1 */
+
+  /* USER CODE END DMA1_Channel6_IRQn 1 */
 }
 
 /**
@@ -268,6 +267,30 @@ void TIM1_CC_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles USART1 global interrupt / USART1 wake-up interrupt through EXTI line 25.
+  */
+void USART1_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART1_IRQn 0 */
+  // Check if RXNE flag is set AND if RXNE interrupt is enabled
+  if (LL_USART_IsActiveFlag_RXNE(USART1) && LL_USART_IsEnabledIT_RXNE(USART1))
+  {
+    uartReadByte(LL_USART_ReceiveData8(USART1));
+  }
+
+  // If an Overrun error (ORE) occurs, it can freeze the RXNE interrupt until cleared!
+  if (LL_USART_IsActiveFlag_ORE(USART1))
+  {
+    LL_USART_ClearFlag_ORE(USART1); // Clear overrun flag
+  }
+
+  /* USER CODE END USART1_IRQn 0 */
+  /* USER CODE BEGIN USART1_IRQn 1 */
+
+  /* USER CODE END USART1_IRQn 1 */
+}
+
+/**
   * @brief This function handles UART4 global interrupt / UART4 wake-up interrupt through EXTI line 34.
   */
 void UART4_IRQHandler(void)
@@ -279,7 +302,6 @@ void UART4_IRQHandler(void)
     uartReadByte(LL_USART_ReceiveData8(UART4));
   }
 
-  // Optional but recommended: Handle Error Flags (Overrun, Noise, Framing)
   // If an Overrun error (ORE) occurs, it can freeze the RXNE interrupt until cleared!
   if (LL_USART_IsActiveFlag_ORE(UART4))
   {
@@ -334,30 +356,6 @@ void COMP7_IRQHandler(void)
   /* USER CODE BEGIN COMP7_IRQn 1 */
 
   /* USER CODE END COMP7_IRQn 1 */
-}
-
-/**
-  * @brief This function handles LPUART1 global interrupt.
-  */
-void LPUART1_IRQHandler(void)
-{
-  /* USER CODE BEGIN LPUART1_IRQn 0 */
-  // Check if RXNE flag is set AND if RXNE interrupt is enabled
-  if (LL_LPUART_IsActiveFlag_RXNE(LPUART1) && LL_LPUART_IsEnabledIT_RXNE(LPUART1))
-  {
-    uartReadByte(LL_LPUART_ReceiveData8(LPUART1));
-  }
-
-  // Optional but recommended: Handle Error Flags (Overrun, Noise, Framing)
-  // If an Overrun error (ORE) occurs, it can freeze the RXNE interrupt until cleared!
-  if (LL_LPUART_IsActiveFlag_ORE(LPUART1))
-  {
-    LL_LPUART_ClearFlag_ORE(LPUART1); // Clear overrun flag
-  }
-  /* USER CODE END LPUART1_IRQn 0 */
-  /* USER CODE BEGIN LPUART1_IRQn 1 */
-
-  /* USER CODE END LPUART1_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

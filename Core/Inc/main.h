@@ -29,9 +29,8 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "stm32g4xx_hal.h"
 
-#include "stm32g4xx_ll_lpuart.h"
-#include "stm32g4xx_ll_rcc.h"
 #include "stm32g4xx_ll_usart.h"
+#include "stm32g4xx_ll_rcc.h"
 #include "stm32g4xx_ll_bus.h"
 #include "stm32g4xx_ll_cortex.h"
 #include "stm32g4xx_ll_system.h"
@@ -54,6 +53,9 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
+extern COMP_HandleTypeDef hcomp2;
+
+extern COMP_HandleTypeDef hcomp7;
 
 /* USER CODE END EC */
 
@@ -70,40 +72,61 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define RCC_OSC_IN_Pin GPIO_PIN_0
-#define RCC_OSC_IN_GPIO_Port GPIOF
-#define RCC_OSC_OUT_Pin GPIO_PIN_1
-#define RCC_OSC_OUT_GPIO_Port GPIOF
-#define SIGNAL_A_Pin GPIO_PIN_0
-#define SIGNAL_A_GPIO_Port GPIOA
-#define IN_B_Pin GPIO_PIN_1
-#define IN_B_GPIO_Port GPIOA
-#define BIAS_B_Pin GPIO_PIN_4
-#define BIAS_B_GPIO_Port GPIOA
-#define BIAS_A_Pin GPIO_PIN_5
-#define BIAS_A_GPIO_Port GPIOA
-#define SIGNAL_AA6_Pin GPIO_PIN_6
-#define SIGNAL_AA6_GPIO_Port GPIOA
-#define SIGNAL_AA7_Pin GPIO_PIN_7
-#define SIGNAL_AA7_GPIO_Port GPIOA
-#define IN_A_Pin GPIO_PIN_0
-#define IN_A_GPIO_Port GPIOB
-#define SIGNAL_B_Pin GPIO_PIN_1
-#define SIGNAL_B_GPIO_Port GPIOB
-#define BIAS_BB2_Pin GPIO_PIN_2
-#define BIAS_BB2_GPIO_Port GPIOB
-#define TEST_2_Pin GPIO_PIN_11
-#define TEST_2_GPIO_Port GPIOB
-#define TEST_1_Pin GPIO_PIN_12
-#define TEST_1_GPIO_Port GPIOB
-#define SIGNAL_BB14_Pin GPIO_PIN_14
-#define SIGNAL_BB14_GPIO_Port GPIOB
-#define V_GND_Pin GPIO_PIN_8
-#define V_GND_GPIO_Port GPIOA
-#define T_SWDIO_Pin GPIO_PIN_13
-#define T_SWDIO_GPIO_Port GPIOA
-#define T_SWCLK_Pin GPIO_PIN_14
-#define T_SWCLK_GPIO_Port GPIOA
+#define TEST_SIGNAL_DAC hdac2
+#define TEST_SIGNAL_DAC_CHANNEL DAC_CHANNEL_1
+#define BIAS_DAC_CHANNEL_A DAC_CHANNEL_1
+#define BIAS_DAC_CHANNEL_B DAC_CHANNEL_2
+#define TRG_A_DAC_CHANNEL DAC_CHANNEL_2
+#define VGND_DAC_CHANNEL DAC_CHANNEL_1
+#define STAGE_A2_OPAMP hopamp1
+#define STAGE_B2_OPAMP hopamp3
+#define VGND_TRG_A_DAC hdac3
+#define STAGE_A1_OPAMP hopamp4
+#define VGND_OPAMP hopamp6
+#define BIAS_DAC hdac1
+#define STAGE_B1_OPAMP hopamp5
+#define COMP_A hcomp2
+#define COMP_B hcomp7
+#define TRG_B_DAC hdac4
+#define TRG_B_DAC_CHANNEL DAC_CHANNEL_1
+#define OPAMP5_IN__Pin GPIO_PIN_3
+#define OPAMP5_IN__GPIO_Port GPIOC
+#define OPAMP3_IN__Pin GPIO_PIN_1
+#define OPAMP3_IN__GPIO_Port GPIOA
+#define ADC1_3__OPAMP1_OUT_Pin GPIO_PIN_2
+#define ADC1_3__OPAMP1_OUT_GPIO_Port GPIOA
+#define OPAMP1_IN__Pin GPIO_PIN_3
+#define OPAMP1_IN__GPIO_Port GPIOA
+#define DAC1_1_Pin GPIO_PIN_4
+#define DAC1_1_GPIO_Port GPIOA
+#define DAC1_2_Pin GPIO_PIN_5
+#define DAC1_2_GPIO_Port GPIOA
+#define DAC2_1_Pin GPIO_PIN_6
+#define DAC2_1_GPIO_Port GPIOA
+#define ADC2_4_COMP2__Pin GPIO_PIN_7
+#define ADC2_4_COMP2__GPIO_Port GPIOA
+#define OPAMP3_OUT_ADC3_1_Pin GPIO_PIN_1
+#define OPAMP3_OUT_ADC3_1_GPIO_Port GPIOB
+#define OPAMP3_IN_B2_Pin GPIO_PIN_2
+#define OPAMP3_IN_B2_GPIO_Port GPIOB
+#define OPAMP4_IN__Pin GPIO_PIN_10
+#define OPAMP4_IN__GPIO_Port GPIOB
+#define OPAMP6_OUT_Pin GPIO_PIN_11
+#define OPAMP6_OUT_GPIO_Port GPIOB
+#define OPAMP4_OUT_Pin GPIO_PIN_12
+#define OPAMP4_OUT_GPIO_Port GPIOB
+#define OPAMP4_IN_B13_Pin GPIO_PIN_13
+#define OPAMP4_IN_B13_GPIO_Port GPIOB
+#define ADC4_4__COMP7__Pin GPIO_PIN_14
+#define ADC4_4__COMP7__GPIO_Port GPIOB
+#define OPAMP5_IN_B15_Pin GPIO_PIN_15
+#define OPAMP5_IN_B15_GPIO_Port GPIOB
+#define OPAMP5_OUT_Pin GPIO_PIN_8
+#define OPAMP5_OUT_GPIO_Port GPIOA
+#define UART4_TX_Pin GPIO_PIN_10
+#define UART4_TX_GPIO_Port GPIOC
+#define UART4_RX_Pin GPIO_PIN_11
+#define UART4_RX_GPIO_Port GPIOC
 
 /* USER CODE BEGIN Private defines */
 

@@ -42,7 +42,7 @@ void MX_COMP2_Init(void)
   hcomp2.Init.InputPlus = COMP_INPUT_PLUS_IO1;
   hcomp2.Init.InputMinus = COMP_INPUT_MINUS_DAC3_CH2;
   hcomp2.Init.OutputPol = COMP_OUTPUTPOL_NONINVERTED;
-  hcomp2.Init.Hysteresis = COMP_HYSTERESIS_30MV;
+  hcomp2.Init.Hysteresis = COMP_HYSTERESIS_50MV;
   hcomp2.Init.BlankingSrce = COMP_BLANKINGSRC_NONE;
   hcomp2.Init.TriggerMode = COMP_TRIGGERMODE_IT_RISING_FALLING;
   if (HAL_COMP_Init(&hcomp2) != HAL_OK)
@@ -67,9 +67,9 @@ void MX_COMP7_Init(void)
   /* USER CODE END COMP7_Init 1 */
   hcomp7.Instance = COMP7;
   hcomp7.Init.InputPlus = COMP_INPUT_PLUS_IO1;
-  hcomp7.Init.InputMinus = COMP_INPUT_MINUS_DAC2_CH1;
+  hcomp7.Init.InputMinus = COMP_INPUT_MINUS_DAC4_CH1;
   hcomp7.Init.OutputPol = COMP_OUTPUTPOL_NONINVERTED;
-  hcomp7.Init.Hysteresis = COMP_HYSTERESIS_30MV;
+  hcomp7.Init.Hysteresis = COMP_HYSTERESIS_50MV;
   hcomp7.Init.BlankingSrce = COMP_BLANKINGSRC_NONE;
   hcomp7.Init.TriggerMode = COMP_TRIGGERMODE_IT_RISING_FALLING;
   if (HAL_COMP_Init(&hcomp7) != HAL_OK)
@@ -96,10 +96,10 @@ void HAL_COMP_MspInit(COMP_HandleTypeDef* compHandle)
     /**COMP2 GPIO Configuration
     PA7     ------> COMP2_INP
     */
-    GPIO_InitStruct.Pin = SIGNAL_AA7_Pin;
+    GPIO_InitStruct.Pin = ADC2_4_COMP2__Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(SIGNAL_AA7_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(ADC2_4_COMP2__GPIO_Port, &GPIO_InitStruct);
 
     /* COMP2 interrupt Init */
     HAL_NVIC_SetPriority(COMP1_2_3_IRQn, 0, 0);
@@ -118,10 +118,10 @@ void HAL_COMP_MspInit(COMP_HandleTypeDef* compHandle)
     /**COMP7 GPIO Configuration
     PB14     ------> COMP7_INP
     */
-    GPIO_InitStruct.Pin = SIGNAL_BB14_Pin;
+    GPIO_InitStruct.Pin = ADC4_4__COMP7__Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(SIGNAL_BB14_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(ADC4_4__COMP7__GPIO_Port, &GPIO_InitStruct);
 
     /* COMP7 interrupt Init */
     HAL_NVIC_SetPriority(COMP7_IRQn, 0, 0);
@@ -144,7 +144,7 @@ void HAL_COMP_MspDeInit(COMP_HandleTypeDef* compHandle)
     /**COMP2 GPIO Configuration
     PA7     ------> COMP2_INP
     */
-    HAL_GPIO_DeInit(SIGNAL_AA7_GPIO_Port, SIGNAL_AA7_Pin);
+    HAL_GPIO_DeInit(ADC2_4_COMP2__GPIO_Port, ADC2_4_COMP2__Pin);
 
     /* COMP2 interrupt Deinit */
     HAL_NVIC_DisableIRQ(COMP1_2_3_IRQn);
@@ -161,7 +161,7 @@ void HAL_COMP_MspDeInit(COMP_HandleTypeDef* compHandle)
     /**COMP7 GPIO Configuration
     PB14     ------> COMP7_INP
     */
-    HAL_GPIO_DeInit(SIGNAL_BB14_GPIO_Port, SIGNAL_BB14_Pin);
+    HAL_GPIO_DeInit(ADC4_4__COMP7__GPIO_Port, ADC4_4__COMP7__Pin);
 
     /* COMP7 interrupt Deinit */
     HAL_NVIC_DisableIRQ(COMP7_IRQn);
