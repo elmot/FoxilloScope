@@ -188,7 +188,7 @@ void HAL_DAC_MspInit(DAC_HandleTypeDef* dacHandle)
     PA4     ------> DAC1_OUT1
     PA5     ------> DAC1_OUT2
     */
-    GPIO_InitStruct.Pin = BIAS_A_Pin|BIAS_B_Pin;
+    GPIO_InitStruct.Pin = DAC1_1_Pin|DAC1_2_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -209,10 +209,10 @@ void HAL_DAC_MspInit(DAC_HandleTypeDef* dacHandle)
     /**DAC2 GPIO Configuration
     PA6     ------> DAC2_OUT1
     */
-    GPIO_InitStruct.Pin = TEST_SIGNAL_Pin;
+    GPIO_InitStruct.Pin = DAC2_1_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(TEST_SIGNAL_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(DAC2_1_GPIO_Port, &GPIO_InitStruct);
 
     /* DAC2 DMA Init */
     /* DAC2_CH1 Init */
@@ -267,7 +267,7 @@ void HAL_DAC_MspDeInit(DAC_HandleTypeDef* dacHandle)
     PA4     ------> DAC1_OUT1
     PA5     ------> DAC1_OUT2
     */
-    HAL_GPIO_DeInit(GPIOA, BIAS_A_Pin|BIAS_B_Pin);
+    HAL_GPIO_DeInit(GPIOA, DAC1_1_Pin|DAC1_2_Pin);
 
   /* USER CODE BEGIN DAC1_MspDeInit 1 */
 
@@ -284,7 +284,7 @@ void HAL_DAC_MspDeInit(DAC_HandleTypeDef* dacHandle)
     /**DAC2 GPIO Configuration
     PA6     ------> DAC2_OUT1
     */
-    HAL_GPIO_DeInit(TEST_SIGNAL_GPIO_Port, TEST_SIGNAL_Pin);
+    HAL_GPIO_DeInit(DAC2_1_GPIO_Port, DAC2_1_Pin);
 
     /* DAC2 DMA DeInit */
     HAL_DMA_DeInit(dacHandle->DMA_Handle1);

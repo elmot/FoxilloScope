@@ -1,0 +1,994 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:ooo="http://openoffice.org/2004/office" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:config="urn:oasis:names:tc:opendocument:xmlns:config:1.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:rpt="http://openoffice.org/2005/report" xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" xmlns:dr3d="urn:oasis:names:tc:opendocument:xmlns:dr3d:1.0" xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" xmlns:chart="urn:oasis:names:tc:opendocument:xmlns:chart:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:number="urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0" xmlns:ooow="http://openoffice.org/2004/writer" xmlns:oooc="http://openoffice.org/2004/calc" xmlns:field="urn:openoffice:names:experimental:ooo-ms-interop:xmlns:field:1.0" xmlns:of="urn:oasis:names:tc:opendocument:xmlns:of:1.2" xmlns:xforms="http://www.w3.org/2002/xforms" xmlns:tableooo="http://openoffice.org/2009/table" xmlns:calcext="urn:org:documentfoundation:names:experimental:calc:xmlns:calcext:1.0" xmlns:drawooo="http://openoffice.org/2010/draw" xmlns:loext="urn:org:documentfoundation:names:experimental:office:xmlns:loext:1.0" xmlns:math="http://www.w3.org/1998/Math/MathML" xmlns:form="urn:oasis:names:tc:opendocument:xmlns:form:1.0" xmlns:script="urn:oasis:names:tc:opendocument:xmlns:script:1.0" xmlns:dom="http://www.w3.org/2001/xml-events" xmlns:formx="urn:openoffice:names:experimental:ooxml-odf-interop:xmlns:form:1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:grddl="http://www.w3.org/2003/g/data-view#" xmlns:css3t="http://www.w3.org/TR/css3-text/" xmlns:presentation="urn:oasis:names:tc:opendocument:xmlns:presentation:1.0" office:version="1.4" office:mimetype="application/vnd.oasis.opendocument.spreadsheet">
+ <office:meta><meta:generator>LibreOffice/26.8.0.3$Windows_X86_64 LibreOffice_project/bce0998afefdbc355585ca324285661a2170ba77</meta:generator><dc:date>2026-10-01T18:44:18.834250600</dc:date><meta:editing-duration>PT5H50M43S</meta:editing-duration><meta:editing-cycles>3</meta:editing-cycles><meta:print-date>2026-10-01T14:40:54.840072700</meta:print-date><meta:printed-by>PDF files</meta:printed-by><meta:document-statistic meta:table-count="1" meta:cell-count="76" meta:object-count="0"/></office:meta>
+ <office:settings>
+  <config:config-item-set config:name="ooo:view-settings">
+   <config:config-item config:name="VisibleAreaTop" config:type="int">0</config:config-item>
+   <config:config-item config:name="VisibleAreaLeft" config:type="int">0</config:config-item>
+   <config:config-item config:name="VisibleAreaWidth" config:type="int">12741</config:config-item>
+   <config:config-item config:name="VisibleAreaHeight" config:type="int">14288</config:config-item>
+   <config:config-item-map-indexed config:name="Views">
+    <config:config-item-map-entry>
+     <config:config-item config:name="ViewId" config:type="string">view1</config:config-item>
+     <config:config-item-map-named config:name="Tables">
+      <config:config-item-map-entry config:name="V2">
+       <config:config-item config:name="CursorPositionX" config:type="int">9</config:config-item>
+       <config:config-item config:name="CursorPositionY" config:type="int">22</config:config-item>
+       <config:config-item config:name="ActiveSplitRange" config:type="short">2</config:config-item>
+       <config:config-item config:name="PositionLeft" config:type="int">0</config:config-item>
+       <config:config-item config:name="PositionRight" config:type="int">0</config:config-item>
+       <config:config-item config:name="PositionTop" config:type="int">0</config:config-item>
+       <config:config-item config:name="PositionBottom" config:type="int">0</config:config-item>
+       <config:config-item config:name="ZoomType" config:type="short">0</config:config-item>
+       <config:config-item config:name="ZoomValue" config:type="int">100</config:config-item>
+       <config:config-item config:name="PageViewZoomValue" config:type="int">60</config:config-item>
+       <config:config-item config:name="ShowGrid" config:type="boolean">true</config:config-item>
+       <config:config-item config:name="AnchoredTextOverflowLegacy" config:type="boolean">false</config:config-item>
+       <config:config-item config:name="LegacySingleLineFontwork" config:type="boolean">false</config:config-item>
+       <config:config-item config:name="ConnectorUseSnapRect" config:type="boolean">false</config:config-item>
+       <config:config-item config:name="IgnoreBreakAfterMultilineField" config:type="boolean">false</config:config-item>
+       <config:config-item config:name="UseTrailingEmptyLinesInLayout" config:type="boolean">false</config:config-item>
+      </config:config-item-map-entry>
+     </config:config-item-map-named>
+     <config:config-item config:name="ActiveTable" config:type="string">V2</config:config-item>
+     <config:config-item config:name="HorizontalScrollbarWidth" config:type="int">2526</config:config-item>
+     <config:config-item config:name="ZoomType" config:type="short">0</config:config-item>
+     <config:config-item config:name="ZoomValue" config:type="int">100</config:config-item>
+     <config:config-item config:name="PageViewZoomValue" config:type="int">60</config:config-item>
+     <config:config-item config:name="ShowPageBreakPreview" config:type="boolean">false</config:config-item>
+     <config:config-item config:name="ShowZeroValues" config:type="boolean">true</config:config-item>
+     <config:config-item config:name="ShowNotes" config:type="boolean">true</config:config-item>
+     <config:config-item config:name="ShowNoteAuthor" config:type="boolean">true</config:config-item>
+     <config:config-item config:name="ShowFormulasMarks" config:type="boolean">false</config:config-item>
+     <config:config-item config:name="ShowGrid" config:type="boolean">true</config:config-item>
+     <config:config-item config:name="GridColor" config:type="int">12632256</config:config-item>
+     <config:config-item config:name="ShowPageBreaks" config:type="boolean">true</config:config-item>
+     <config:config-item config:name="HasColumnRowHeaders" config:type="boolean">true</config:config-item>
+     <config:config-item config:name="HasSheetTabs" config:type="boolean">true</config:config-item>
+     <config:config-item config:name="IsOutlineSymbolsSet" config:type="boolean">true</config:config-item>
+     <config:config-item config:name="IsValueHighlightingEnabled" config:type="boolean">false</config:config-item>
+     <config:config-item config:name="IsSnapToRaster" config:type="boolean">false</config:config-item>
+     <config:config-item config:name="RasterIsVisible" config:type="boolean">false</config:config-item>
+     <config:config-item config:name="RasterResolutionX" config:type="int">1270</config:config-item>
+     <config:config-item config:name="RasterResolutionY" config:type="int">1270</config:config-item>
+     <config:config-item config:name="RasterSubdivisionX" config:type="int">1</config:config-item>
+     <config:config-item config:name="RasterSubdivisionY" config:type="int">1</config:config-item>
+     <config:config-item config:name="IsRasterAxisSynchronized" config:type="boolean">true</config:config-item>
+     <config:config-item config:name="FormulaBarHeight" config:type="short">1</config:config-item>
+     <config:config-item config:name="WindowState" config:type="string">0,34,2560,1494;4;,,,;</config:config-item>
+     <config:config-item config:name="AnchoredTextOverflowLegacy" config:type="boolean">false</config:config-item>
+     <config:config-item config:name="LegacySingleLineFontwork" config:type="boolean">false</config:config-item>
+     <config:config-item config:name="ConnectorUseSnapRect" config:type="boolean">false</config:config-item>
+     <config:config-item config:name="IgnoreBreakAfterMultilineField" config:type="boolean">false</config:config-item>
+     <config:config-item config:name="UseTrailingEmptyLinesInLayout" config:type="boolean">false</config:config-item>
+    </config:config-item-map-entry>
+   </config:config-item-map-indexed>
+  </config:config-item-set>
+  <config:config-item-set config:name="ooo:configuration-settings">
+   <config:config-item config:name="AllowPrintJobCancel" config:type="boolean">true</config:config-item>
+   <config:config-item config:name="ApplyUserData" config:type="boolean">true</config:config-item>
+   <config:config-item config:name="AutoCalculate" config:type="boolean">true</config:config-item>
+   <config:config-item config:name="CharacterCompressionType" config:type="short">0</config:config-item>
+   <config:config-item config:name="EmbedAsianScriptFonts" config:type="boolean">true</config:config-item>
+   <config:config-item config:name="EmbedComplexScriptFonts" config:type="boolean">true</config:config-item>
+   <config:config-item config:name="EmbedFonts" config:type="boolean">false</config:config-item>
+   <config:config-item config:name="EmbedLatinScriptFonts" config:type="boolean">true</config:config-item>
+   <config:config-item config:name="EmbedOnlyUsedFonts" config:type="boolean">false</config:config-item>
+   <config:config-item config:name="GridColor" config:type="int">12632256</config:config-item>
+   <config:config-item config:name="HasColumnRowHeaders" config:type="boolean">true</config:config-item>
+   <config:config-item config:name="HasSheetTabs" config:type="boolean">true</config:config-item>
+   <config:config-item config:name="ImagePreferredDPI" config:type="int">0</config:config-item>
+   <config:config-item config:name="IsDocumentShared" config:type="boolean">false</config:config-item>
+   <config:config-item config:name="IsKernAsianPunctuation" config:type="boolean">false</config:config-item>
+   <config:config-item config:name="IsOutlineSymbolsSet" config:type="boolean">true</config:config-item>
+   <config:config-item config:name="IsRasterAxisSynchronized" config:type="boolean">true</config:config-item>
+   <config:config-item config:name="IsSnapToRaster" config:type="boolean">false</config:config-item>
+   <config:config-item config:name="LinkUpdateMode" config:type="short">3</config:config-item>
+   <config:config-item config:name="LoadReadonly" config:type="boolean">false</config:config-item>
+   <config:config-item config:name="ModifyPasswordHash" config:type="int">0</config:config-item>
+   <config:config-item config:name="PrinterName" config:type="string">HP5184D9 (HP OfficeJet Pro 6970)</config:config-item>
+   <config:config-item config:name="PrinterPaperFromSetup" config:type="boolean">false</config:config-item>
+   <config:config-item config:name="PrinterSetup" config:type="base64Binary">Rzj+/0hQNTE4NEQ5IChIUCBPZmZpY2VKZXQgUHJvIDY5NzApAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASFAgT2ZmaWNlSmV0IFBybyA2OTcwIFBDTC0zAAAAAAAWAAEADjcAAAAAAQAIAFZUAAAkbQAAM1ROVwAAAAAKAEgAUAA1ADEAOAA0AEQAOQAgACgASABQACAATwBmAGYAaQBjAGUASgBlAHQAIABQAHIAbwAgADYAOQA3ADAAAAABBAMG3AAoNkO/AQIBAAEA6gpvCGQAAQABAVgCAgABAFgCAwABAEwAZQB0AHQAZQByAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAQAAAAIAAAALAQAA/////0dJUzQAAAAAAAAAAAAAAABESU5VIgAACVwLzCoi/njVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAEAAQAAAAAACQAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAkAAFNNVEoAAAAAEADwCHsAOAA2ADAARAA2ADIARgBCAC0AQgBGADUARgAtADQAZAAzADYALQBBADEAMQAxAC0ARAA2AEUAOAA1AEQAQwA4ADUANAAzAEEAfQAAAElucHV0QmluADEAUkVTRExMAFVuaXJlc0RMTABMb2NhbGUARW5nbGlzaF9Vbml0ZWRfU3RhdGVzAFN0cmluZ3NDbHVzdGVyMABJRFNfUFNfUEFQRVJfU0laRQBTdHJpbmdzQ2x1c3RlcjEASURTX0FCT1VUX0hQX0NPUFlSSUdIVDEASFBJbmtEcml2ZXJUeXBlAEhQU3RhbmRhcmRJbmtEcml2ZXIATWFudWFsRHVwbGV4AE1hbnVhbABEZXZpY2VMYW5ndWFnZQBQQ0wAVjREcml2ZXIAVjQASFBNYW51YWxEdXBsZXhTdXBwb3J0AE9GRgBIUERhdGFDb2xsZWN0aW9uWE1MAGhweWdpZERhdGFNYXAueG1sAEhQSW1hZ2luZ0RsbABocGZpbWU1MgBIUEFwcGxpY2F0aW9uVHJhY2tpbmcAQXBwVHJhY2tpbmcAUGFnZUNvbG9yTWFuYWdlbWVudABOb25lAEhQTWVjaE9mZnNldAAxOTIASFBGZWVkVHlwZQBIUENGZWVkAEhQU3BlZWRNZWNoADIASFBCb29rbGV0R3V0dGVyADU5MjcASFBSbHQAMQBVc2VyUmVzb2x1dGlvbgBOb3JtYWwAUmVzb2x1dGlvbgA2MDBkcGkASFBQcmludE9uQm90aFNpZGVzTWFudWFsbHkAT0ZGAENvbG9yTW9kZQBDb2xvck91dHB1dABQYXBlclNpemUATEVUVEVSAEJvcmRlcmxlc3NQcmludABOTwBPcmllbnRhdGlvbgBQT1JUUkFJVABNZWRpYVR5cGUAMC4xMDA0LjAwMDBfMF82MDB4NjAwAER1cGxleABOT05FAEpvYkZsaXBQYWdlVXAAZmFsc2UARG9jdW1lbnROVXAAMQBOVXBCb3JkZXJzAE9mZgBQcmVzZW50YXRpb25EaXJlY3Rpb24AUmlnaHRCb3R0b20AQ29sbGF0ZQBPTgBKb2JQYWdlT3JkZXIAU3RhbmRhcmQARG9jdW1lbnRQYWdlUmFuZ2VzAEFsbFBhZ2VzAEdVSVN0cmluZ3MASURTX1VTRV9QQVBFUl9TSVpFAF9HZW5lcmFsRXZlcnlkYXkATWVkaWFUeXBlAF9QaG90b1ByaW50aW5nQm9yZGVybGVzcwBNZWRpYVR5cGUAX1Bob3RvV2hpdGVCb3JkZXJzAE1lZGlhVHlwZQBfRHVwbGV4AE1lZGlhVHlwZQBfRmFzdEVjbwBNZWRpYVR5cGUAX0ZhY3RvcnlEZWZhdWx0cwBNZWRpYVR5cGUARG9jdW1lbnRCaW5kaW5nAE5PTkUASFBNYXhEcGkAMF9kaXNhYmxlZABPdXRwdXRRdWFsaXR5UHJldgBOb3JtYWwAQm9yZGVybGVzc1ByZXYATk8ASW5wdXRCaW5QcmV2AEF1dG8ATWVkaWFUeXBlUHJldgAwLjEwMDQuMDAwMF8wXzYwMHg2MDAAVG91Y2hCeVVzZXIAT24AU25hcHBfSFBfM181WDVfSU5fTF9NTQBNVFNfNS4xMDY5LjAwMDBfMF82MDB4NjAwX0lCXzFfUFFfTm9ybWFsX0JEX0JvcmRlcmxlc3NfRU5EAFNuYXBwX0phcGFuSGFnYWtpUG9zdGNhcmQATVRTXzguMTA1NC4wMDAwXzFfNjAweDYwMF9JQl8xX1BRX05vcm1hbF9CRF9Ob25lX0VORABTbmFwcF9IUF80WDZfSU5fMTBYMTVfQ00ATVRTXzUuMTA2OS4wMDAwXzBfNjAweDYwMF9JQl8xX1BRX05vcm1hbF9CRF9Cb3JkZXJsZXNzX0VORABTbmFwcF9IUF8yTF9NTQBNVFNfNS4xMDY5LjAwMDBfMF82MDB4NjAwX0lCXzFfUFFfTm9ybWFsX0JEX0JvcmRlcmxlc3NfRU5EAFNuYXBwX0hQXzVYN19JTl8xM1gxOF9DTQBNVFNfNS4xMDY5LjAwMDBfMF82MDB4NjAwX0lCXzFfUFFfTm9ybWFsX0JEX0JvcmRlcmxlc3NfRU5EAFNuYXBwX0hQXzhYMTBfSU4ATVRTXzUuMTA2OS4wMDAwXzBfNjAweDYwMF9JQl8xX1BRX05vcm1hbF9CRF9Cb3JkZXJsZXNzX0VORABTbmFwcF9IUF9JTkRFWF9DQVJEXzRYNl9JTgBNVFNfMi4xMDc3LjAwMDBfMV82MDB4NjAwX0lCXzFfUFFfTm9ybWFsX0JEX05vbmVfRU5EAFNuYXBwX0hQX0lOREVYX0NBUkRfNVg4X0lOAE1UU18yLjEwNzcuMDAwMF8xXzYwMHg2MDBfSUJfMV9QUV9Ob3JtYWxfQkRfTm9uZV9FTkQAU25hcHBfSFBfSU5ERVhfQ0FSRF9MRVRURVIATVRTXzIuMTA3Ny4wMDAwXzFfNjAweDYwMF9JQl8xX1BRX05vcm1hbF9CRF9Ob25lX0VORABTbmFwcF9IUF9JTkRFWF9DQVJEX0E0AE1UU18yLjEwNzcuMDAwMF8xXzYwMHg2MDBfSUJfMV9QUV9Ob3JtYWxfQkRfTm9uZV9FTkQAU25hcHBfSFBfT0ZVS1VfSEFHQUtJXzIwMFgxNDhfTU0ATVRTXzguMTA1NC4wMDAwXzFfNjAweDYwMF9JQl8xX1BRX05vcm1hbF9CRF9Ob25lX0VORAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAzCoAAFY0RE0BAAAAAAAAAFEH64EcAAAAlA4AAD4AAAD7Yg2GX782TaER1uhdyFQ6eA4AAPwDAAAEAAAAgAAAAAAAAAAAAAAAAQAAAAQAAAAOAAAAgAAAAAEAAAAEAAAAGAAAAIQAAAABAAAABAAAACYAAACIAAAAAQAAAAQAAABEAAAAjAAAAAEAAAAEAAAAZAAAAJAAAAADAAAAfgAAAIwAAACUAAAAAQAAAAQAAAC0AAAAFAEAAAEAAAAEAAAA5gAAABgBAAADAAAAfgAAABoBAAAcAQAAAwAAAH4AAABCAQAAnAEAAAMAAAB+AAAAaAEAABwCAAABAAAABAAAAI4BAACcAgAAAQAAAAQAAAC+AQAAoAIAAAMAAAB+AAAA8AEAAKQCAAADAAAAfgAAABYCAAAkAwAAAwAAAH4AAAA6AgAApAMAAAEAAAAEAAAAZAIAACQEAAABAAAABAAAAJgCAAAoBAAAAwAAAH4AAADOAgAALAQAAAMAAAB+AAAA+AIAAKwEAAADAAAAfgAAACADAAAsBQAAAQAAAAQAAABUAwAArAUAAAEAAAAEAAAAkgMAALAFAAADAAAAfgAAANIDAAC0BQAAAwAAAH4AAAAGBAAANAYAAAMAAAB+AAAAOAQAALQGAAADAAAAAAEAAHYEAAA0BwAAAwAAAH4AAACgBAAANAgAAAEAAAAEAAAA1AQAALQIAAABAAAABAAAABIFAAC4CAAAAwAAAH4AAABSBQAAvAgAAAMAAAB+AAAAhgUAADwJAAADAAAAfgAAALgFAAC8CQAAAwAAAAABAAD2BQAAPAoAAAMAAAAAAQAAIAYAADwLAAABAAAABAAAAEAGAAA8DAAAAQAAAAQAAABqBgAAQAwAAAEAAAAEAAAAlgYAAEQMAAABAAAABAAAALIGAABIDAAAAwAAAAACAADQBgAATAwAAAEAAAAEAAAA9gYAAEwOAAABAAAABAAAADoHAABQDgAAAQAAAAQAAACABwAAVA4AAAMAAAAAAgAAtAcAAFgOAAABAAAABAAAAOIHAABYEAAAAQAAAAQAAAAWCAAAXBAAAAMAAAASAAAARAgAAGAQAAADAAAAAAEAAHIIAAB0EAAAAQAAAAQAAACgCAAAdBEAAAEAAAAEAAAA0ggAAHgRAAABAAAABAAAAP4IAAB8EQAAAQAAAAQAAAAuCQAAgBEAAAMAAAAwCAAAaAkAAIQRAAABAAAABAAAAJgJAAC0GQAAAQAAAAQAAADSCQAAuBkAAAMAAACAAAAADgoAALwZAAADAAAAgAAAAB4KAAA8GgAAAwAAABoAAAAwCgAAvBoAAAMAAAAAAQAAOAoAANgaAAADAAAAQAAAAEoKAADYGwAAAwAAACAAAABkCgAAGBwAAGIAQQByAHIAYQB5AAAAWgBvAG8AbQAAAFAAbwBzAHQAZQByAAAATgBVAHAAQgBvAHIAZABlAHIAVwBpAGQAdABoAAAATgBVAHAAQgBvAHIAZABlAHIATABlAG4AZwB0AGgAAABOAFUAcABCAG8AcgBkAGUAcgBEAGEAcwBoAEwAZQBuAGcAdABoAAAARgByAG8AbgB0AEMAbwB2AGUAcgBNAGUAZABpAGEAUwBpAHoAZQAAAEYAcgBvAG4AdABDAG8AdgBlAHIATQBlAGQAaQBhAFMAaQB6AGUAVwBpAGQAdABoAAAARgByAG8AbgB0AEMAbwB2AGUAcgBNAGUAZABpAGEAUwBpAHoAZQBIAGUAaQBnAGgAdAAAAEYAcgBvAG4AdABDAG8AdgBlAHIATQBlAGQAaQBhAFQAeQBwAGUAAABGAHIAbwBuAHQAQwBvAHYAZQByAEkAbgBwAHUAdABCAGkAbgAAAEIAYQBjAGsAQwBvAHYAZQByAE0AZQBkAGkAYQBTAGkAegBlAAAAQgBhAGMAawBDAG8AdgBlAHIATQBlAGQAaQBhAFMAaQB6AGUAVwBpAGQAdABoAAAAQgBhAGMAawBDAG8AdgBlAHIATQBlAGQAaQBhAFMAaQB6AGUASABlAGkAZwBoAHQAAABCAGEAYwBrAEMAbwB2AGUAcgBNAGUAZABpAGEAVAB5AHAAZQAAAEIAYQBjAGsAQwBvAHYAZQByAEkAbgBwAHUAdABCAGkAbgAAAEkAbgB0AGUAcgBsAGUAYQB2AGUAcwBNAGUAZABpAGEAUwBpAHoAZQAAAEkAbgB0AGUAcgBsAGUAYQB2AGUAcwBNAGUAZABpAGEAUwBpAHoAZQBXAGkAZAB0AGgAAABJAG4AdABlAHIAbABlAGEAdgBlAHMATQBlAGQAaQBhAFMAaQB6AGUASABlAGkAZwBoAHQAAABJAG4AdABlAHIAbABlAGEAdgBlAHMATQBlAGQAaQBhAFQAeQBwAGUAAABJAG4AdABlAHIAbABlAGEAdgBlAHMASQBuAHAAdQB0AEIAaQBuAAAASQBuAHMAZQByAHQARQBtAHAAdAB5AFAAYQBnAGUAcwBNAGUAZABpAGEAUwBpAHoAZQAAAEkAbgBzAGUAcgB0AEUAbQBwAHQAeQBQAGEAZwBlAHMATQBlAGQAaQBhAFMAaQB6AGUAVwBpAGQAdABoAAAASQBuAHMAZQByAHQARQBtAHAAdAB5AFAAYQBnAGUAcwBNAGUAZABpAGEAUwBpAHoAZQBIAGUAaQBnAGgAdAAAAEkAbgBzAGUAcgB0AEUAbQBwAHQAeQBQAGEAZwBlAHMATQBlAGQAaQBhAFQAeQBwAGUAAABJAG4AcwBlAHIAdABFAG0AcAB0AHkAUABhAGcAZQBzAEkAbgBwAHUAdABCAGkAbgAAAEkAbgBzAGUAcgB0AEUAbQBwAHQAeQBQAGEAZwBlAHMARQB4AGMAZQBwAHQAaQBvAG4AVQBzAGEAZwBlAAAASQBuAHMAZQByAHQARQBtAHAAdAB5AFAAYQBnAGUAcwBMAGkAcwB0AAAASQBuAHMAZQByAHQAUAByAGkAbgB0AFAAYQBnAGUAcwBNAGUAZABpAGEAUwBpAHoAZQAAAEkAbgBzAGUAcgB0AFAAcgBpAG4AdABQAGEAZwBlAHMATQBlAGQAaQBhAFMAaQB6AGUAVwBpAGQAdABoAAAASQBuAHMAZQByAHQAUAByAGkAbgB0AFAAYQBnAGUAcwBNAGUAZABpAGEAUwBpAHoAZQBIAGUAaQBnAGgAdAAAAEkAbgBzAGUAcgB0AFAAcgBpAG4AdABQAGEAZwBlAHMATQBlAGQAaQBhAFQAeQBwAGUAAABJAG4AcwBlAHIAdABQAHIAaQBuAHQAUABhAGcAZQBzAEkAbgBwAHUAdABCAGkAbgAAAEkAbgBzAGUAcgB0AFAAcgBpAG4AdABQAGEAZwBlAHMARQB4AGMAZQBwAHQAaQBvAG4AVQBzAGEAZwBlAAAASQBuAHMAZQByAHQAUAByAGkAbgB0AFAAYQBnAGUAcwBMAGkAcwB0AAAAVABhAHIAZwBlAHQATQBlAGQAaQBhAFMAaQB6AGUAAABUAGEAcgBnAGUAdABNAGUAZABpAGEAUwBpAHoAZQBXAGkAZAB0AGgAAABUAGEAcgBnAGUAdABNAGUAZABpAGEAUwBpAHoAZQBIAGUAaQBnAGgAdAAAAEIAaQBuAGQAaQBuAGcARwB1AHQAdABlAHIAAABTAGkAZwBuAGEAdAB1AHIAZQBQAGEAZwBlAHMAAABQAGEAZwBlAFcAYQB0AGUAcgBtAGEAcgBrAE4AYQBtAGUASAAAAFAAYQBnAGUAVwBhAHQAZQByAG0AYQByAGsAUABsAGEAYwBlAG0AZQBuAHQATwBmAGYAcwBlAHQAVwBpAGQAdABoAAAAUABhAGcAZQBXAGEAdABlAHIAbQBhAHIAawBQAGwAYQBjAGUAbQBlAG4AdABPAGYAZgBzAGUAdABIAGUAaQBnAGgAdAAAAFAAYQBnAGUAVwBhAHQAZQByAG0AYQByAGsAVAByAGEAbgBzAHAAYQByAGUAbgBjAHkAAABQAGEAZwBlAFcAYQB0AGUAcgBtAGEAcgBrAFQAZQB4AHQAVABlAHgAdABIAAAAUABhAGcAZQBXAGEAdABlAHIAbQBhAHIAawBUAGUAeAB0AEYAbwBuAHQAUwBpAHoAZQAAAFAAYQBnAGUAVwBhAHQAZQByAG0AYQByAGsAVABlAHgAdABBAG4AZwBsAGUAAABQAGEAZwBlAFcAYQB0AGUAcgBtAGEAcgBrAFQAZQB4AHQAQwBvAGwAbwByAAAAUABhAGcAZQBXAGEAdABlAHIAbQBhAHIAawBUAGUAeAB0AEYAbwBuAHQASAAAAFAAYQBnAGUAVwBhAHQAZQByAG0AYQByAGsAVABlAHgAdABPAHUAdABsAGkAbgBlAAAAUABhAGcAZQBXAGEAdABlAHIAbQBhAHIAawBUAGUAeAB0AEIAbwBsAGQAAABQAGEAZwBlAFcAYQB0AGUAcgBtAGEAcgBrAFQAZQB4AHQASQB0AGEAbABpAGMAAABQAGEAZwBlAFcAYQB0AGUAcgBtAGEAcgBrAFQAZQB4AHQAUgBpAGcAaAB0AFQAbwBMAGUAZgB0AAAAUABhAGcAZQBXAGEAdABlAHIAbQBhAHIAawBJAG0AYQBnAGUARgBpAGwAZQBIAAAAUABhAGcAZQBXAGEAdABlAHIAbQBhAHIAawBJAG0AYQBnAGUAUwBjAGEAbABlAFcAaQBkAHQAaAAAAFAAYQBnAGUAVwBhAHQAZQByAG0AYQByAGsASQBtAGEAZwBlAFMAYwBhAGwAZQBIAGUAaQBnAGgAdAAAAEoAbwBiAE4AYQBtAGUAAABVAHMAZQByAE4AYQBtAGUAAABQAEkATgAAAFAAYQBzAHMAdwBvAHIAZAAAAFMAaABvAHIAdABjAHUAdABOAGEAbQBlAAAARAB1AHAAbABlAHgATQBvAGQAZQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABkAAAAAQAAAAAAAAAAAAAAAAAAAG4AcwAwADAAMAAwADoAVQBzAGUAUABhAGcAZQBNAGUAZABpAGEAUwBpAHoAZQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABwAHMAawA6AFAAbABhAGkAbgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHAAcwBrADoAQQB1AHQAbwBTAGUAbABlAGMAdAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbgBzADAAMAAwADAAOgBVAHMAZQBQAGEAZwBlAE0AZQBkAGkAYQBTAGkAegBlAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHAAcwBrADoAUABsAGEAaQBuAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcABzAGsAOgBBAHUAdABvAFMAZQBsAGUAYwB0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABuAHMAMAAwADAAMAA6AFUAcwBlAFAAYQBnAGUATQBlAGQAaQBhAFMAaQB6AGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcABzAGsAOgBQAGwAYQBpAG4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABwAHMAawA6AEEAdQB0AG8AUwBlAGwAZQBjAHQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAG4AcwAwADAAMAAwADoAVQBzAGUAUABhAGcAZQBNAGUAZABpAGEAUwBpAHoAZQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABwAHMAawA6AEEAdQB0AG8AUwBlAGwAZQBjAHQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHAAcwBrADoAQQB1AHQAbwBTAGUAbABlAGMAdAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbgBzADAAMAAwADAAOgBTAHAAZQBjAGkAZgBpAGUAZABQAGEAZwBlAHMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbgBzADAAMAAwADAAOgBVAHMAZQBQAGEAZwBlAE0AZQBkAGkAYQBTAGkAegBlAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHAAcwBrADoAQQB1AHQAbwBTAGUAbABlAGMAdAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcABzAGsAOgBBAHUAdABvAFMAZQBsAGUAYwB0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABuAHMAMAAwADAAMAA6AFMAcABlAGMAaQBmAGkAZQBkAFAAYQBnAGUAcwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyAAAAMAAwADYAMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABIAAAAAAAAAEYARgBGAEYAMAAwADAAMAAAAAAAMAAwADYAMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwADAANAAxAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGQAAABkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE0AYQBuAHUAYQBsAAAAAAAAAAAAAAAAAAAAAAAAAAAAEgBDT01QQVRfRFVQTEVYX01PREUPAER1cGxleE1vZGU6Ok9mZgwAUFJJTlRFUl9OQU1FIABIUDUxODREOSAoSFAgT2ZmaWNlSmV0IFBybyA2OTcwKQsARFJJVkVSX05BTUUbAEhQIE9mZmljZUpldCBQcm8gNjk3MCBQQ0wtMw==</config:config-item>
+   <config:config-item config:name="RasterIsVisible" config:type="boolean">false</config:config-item>
+   <config:config-item config:name="RasterResolutionX" config:type="int">1270</config:config-item>
+   <config:config-item config:name="RasterResolutionY" config:type="int">1270</config:config-item>
+   <config:config-item config:name="RasterSubdivisionX" config:type="int">1</config:config-item>
+   <config:config-item config:name="RasterSubdivisionY" config:type="int">1</config:config-item>
+   <config:config-item config:name="SaveThumbnail" config:type="boolean">true</config:config-item>
+   <config:config-item config:name="SaveVersionOnClose" config:type="boolean">false</config:config-item>
+   <config:config-item config:name="ShowFormulasMarks" config:type="boolean">false</config:config-item>
+   <config:config-item config:name="ShowGrid" config:type="boolean">true</config:config-item>
+   <config:config-item config:name="ShowNoteAuthor" config:type="boolean">true</config:config-item>
+   <config:config-item config:name="ShowNotes" config:type="boolean">true</config:config-item>
+   <config:config-item config:name="ShowPageBreaks" config:type="boolean">true</config:config-item>
+   <config:config-item config:name="ShowZeroValues" config:type="boolean">true</config:config-item>
+   <config:config-item config:name="SyntaxStringRef" config:type="short">7</config:config-item>
+   <config:config-item config:name="UpdateFromTemplate" config:type="boolean">true</config:config-item>
+   <config:config-item-map-named config:name="ScriptConfiguration">
+    <config:config-item-map-entry config:name="V2">
+     <config:config-item config:name="CodeName" config:type="string">V2</config:config-item>
+    </config:config-item-map-entry>
+   </config:config-item-map-named>
+  </config:config-item-set>
+ </office:settings>
+ <office:scripts>
+  <office:script script:language="ooo:Basic">
+   <ooo:libraries xmlns:ooo="http://openoffice.org/2004/office" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <ooo:library-embedded ooo:name="Standard"/>
+   </ooo:libraries>
+  </office:script>
+ </office:scripts>
+ <office:font-face-decls>
+  <style:font-face style:name="Aptos Narrow" svg:font-family="&apos;Aptos Narrow&apos;"/>
+  <style:font-face style:name="Arial" svg:font-family="Arial"/>
+  <style:font-face style:name="DejaVu Sans" svg:font-family="&apos;DejaVu Sans&apos;" style:font-family-generic="system" style:font-pitch="variable"/>
+  <style:font-face style:name="Liberation Sans" svg:font-family="&apos;Liberation Sans&apos;" style:font-family-generic="swiss" style:font-pitch="variable"/>
+  <style:font-face style:name="Linux Libertine G" svg:font-family="&apos;Linux Libertine G&apos;" style:font-family-generic="system" style:font-pitch="variable"/>
+ </office:font-face-decls>
+ <office:styles>
+  <style:default-style style:family="table-cell">
+   <style:table-cell-properties fo:wrap-option="no-wrap"/>
+   <style:paragraph-properties style:tab-stop-distance="12.7mm"/>
+   <style:text-properties style:font-name="Liberation Sans" fo:font-size="10pt" fo:language="en" fo:country="US" style:font-name-asian="DejaVu Sans" style:font-size-asian="10pt" style:language-asian="zh" style:country-asian="CN" style:font-name-complex="DejaVu Sans" style:font-size-complex="10pt" style:language-complex="hi" style:country-complex="IN"/>
+  </style:default-style>
+  <style:default-style style:family="graphic">
+   <style:graphic-properties svg:stroke-color="#3465a4" draw:fill-color="#729fcf" fo:wrap-option="no-wrap" draw:shadow-offset-x="3mm" draw:shadow-offset-y="3mm" style:writing-mode="page"/>
+   <style:paragraph-properties style:text-autospace="ideograph-alpha" style:punctuation-wrap="simple" style:line-break="strict" style:font-independent-line-spacing="false">
+    <style:tab-stops/>
+   </style:paragraph-properties>
+   <style:text-properties style:use-window-font-color="true" loext:opacity="0%" fo:font-family="&apos;Liberation Serif&apos;" style:font-family-generic="roman" style:font-pitch="variable" fo:font-size="12pt" fo:language="en" fo:country="US" style:letter-kerning="true" style:font-family-asian="&apos;Segoe UI&apos;" style:font-family-generic-asian="system" style:font-pitch-asian="variable" style:font-size-asian="12pt" style:language-asian="zh" style:country-asian="CN" style:font-family-complex="Tahoma" style:font-family-generic-complex="system" style:font-pitch-complex="variable" style:font-size-complex="12pt" style:language-complex="hi" style:country-complex="IN"/>
+  </style:default-style>
+  <style:style style:name="Default" style:family="graphic"/>
+  <style:style style:name="Note" style:family="graphic" style:parent-style-name="Default">
+   <style:graphic-properties draw:stroke="solid" draw:marker-start="Arrowheads_20_1" draw:marker-start-width="2mm" draw:marker-start-center="false" draw:fill="solid" draw:fill-color="#ffffc0" draw:auto-grow-height="true" draw:auto-grow-width="false" fo:padding-top="1mm" fo:padding-bottom="1mm" fo:padding-left="1mm" fo:padding-right="1mm" draw:shadow="visible" draw:shadow-offset-x="1mm" draw:shadow-offset-y="1mm"/>
+   <style:text-properties style:font-name="Arial" fo:font-family="Arial" fo:font-size="10pt" style:font-name-asian="Linux Libertine G" style:font-family-asian="&apos;Linux Libertine G&apos;" style:font-family-generic-asian="system" style:font-pitch-asian="variable" style:font-size-asian="10pt" style:font-name-complex="Arial" style:font-family-complex="Arial" style:font-size-complex="10pt"/>
+  </style:style>
+  <number:number-style style:name="N0">
+   <number:number number:min-integer-digits="1"/>
+  </number:number-style>
+  <number:currency-style style:name="N119P0" style:volatile="true">
+   <number:currency-symbol number:language="en" number:country="IE">€</number:currency-symbol>
+   <number:number number:decimal-places="2" number:min-decimal-places="2" number:min-integer-digits="1" number:grouping="true"/>
+  </number:currency-style>
+  <number:currency-style style:name="N119">
+   <style:text-properties fo:color="#ff0000"/>
+   <number:text>-</number:text>
+   <number:currency-symbol number:language="en" number:country="IE">€</number:currency-symbol>
+   <number:number number:decimal-places="2" number:min-decimal-places="2" number:min-integer-digits="1" number:grouping="true"/>
+   <style:map style:condition="value()&gt;=0" style:apply-style-name="N119P0"/>
+  </number:currency-style>
+  <number:time-style style:name="N120">
+   <number:minutes number:style="long"/>
+   <number:text>:</number:text>
+   <number:seconds number:style="long"/>
+  </number:time-style>
+  <number:time-style style:name="N121" number:truncate-on-overflow="false">
+   <number:hours/>
+   <number:text>:</number:text>
+   <number:minutes number:style="long"/>
+   <number:text>:</number:text>
+   <number:seconds number:style="long"/>
+  </number:time-style>
+  <number:time-style style:name="N122">
+   <number:minutes number:style="long"/>
+   <number:text>:</number:text>
+   <number:seconds number:style="long" number:decimal-places="1"/>
+  </number:time-style>
+  <number:number-style style:name="N123">
+   <number:scientific-number number:decimal-places="1" number:min-decimal-places="1" number:min-integer-digits="1" number:min-exponent-digits="1" number:exponent-interval="3" number:forced-exponent-sign="true"/>
+  </number:number-style>
+  <number:currency-style style:name="N10130P0" style:volatile="true" number:language="en" number:country="US">
+   <number:currency-symbol/>
+   <number:number number:decimal-places="0" number:min-decimal-places="0" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text> </number:text>
+  </number:currency-style>
+  <number:currency-style style:name="N10130" number:language="en" number:country="US">
+   <number:text>(</number:text>
+   <number:currency-symbol/>
+   <number:number number:decimal-places="0" number:min-decimal-places="0" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text>)</number:text>
+   <style:map style:condition="value()&gt;=0" style:apply-style-name="N10130P0"/>
+  </number:currency-style>
+  <number:currency-style style:name="N10131P0" style:volatile="true" number:language="en" number:country="US">
+   <number:currency-symbol/>
+   <number:number number:decimal-places="0" number:min-decimal-places="0" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text> </number:text>
+  </number:currency-style>
+  <number:currency-style style:name="N10131" number:language="en" number:country="US">
+   <style:text-properties fo:color="#ff0000"/>
+   <number:text>(</number:text>
+   <number:currency-symbol/>
+   <number:number number:decimal-places="0" number:min-decimal-places="0" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text>)</number:text>
+   <style:map style:condition="value()&gt;=0" style:apply-style-name="N10131P0"/>
+  </number:currency-style>
+  <number:currency-style style:name="N10133P0" style:volatile="true" number:language="en" number:country="US">
+   <number:currency-symbol/>
+   <number:number number:decimal-places="2" number:min-decimal-places="2" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text> </number:text>
+  </number:currency-style>
+  <number:currency-style style:name="N10133" number:language="en" number:country="US">
+   <number:text>(</number:text>
+   <number:currency-symbol/>
+   <number:number number:decimal-places="2" number:min-decimal-places="2" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text>)</number:text>
+   <style:map style:condition="value()&gt;=0" style:apply-style-name="N10133P0"/>
+  </number:currency-style>
+  <number:currency-style style:name="N10134P0" style:volatile="true" number:language="en" number:country="US">
+   <number:currency-symbol/>
+   <number:number number:decimal-places="2" number:min-decimal-places="2" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text> </number:text>
+  </number:currency-style>
+  <number:currency-style style:name="N10134" number:language="en" number:country="US">
+   <style:text-properties fo:color="#ff0000"/>
+   <number:text>(</number:text>
+   <number:currency-symbol/>
+   <number:number number:decimal-places="2" number:min-decimal-places="2" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text>)</number:text>
+   <style:map style:condition="value()&gt;=0" style:apply-style-name="N10134P0"/>
+  </number:currency-style>
+  <number:date-style style:name="N10135" number:language="en" number:country="US">
+   <number:month/>
+   <number:text>/</number:text>
+   <number:day/>
+   <number:text>/</number:text>
+   <number:year number:style="long"/>
+  </number:date-style>
+  <number:date-style style:name="N10136" number:language="en" number:country="US">
+   <number:day/>
+   <number:text>-</number:text>
+   <number:month number:textual="true"/>
+   <number:text>-</number:text>
+   <number:year/>
+  </number:date-style>
+  <number:date-style style:name="N10137" number:language="en" number:country="US">
+   <number:day/>
+   <number:text>-</number:text>
+   <number:month number:textual="true"/>
+  </number:date-style>
+  <number:date-style style:name="N10138" number:language="en" number:country="US">
+   <number:month number:textual="true"/>
+   <number:text>-</number:text>
+   <number:year/>
+  </number:date-style>
+  <number:time-style style:name="N10139" number:language="en" number:country="US">
+   <number:hours/>
+   <number:text>:</number:text>
+   <number:minutes number:style="long"/>
+   <number:text> </number:text>
+   <number:am-pm/>
+  </number:time-style>
+  <number:time-style style:name="N10140" number:language="en" number:country="US">
+   <number:hours/>
+   <number:text>:</number:text>
+   <number:minutes number:style="long"/>
+   <number:text>:</number:text>
+   <number:seconds number:style="long"/>
+   <number:text> </number:text>
+   <number:am-pm/>
+  </number:time-style>
+  <number:time-style style:name="N10141" number:language="en" number:country="US">
+   <number:hours/>
+   <number:text>:</number:text>
+   <number:minutes number:style="long"/>
+  </number:time-style>
+  <number:time-style style:name="N10142" number:language="en" number:country="US">
+   <number:hours/>
+   <number:text>:</number:text>
+   <number:minutes number:style="long"/>
+   <number:text>:</number:text>
+   <number:seconds number:style="long"/>
+  </number:time-style>
+  <number:date-style style:name="N10143" number:language="en" number:country="US">
+   <number:month/>
+   <number:text>/</number:text>
+   <number:day/>
+   <number:text>/</number:text>
+   <number:year number:style="long"/>
+   <number:text> </number:text>
+   <number:hours/>
+   <number:text>:</number:text>
+   <number:minutes number:style="long"/>
+  </number:date-style>
+  <number:number-style style:name="N10145P0" style:volatile="true" number:language="en" number:country="US">
+   <number:number number:decimal-places="0" number:min-decimal-places="0" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text> </number:text>
+  </number:number-style>
+  <number:number-style style:name="N10145" number:language="en" number:country="US">
+   <style:text-properties fo:color="#ff0000"/>
+   <number:text>(</number:text>
+   <number:number number:decimal-places="0" number:min-decimal-places="0" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text>)</number:text>
+   <style:map style:condition="value()&gt;=0" style:apply-style-name="N10145P0"/>
+  </number:number-style>
+  <number:number-style style:name="N10147P0" style:volatile="true" number:language="en" number:country="US">
+   <number:number number:decimal-places="2" number:min-decimal-places="2" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text> </number:text>
+  </number:number-style>
+  <number:number-style style:name="N10147" number:language="en" number:country="US">
+   <style:text-properties fo:color="#ff0000"/>
+   <number:text>(</number:text>
+   <number:number number:decimal-places="2" number:min-decimal-places="2" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text>)</number:text>
+   <style:map style:condition="value()&gt;=0" style:apply-style-name="N10147P0"/>
+  </number:number-style>
+  <number:number-style style:name="N10151P0" style:volatile="true" number:language="en" number:country="US">
+   <number:text> </number:text>
+   <number:fill-character> </number:fill-character>
+   <number:number number:decimal-places="0" number:min-decimal-places="0" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text> </number:text>
+  </number:number-style>
+  <number:number-style style:name="N10151P1" style:volatile="true" number:language="en" number:country="US">
+   <number:text> </number:text>
+   <number:fill-character> </number:fill-character>
+   <number:text>(</number:text>
+   <number:number number:decimal-places="0" number:min-decimal-places="0" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text>)</number:text>
+  </number:number-style>
+  <number:number-style style:name="N10151P2" style:volatile="true" number:language="en" number:country="US">
+   <number:text> </number:text>
+   <number:fill-character> </number:fill-character>
+   <number:text>- </number:text>
+  </number:number-style>
+  <number:text-style style:name="N10151" number:language="en" number:country="US">
+   <number:text> </number:text>
+   <number:text-content/>
+   <number:text> </number:text>
+   <style:map style:condition="value()&gt;0" style:apply-style-name="N10151P0"/>
+   <style:map style:condition="value()&lt;0" style:apply-style-name="N10151P1"/>
+   <style:map style:condition="value()=0" style:apply-style-name="N10151P2"/>
+  </number:text-style>
+  <number:currency-style style:name="N10155P0" style:volatile="true" number:language="en" number:country="US">
+   <number:currency-symbol/>
+   <number:fill-character> </number:fill-character>
+   <number:number number:decimal-places="0" number:min-decimal-places="0" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text> </number:text>
+  </number:currency-style>
+  <number:currency-style style:name="N10155P1" style:volatile="true" number:language="en" number:country="US">
+   <number:currency-symbol/>
+   <number:fill-character> </number:fill-character>
+   <number:text>(</number:text>
+   <number:number number:decimal-places="0" number:min-decimal-places="0" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text>)</number:text>
+  </number:currency-style>
+  <number:currency-style style:name="N10155P2" style:volatile="true" number:language="en" number:country="US">
+   <number:currency-symbol/>
+   <number:fill-character> </number:fill-character>
+   <number:text>- </number:text>
+  </number:currency-style>
+  <number:text-style style:name="N10155" number:language="en" number:country="US">
+   <number:text> </number:text>
+   <number:text-content/>
+   <number:text> </number:text>
+   <style:map style:condition="value()&gt;0" style:apply-style-name="N10155P0"/>
+   <style:map style:condition="value()&lt;0" style:apply-style-name="N10155P1"/>
+   <style:map style:condition="value()=0" style:apply-style-name="N10155P2"/>
+  </number:text-style>
+  <number:number-style style:name="N10159P0" style:volatile="true" number:language="en" number:country="US">
+   <number:text> </number:text>
+   <number:fill-character> </number:fill-character>
+   <number:number number:decimal-places="2" number:min-decimal-places="2" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text> </number:text>
+  </number:number-style>
+  <number:number-style style:name="N10159P1" style:volatile="true" number:language="en" number:country="US">
+   <number:text> </number:text>
+   <number:fill-character> </number:fill-character>
+   <number:text>(</number:text>
+   <number:number number:decimal-places="2" number:min-decimal-places="2" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text>)</number:text>
+  </number:number-style>
+  <number:number-style style:name="N10159P2" style:volatile="true" number:language="en" number:country="US">
+   <number:text> </number:text>
+   <number:fill-character> </number:fill-character>
+   <number:text>-</number:text>
+   <number:number number:decimal-places="0" number:min-decimal-places="0" number:min-integer-digits="0"/>
+   <number:text> </number:text>
+  </number:number-style>
+  <number:text-style style:name="N10159" number:language="en" number:country="US">
+   <number:text> </number:text>
+   <number:text-content/>
+   <number:text> </number:text>
+   <style:map style:condition="value()&gt;0" style:apply-style-name="N10159P0"/>
+   <style:map style:condition="value()&lt;0" style:apply-style-name="N10159P1"/>
+   <style:map style:condition="value()=0" style:apply-style-name="N10159P2"/>
+  </number:text-style>
+  <number:currency-style style:name="N10163P0" style:volatile="true" number:language="en" number:country="US">
+   <number:currency-symbol/>
+   <number:fill-character> </number:fill-character>
+   <number:number number:decimal-places="2" number:min-decimal-places="2" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text> </number:text>
+  </number:currency-style>
+  <number:currency-style style:name="N10163P1" style:volatile="true" number:language="en" number:country="US">
+   <number:currency-symbol/>
+   <number:fill-character> </number:fill-character>
+   <number:text>(</number:text>
+   <number:number number:decimal-places="2" number:min-decimal-places="2" number:min-integer-digits="1" number:grouping="true"/>
+   <number:text>)</number:text>
+  </number:currency-style>
+  <number:currency-style style:name="N10163P2" style:volatile="true" number:language="en" number:country="US">
+   <number:currency-symbol/>
+   <number:fill-character> </number:fill-character>
+   <number:text>-</number:text>
+   <number:number number:decimal-places="0" number:min-decimal-places="0" number:min-integer-digits="0"/>
+   <number:text> </number:text>
+  </number:currency-style>
+  <number:text-style style:name="N10163" number:language="en" number:country="US">
+   <number:text> </number:text>
+   <number:text-content/>
+   <number:text> </number:text>
+   <style:map style:condition="value()&gt;0" style:apply-style-name="N10163P0"/>
+   <style:map style:condition="value()&lt;0" style:apply-style-name="N10163P1"/>
+   <style:map style:condition="value()=0" style:apply-style-name="N10163P2"/>
+  </number:text-style>
+  <style:style style:name="Default" style:family="table-cell">
+   <style:table-cell-properties style:rotation-align="none" style:vertical-align="bottom"/>
+   <style:text-properties fo:color="#000000" style:font-name="Arial" fo:font-family="Arial" style:font-name-asian="Linux Libertine G" style:font-family-asian="&apos;Linux Libertine G&apos;" style:font-family-generic-asian="system" style:font-pitch-asian="variable" style:font-name-complex="Arial" style:font-family-complex="Arial"/>
+  </style:style>
+  <style:style style:name="Heading" style:family="table-cell" style:parent-style-name="Default">
+   <style:text-properties fo:color="#000000" fo:font-size="24pt" fo:font-style="normal" fo:font-weight="bold"/>
+  </style:style>
+  <style:style style:name="Heading_20_1" style:display-name="Heading 1" style:family="table-cell" style:parent-style-name="Heading">
+   <style:text-properties fo:color="#000000" fo:font-size="18pt" fo:font-style="normal" fo:font-weight="normal"/>
+  </style:style>
+  <style:style style:name="Heading_20_2" style:display-name="Heading 2" style:family="table-cell" style:parent-style-name="Heading">
+   <style:text-properties fo:color="#000000" fo:font-size="12pt" fo:font-style="normal" fo:font-weight="normal"/>
+  </style:style>
+  <style:style style:name="Text" style:family="table-cell" style:parent-style-name="Default"/>
+  <style:style style:name="Note" style:family="table-cell" style:parent-style-name="Text">
+   <style:table-cell-properties fo:background-color="#ffffcc" style:diagonal-bl-tr="none" style:diagonal-tl-br="none" fo:border="0.74pt solid #808080"/>
+   <style:text-properties fo:color="#333333" fo:font-size="10pt" fo:font-style="normal" fo:font-weight="normal"/>
+  </style:style>
+  <style:style style:name="Footnote" style:family="table-cell" style:parent-style-name="Text">
+   <style:text-properties fo:color="#808080" fo:font-size="10pt" fo:font-style="italic" fo:font-weight="normal"/>
+  </style:style>
+  <style:style style:name="Hyperlink" style:family="table-cell" style:parent-style-name="Text">
+   <style:text-properties fo:color="#0000ee" fo:font-size="10pt" fo:font-style="normal" style:text-underline-style="solid" style:text-underline-width="auto" style:text-underline-color="#0000ee" fo:font-weight="normal"/>
+  </style:style>
+  <style:style style:name="Status" style:family="table-cell" style:parent-style-name="Default"/>
+  <style:style style:name="Good" style:family="table-cell" style:parent-style-name="Status">
+   <style:table-cell-properties fo:background-color="#ccffcc"/>
+   <style:text-properties fo:color="#006600" fo:font-size="10pt" fo:font-style="normal" fo:font-weight="normal"/>
+  </style:style>
+  <style:style style:name="Neutral" style:family="table-cell" style:parent-style-name="Status">
+   <style:table-cell-properties fo:background-color="#ffffcc"/>
+   <style:text-properties fo:color="#996600" fo:font-size="10pt" fo:font-style="normal" fo:font-weight="normal"/>
+  </style:style>
+  <style:style style:name="Bad" style:family="table-cell" style:parent-style-name="Status">
+   <style:table-cell-properties fo:background-color="#ffcccc"/>
+   <style:text-properties fo:color="#cc0000" fo:font-size="10pt" fo:font-style="normal" fo:font-weight="normal"/>
+  </style:style>
+  <style:style style:name="Warning" style:family="table-cell" style:parent-style-name="Status">
+   <style:text-properties fo:color="#cc0000" fo:font-size="10pt" fo:font-style="normal" fo:font-weight="normal"/>
+  </style:style>
+  <style:style style:name="Error" style:family="table-cell" style:parent-style-name="Status">
+   <style:table-cell-properties fo:background-color="#cc0000"/>
+   <style:text-properties fo:color="#ffffff" fo:font-size="10pt" fo:font-style="normal" fo:font-weight="bold"/>
+  </style:style>
+  <style:style style:name="Accent" style:family="table-cell" style:parent-style-name="Default">
+   <style:text-properties fo:color="#000000" fo:font-size="10pt" fo:font-style="normal" fo:font-weight="bold"/>
+  </style:style>
+  <style:style style:name="Accent_20_1" style:display-name="Accent 1" style:family="table-cell" style:parent-style-name="Accent">
+   <style:table-cell-properties fo:background-color="#000000"/>
+   <style:text-properties fo:color="#ffffff" fo:font-size="10pt" fo:font-style="normal" fo:font-weight="normal"/>
+  </style:style>
+  <style:style style:name="Accent_20_2" style:display-name="Accent 2" style:family="table-cell" style:parent-style-name="Accent">
+   <style:table-cell-properties fo:background-color="#808080"/>
+   <style:text-properties fo:color="#ffffff" fo:font-size="10pt" fo:font-style="normal" fo:font-weight="normal"/>
+  </style:style>
+  <style:style style:name="Accent_20_3" style:display-name="Accent 3" style:family="table-cell" style:parent-style-name="Accent">
+   <style:table-cell-properties fo:background-color="#dddddd"/>
+  </style:style>
+  <style:style style:name="Result" style:family="table-cell" style:parent-style-name="Default">
+   <style:table-cell-properties fo:wrap-option="no-wrap" style:shrink-to-fit="false"/>
+   <style:text-properties fo:font-style="italic" style:text-underline-style="solid" style:text-underline-width="auto" style:text-underline-color="font-color" fo:font-weight="bold" style:font-style-asian="italic" style:font-weight-asian="bold" style:font-style-complex="italic" style:font-weight-complex="bold"/>
+  </style:style>
+  <draw:marker draw:name="Arrowheads_20_1" draw:display-name="Arrowheads 1" svg:viewBox="0 0 20 30" svg:d="M10 0l-10 30h20z"/>
+  <loext:theme loext:name="Office">
+   <loext:theme-colors loext:name="LibreOffice">
+    <loext:color loext:name="dark1" loext:color="#000000"/>
+    <loext:color loext:name="light1" loext:color="#ffffff"/>
+    <loext:color loext:name="dark2" loext:color="#000000"/>
+    <loext:color loext:name="light2" loext:color="#ffffff"/>
+    <loext:color loext:name="accent1" loext:color="#18a303"/>
+    <loext:color loext:name="accent2" loext:color="#0369a3"/>
+    <loext:color loext:name="accent3" loext:color="#a33e03"/>
+    <loext:color loext:name="accent4" loext:color="#8e03a3"/>
+    <loext:color loext:name="accent5" loext:color="#c99c00"/>
+    <loext:color loext:name="accent6" loext:color="#c9211e"/>
+    <loext:color loext:name="hyperlink" loext:color="#0000ee"/>
+    <loext:color loext:name="followed-hyperlink" loext:color="#551a8b"/>
+   </loext:theme-colors>
+  </loext:theme>
+ </office:styles>
+ <office:automatic-styles>
+  <style:style style:name="co1" style:family="table-column">
+   <style:table-column-properties fo:break-before="auto" style:column-width="24.75mm"/>
+  </style:style>
+  <style:style style:name="co2" style:family="table-column">
+   <style:table-column-properties fo:break-before="auto" style:column-width="28.42mm"/>
+  </style:style>
+  <style:style style:name="co3" style:family="table-column">
+   <style:table-column-properties fo:break-before="auto" style:column-width="22.58mm"/>
+  </style:style>
+  <style:style style:name="ro1" style:family="table-row">
+   <style:table-row-properties style:row-height="7.94mm" fo:break-before="auto" style:use-optimal-row-height="false"/>
+  </style:style>
+  <style:style style:name="ro2" style:family="table-row">
+   <style:table-row-properties style:row-height="4.52mm" fo:break-before="auto" style:use-optimal-row-height="false"/>
+  </style:style>
+  <style:style style:name="ta1" style:family="table" style:master-page-name="PageStyle_5f_V2">
+   <style:table-properties table:display="true" style:writing-mode="lr-tb"/>
+  </style:style>
+  <number:number-style style:name="N2">
+   <number:number number:decimal-places="2" number:min-decimal-places="2" number:min-integer-digits="1"/>
+  </number:number-style>
+  <style:style style:name="ce1" style:family="table-cell" style:parent-style-name="Default">
+   <style:table-cell-properties style:text-align-source="fix" style:repeat-content="false" fo:wrap-option="no-wrap" fo:border="0.74pt solid #000000" style:direction="ltr" style:rotation-angle="0" style:rotation-align="none" style:shrink-to-fit="false" style:vertical-align="middle" loext:vertical-justify="auto"/>
+   <style:paragraph-properties fo:text-align="start" css3t:text-justify="auto" fo:margin-left="0mm" style:writing-mode="page"/>
+   <style:text-properties fo:color="#000000" style:text-outline="false" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" fo:text-shadow="none" style:text-underline-style="none" fo:font-weight="bold" style:font-size-asian="11pt" style:font-style-asian="normal" style:font-weight-asian="bold" style:font-name-complex="Arial" style:font-size-complex="11pt" style:font-style-complex="normal" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="ce18" style:family="table-cell" style:parent-style-name="Default">
+   <style:table-cell-properties style:diagonal-bl-tr="none" style:diagonal-tl-br="none" style:text-align-source="value-type" style:repeat-content="false" fo:wrap-option="no-wrap" fo:border="0.74pt solid #000000" style:direction="ltr" style:rotation-angle="0" style:rotation-align="none" style:shrink-to-fit="false" style:vertical-align="middle" loext:vertical-justify="auto"/>
+   <style:paragraph-properties css3t:text-justify="auto" fo:margin-left="0mm" style:writing-mode="page"/>
+   <style:text-properties fo:color="#000000" style:text-outline="false" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" fo:text-shadow="none" style:text-underline-style="none" fo:font-weight="normal" style:font-size-asian="11pt" style:font-style-asian="normal" style:font-weight-asian="normal" style:font-name-complex="Arial" style:font-size-complex="11pt" style:font-style-complex="normal" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="ce19" style:family="table-cell" style:parent-style-name="Default">
+   <style:table-cell-properties fo:background-color="#980000" style:text-align-source="value-type" style:repeat-content="false" fo:wrap-option="no-wrap" fo:border="0.74pt solid #000000" style:direction="ltr" style:rotation-angle="0" style:rotation-align="none" style:shrink-to-fit="false" style:vertical-align="middle" loext:vertical-justify="auto"/>
+   <style:paragraph-properties css3t:text-justify="auto" fo:margin-left="0mm" style:writing-mode="page"/>
+   <style:text-properties fo:color="#000000" style:text-outline="false" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" fo:text-shadow="none" style:text-underline-style="none" fo:font-weight="normal" style:font-size-asian="11pt" style:font-style-asian="normal" style:font-weight-asian="normal" style:font-name-complex="Arial" style:font-size-complex="11pt" style:font-style-complex="normal" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="ce20" style:family="table-cell" style:parent-style-name="Default">
+   <style:table-cell-properties style:text-align-source="value-type" style:repeat-content="false" fo:wrap-option="no-wrap" fo:border="0.74pt solid #000000" style:direction="ltr" style:rotation-angle="0" style:rotation-align="none" style:shrink-to-fit="false" style:vertical-align="middle" loext:vertical-justify="auto"/>
+   <style:paragraph-properties css3t:text-justify="auto" fo:margin-left="0mm" style:writing-mode="page"/>
+   <style:text-properties fo:color="#000000" style:text-outline="false" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" fo:text-shadow="none" style:text-underline-style="none" fo:font-weight="normal" style:font-size-asian="11pt" style:font-style-asian="normal" style:font-weight-asian="normal" style:font-name-complex="Arial" style:font-size-complex="11pt" style:font-style-complex="normal" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="ce21" style:family="table-cell" style:parent-style-name="Default">
+   <style:table-cell-properties fo:border="0.74pt solid #000000"/>
+  </style:style>
+  <style:style style:name="ce22" style:family="table-cell" style:parent-style-name="Default">
+   <style:table-cell-properties style:diagonal-bl-tr="none" style:diagonal-tl-br="none" style:text-align-source="value-type" style:repeat-content="false" fo:wrap-option="no-wrap" fo:border="0.74pt solid #000000" style:direction="ltr" style:rotation-angle="0" style:rotation-align="none" style:shrink-to-fit="false" style:vertical-align="middle" loext:vertical-justify="auto"/>
+   <style:paragraph-properties css3t:text-justify="auto" fo:margin-left="0mm" style:writing-mode="page"/>
+   <style:text-properties fo:color="#000000" style:text-outline="false" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="italic" fo:text-shadow="none" style:text-underline-style="none" fo:font-weight="normal" style:font-size-asian="11pt" style:font-style-asian="italic" style:font-weight-asian="normal" style:font-name-complex="Arial" style:font-size-complex="11pt" style:font-style-complex="italic" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="ce23" style:family="table-cell" style:parent-style-name="Default">
+   <style:table-cell-properties style:text-align-source="value-type" style:repeat-content="false" fo:wrap-option="no-wrap" fo:border="0.74pt solid #000000" style:direction="ltr" style:rotation-angle="0" style:rotation-align="none" style:shrink-to-fit="false" style:vertical-align="middle" loext:vertical-justify="auto"/>
+   <style:paragraph-properties css3t:text-justify="auto" fo:margin-left="0mm" style:writing-mode="page"/>
+   <style:text-properties fo:color="#000000" style:text-outline="false" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="italic" fo:text-shadow="none" style:text-underline-style="none" fo:font-weight="normal" style:font-size-asian="11pt" style:font-style-asian="italic" style:font-weight-asian="normal" style:font-name-complex="Arial" style:font-size-complex="11pt" style:font-style-complex="italic" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="ce24" style:family="table-cell" style:parent-style-name="Default">
+   <style:table-cell-properties style:text-align-source="value-type" style:repeat-content="false" fo:wrap-option="no-wrap" fo:border="0.74pt solid #000000" style:direction="ltr" style:rotation-angle="0" style:rotation-align="none" style:shrink-to-fit="false" style:vertical-align="middle" loext:vertical-justify="auto"/>
+   <style:paragraph-properties css3t:text-justify="auto" fo:margin-left="0mm" style:writing-mode="page"/>
+   <style:text-properties fo:color="#b7b7b7" style:text-outline="false" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" fo:text-shadow="none" style:text-underline-style="none" fo:font-weight="normal" style:font-size-asian="11pt" style:font-style-asian="normal" style:font-weight-asian="normal" style:font-name-complex="Arial" style:font-size-complex="11pt" style:font-style-complex="normal" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="ce25" style:family="table-cell" style:parent-style-name="Default">
+   <style:table-cell-properties style:diagonal-bl-tr="none" style:diagonal-tl-br="none" style:text-align-source="value-type" style:repeat-content="false" fo:wrap-option="no-wrap" fo:border="0.74pt solid #000000" style:direction="ltr" style:rotation-angle="0" style:rotation-align="none" style:shrink-to-fit="false" style:vertical-align="middle" loext:vertical-justify="auto"/>
+   <style:paragraph-properties css3t:text-justify="auto" fo:margin-left="0mm" style:writing-mode="page"/>
+   <style:text-properties fo:color="#b7b7b7" style:text-outline="false" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" fo:text-shadow="none" style:text-underline-style="none" fo:font-weight="normal" style:font-size-asian="11pt" style:font-style-asian="normal" style:font-weight-asian="normal" style:font-name-complex="Arial" style:font-size-complex="11pt" style:font-style-complex="normal" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="ce7" style:family="table-cell" style:parent-style-name="Default">
+   <style:table-cell-properties style:text-align-source="fix" style:repeat-content="false" fo:wrap-option="no-wrap" style:direction="ltr" style:rotation-angle="0" style:rotation-align="none" style:shrink-to-fit="false" style:vertical-align="middle" loext:vertical-justify="auto"/>
+   <style:paragraph-properties fo:text-align="start" css3t:text-justify="auto" fo:margin-left="0mm" style:writing-mode="page"/>
+   <style:text-properties fo:color="#000000" style:text-outline="false" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" fo:text-shadow="none" style:text-underline-style="none" fo:font-weight="bold" style:font-size-asian="11pt" style:font-style-asian="normal" style:font-weight-asian="bold" style:font-name-complex="Arial" style:font-size-complex="11pt" style:font-style-complex="normal" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="ce15" style:family="table-cell" style:parent-style-name="Default">
+   <style:table-cell-properties style:text-align-source="value-type" style:repeat-content="false" fo:wrap-option="no-wrap" style:direction="ltr" style:rotation-angle="0" style:rotation-align="none" style:shrink-to-fit="false" style:vertical-align="middle" loext:vertical-justify="auto"/>
+   <style:paragraph-properties css3t:text-justify="auto" fo:margin-left="0mm" style:writing-mode="page"/>
+   <style:text-properties fo:color="#000000" style:text-outline="false" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" fo:text-shadow="none" style:text-underline-style="none" fo:font-weight="bold" style:font-size-asian="11pt" style:font-style-asian="normal" style:font-weight-asian="bold" style:font-name-complex="Arial" style:font-size-complex="11pt" style:font-style-complex="normal" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="ce16" style:family="table-cell" style:parent-style-name="Default">
+   <style:table-cell-properties style:text-align-source="value-type" style:repeat-content="false" fo:wrap-option="no-wrap" style:direction="ltr" style:rotation-angle="0" style:rotation-align="none" style:shrink-to-fit="false" style:vertical-align="middle" loext:vertical-justify="auto"/>
+   <style:paragraph-properties css3t:text-justify="auto" fo:margin-left="0mm" style:writing-mode="page"/>
+   <style:text-properties fo:color="#b7b7b7" style:text-outline="false" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" fo:text-shadow="none" style:text-underline-style="none" fo:font-weight="bold" style:font-size-asian="11pt" style:font-style-asian="normal" style:font-weight-asian="bold" style:font-name-complex="Arial" style:font-size-complex="11pt" style:font-style-complex="normal" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="ce17" style:family="table-cell" style:parent-style-name="Default">
+   <style:table-cell-properties style:text-align-source="fix" style:repeat-content="false" fo:wrap-option="no-wrap" fo:border="none" style:direction="ltr" style:rotation-angle="0" style:rotation-align="none" style:shrink-to-fit="false" style:vertical-align="bottom" loext:vertical-justify="auto"/>
+   <style:paragraph-properties fo:text-align="center" css3t:text-justify="auto" fo:margin-left="0mm" style:writing-mode="page"/>
+   <style:text-properties fo:color="#000000" style:text-outline="false" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" fo:text-shadow="none" style:text-underline-style="none" fo:font-weight="bold" style:font-size-asian="11pt" style:font-style-asian="normal" style:font-weight-asian="bold" style:font-name-complex="Arial" style:font-size-complex="11pt" style:font-style-complex="normal" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="ce30" style:family="table-cell" style:parent-style-name="Default">
+   <style:table-cell-properties style:text-align-source="value-type" style:repeat-content="false" fo:wrap-option="no-wrap" style:direction="ltr" style:rotation-angle="0" style:rotation-align="none" style:shrink-to-fit="false" style:vertical-align="bottom" loext:vertical-justify="auto"/>
+   <style:paragraph-properties css3t:text-justify="auto" fo:margin-left="0mm" style:writing-mode="page"/>
+   <style:text-properties fo:color="#000000" style:text-outline="false" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" fo:text-shadow="none" style:text-underline-style="none" fo:font-weight="normal" style:font-size-asian="11pt" style:font-style-asian="normal" style:font-weight-asian="normal" style:font-name-complex="Arial" style:font-size-complex="11pt" style:font-style-complex="normal" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:page-layout style:name="pm1">
+   <style:page-layout-properties style:first-page-number="continue" style:writing-mode="lr-tb"/>
+   <style:header-style>
+    <style:header-footer-properties fo:min-height="7.5mm" fo:margin-left="0mm" fo:margin-right="0mm" fo:margin-bottom="2.5mm"/>
+   </style:header-style>
+   <style:footer-style>
+    <style:header-footer-properties fo:min-height="7.5mm" fo:margin-left="0mm" fo:margin-right="0mm" fo:margin-top="2.5mm"/>
+   </style:footer-style>
+  </style:page-layout>
+  <style:page-layout style:name="pm2">
+   <style:page-layout-properties style:writing-mode="lr-tb"/>
+   <style:header-style>
+    <style:header-footer-properties fo:min-height="7.5mm" fo:margin-left="0mm" fo:margin-right="0mm" fo:margin-bottom="2.5mm" fo:border="2.49pt solid #000000" fo:padding="0.18mm" fo:background-color="#c0c0c0">
+     <style:background-image/>
+    </style:header-footer-properties>
+   </style:header-style>
+   <style:footer-style>
+    <style:header-footer-properties fo:min-height="7.5mm" fo:margin-left="0mm" fo:margin-right="0mm" fo:margin-top="2.5mm" fo:border="2.49pt solid #000000" fo:padding="0.18mm" fo:background-color="#c0c0c0">
+     <style:background-image/>
+    </style:header-footer-properties>
+   </style:footer-style>
+  </style:page-layout>
+  <style:page-layout style:name="pm3">
+   <style:page-layout-properties style:num-format="1" style:print-orientation="portrait" fo:margin-top="24.99mm" fo:margin-bottom="24.99mm" fo:margin-left="19mm" fo:margin-right="19mm" style:print-page-order="ttb" style:first-page-number="continue" style:scale-to="100%" style:writing-mode="lr-tb" style:print="charts drawings objects zero-values"/>
+   <style:header-style>
+    <style:header-footer-properties fo:min-height="7.5mm" fo:margin-left="0mm" fo:margin-right="0mm" fo:margin-bottom="2.5mm"/>
+   </style:header-style>
+   <style:footer-style>
+    <style:header-footer-properties fo:min-height="7.5mm" fo:margin-left="0mm" fo:margin-right="0mm" fo:margin-top="2.5mm"/>
+   </style:footer-style>
+  </style:page-layout>
+ </office:automatic-styles>
+ <office:master-styles>
+  <style:master-page style:name="Default" style:page-layout-name="pm1">
+   <style:header>
+    <text:p><text:sheet-name>???</text:sheet-name></text:p>
+   </style:header>
+   <style:header-left style:display="false"/>
+   <style:header-first style:display="false"/>
+   <style:footer>
+    <text:p>Page <text:page-number>1</text:page-number></text:p>
+   </style:footer>
+   <style:footer-left style:display="false"/>
+   <style:footer-first style:display="false"/>
+  </style:master-page>
+  <style:master-page style:name="Report" style:page-layout-name="pm2">
+   <style:header>
+    <style:region-left>
+     <text:p><text:sheet-name>???</text:sheet-name><text:s/>(<text:title>???</text:title>)</text:p>
+    </style:region-left>
+    <style:region-right>
+     <text:p><text:date style:data-style-name="N2" text:date-value="2026-10-01">00/00/0000</text:date>, <text:time style:data-style-name="N2" text:time-value="12:41:06.577955900">00:00:00</text:time></text:p>
+    </style:region-right>
+   </style:header>
+   <style:header-left style:display="false"/>
+   <style:header-first style:display="false"/>
+   <style:footer>
+    <text:p>Page <text:page-number>1</text:page-number><text:s/>/ <text:page-count>99</text:page-count></text:p>
+   </style:footer>
+   <style:footer-left style:display="false"/>
+   <style:footer-first style:display="false"/>
+  </style:master-page>
+  <style:master-page style:name="PageStyle_5f_V1" style:display-name="PageStyle_V1" style:page-layout-name="pm3">
+   <style:header style:display="false"/>
+   <style:header-left style:display="false"/>
+   <style:header-first style:display="false"/>
+   <style:footer style:display="false"/>
+   <style:footer-left style:display="false"/>
+   <style:footer-first style:display="false"/>
+  </style:master-page>
+  <style:master-page style:name="PageStyle_5f_V2" style:display-name="PageStyle_V2" style:page-layout-name="pm3">
+   <style:header style:display="false"/>
+   <style:header-left style:display="false"/>
+   <style:header-first style:display="false"/>
+   <style:footer style:display="false"/>
+   <style:footer-left style:display="false"/>
+   <style:footer-first style:display="false"/>
+  </style:master-page>
+ </office:master-styles>
+ <office:body>
+  <office:spreadsheet>
+   <table:calculation-settings table:case-sensitive="false" table:automatic-find-labels="false" table:use-regular-expressions="false" table:use-wildcards="true">
+    <table:iteration table:maximum-difference="0.0001"/>
+   </table:calculation-settings>
+   <table:table table:name="V2" table:style-name="ta1">
+    <office:forms form:automatic-focus="false" form:apply-design-mode="false"/>
+    <table:table-column table:style-name="co1" table:default-cell-style-name="Default"/>
+    <table:table-column table:style-name="co2" table:default-cell-style-name="Default"/>
+    <table:table-column table:style-name="co1" table:number-columns-repeated="1022" table:default-cell-style-name="Default"/>
+    <table:table-row table:style-name="ro1">
+     <table:table-cell table:style-name="ce1" office:value-type="string" calcext:value-type="string">
+      <text:p>Column 1</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce1" office:value-type="string" calcext:value-type="string">
+      <text:p>Function</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce1" office:value-type="string" calcext:value-type="string">
+      <text:p>OUT</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce1" office:value-type="string" calcext:value-type="string">
+      <text:p>IN+</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce1" office:value-type="string" calcext:value-type="string">
+      <text:p>IN-</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce7" table:number-columns-repeated="2"/>
+     <table:table-cell table:style-name="ce17" table:number-columns-spanned="2" table:number-rows-spanned="1"/>
+     <table:covered-table-cell/>
+     <table:table-cell table:style-name="ce30"/>
+     <table:table-cell table:number-columns-repeated="1014"/>
+    </table:table-row>
+    <table:table-row table:style-name="ro1">
+     <table:table-cell table:style-name="ce18" office:value-type="string" calcext:value-type="string">
+      <text:p>OPAMP1</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce18" office:value-type="string" calcext:value-type="string">
+      <text:p>STAGE1.2</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce22" office:value-type="string" calcext:value-type="string">
+      <text:p>PA2</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce25" office:value-type="string" calcext:value-type="string">
+      <text:p>int</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce18" office:value-type="string" calcext:value-type="string">
+      <text:p>PA3</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce15" table:number-columns-repeated="2"/>
+     <table:table-cell table:style-name="ce30" table:number-columns-repeated="3"/>
+     <table:table-cell table:number-columns-repeated="1014"/>
+    </table:table-row>
+    <table:table-row table:style-name="ro1">
+     <table:table-cell table:style-name="ce19" office:value-type="string" calcext:value-type="string">
+      <text:p>OPAMP2</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce21" table:number-columns-repeated="4"/>
+     <table:table-cell table:style-name="ce15" table:number-columns-repeated="2"/>
+     <table:table-cell table:number-columns-repeated="1017"/>
+    </table:table-row>
+    <table:table-row table:style-name="ro1">
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>OPAMP3</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>STAGE2.2</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce23" office:value-type="string" calcext:value-type="string">
+      <text:p>PB1</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce24" office:value-type="string" calcext:value-type="string">
+      <text:p>int</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>PB2</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce15" table:number-columns-repeated="2"/>
+     <table:table-cell table:number-columns-repeated="1017"/>
+    </table:table-row>
+    <table:table-row table:style-name="ro1">
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>OPAMP4</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>STAGE1.1</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>PB12</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>PB13</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>PB10</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce15" table:number-columns-repeated="2"/>
+     <table:table-cell table:style-name="ce30" table:number-columns-repeated="3"/>
+     <table:table-cell table:number-columns-repeated="1014"/>
+    </table:table-row>
+    <table:table-row table:style-name="ro1">
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>OPAMP5</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>STAGE2.1</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>PA8</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>PC3</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>PB15</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce15" table:number-columns-repeated="2"/>
+     <table:table-cell table:style-name="ce30" table:number-columns-repeated="3"/>
+     <table:table-cell table:number-columns-repeated="1014"/>
+    </table:table-row>
+    <table:table-row table:style-name="ro1">
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>OPAMP6</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>VGND</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>PB11</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce24" office:value-type="string" calcext:value-type="string">
+      <text:p>int</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce24" office:value-type="string" calcext:value-type="string">
+      <text:p>---</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce15" table:number-columns-repeated="2"/>
+     <table:table-cell table:number-columns-repeated="1017"/>
+    </table:table-row>
+    <table:table-row table:style-name="ro1">
+     <table:table-cell table:style-name="ce21" table:number-columns-repeated="5"/>
+     <table:table-cell table:style-name="ce15" table:number-columns-repeated="2"/>
+     <table:table-cell table:number-columns-repeated="1017"/>
+    </table:table-row>
+    <table:table-row table:style-name="ro1">
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>ADC1.3</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>CH1</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce24" office:value-type="string" calcext:value-type="string">
+      <text:p>---</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce23" office:value-type="string" calcext:value-type="string">
+      <text:p>PA2</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce24" office:value-type="string" calcext:value-type="string">
+      <text:p>---</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce15" table:number-columns-repeated="2"/>
+     <table:table-cell table:style-name="ce30" table:number-columns-repeated="3"/>
+     <table:table-cell table:number-columns-repeated="1014"/>
+    </table:table-row>
+    <table:table-row table:style-name="ro1">
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>ADC2.2</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>CH1</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce24" office:value-type="string" calcext:value-type="string">
+      <text:p>---</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>PA1</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce24" office:value-type="string" calcext:value-type="string">
+      <text:p>---</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce15" table:number-columns-repeated="2"/>
+     <table:table-cell table:style-name="ce30" table:number-columns-repeated="2"/>
+     <table:table-cell table:number-columns-repeated="1015"/>
+    </table:table-row>
+    <table:table-row table:style-name="ro1">
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>ADC3.1</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>CH2</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce24" office:value-type="string" calcext:value-type="string">
+      <text:p>---</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce23" office:value-type="string" calcext:value-type="string">
+      <text:p>PB1</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce24" office:value-type="string" calcext:value-type="string">
+      <text:p>---</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce15" table:number-columns-repeated="2"/>
+     <table:table-cell table:style-name="ce30" table:number-columns-repeated="3"/>
+     <table:table-cell table:number-columns-repeated="1014"/>
+    </table:table-row>
+    <table:table-row table:style-name="ro1">
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>ADC4.4</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>CH2</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce24" office:value-type="string" calcext:value-type="string">
+      <text:p>---</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>PB14</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce24" office:value-type="string" calcext:value-type="string">
+      <text:p>---</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce15" table:number-columns-repeated="2"/>
+     <table:table-cell table:number-columns-repeated="1017"/>
+    </table:table-row>
+    <table:table-row table:style-name="ro1">
+     <table:table-cell table:style-name="ce20" table:number-columns-repeated="3"/>
+     <table:table-cell table:style-name="ce24" table:number-columns-repeated="2"/>
+     <table:table-cell table:style-name="ce16" table:number-columns-repeated="2"/>
+     <table:table-cell table:number-columns-repeated="1017"/>
+    </table:table-row>
+    <table:table-row table:style-name="ro1">
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>DAC1.1</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>BIAS 1</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>PA4</text:p>
+     </table:table-cell>
+     <table:table-cell table:number-columns-repeated="2" table:style-name="ce24" office:value-type="string" calcext:value-type="string">
+      <text:p>---</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce15" table:number-columns-repeated="2"/>
+     <table:table-cell table:number-columns-repeated="1017"/>
+    </table:table-row>
+    <table:table-row table:style-name="ro1">
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>DAC1.2</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>BIAS 2</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>PA5</text:p>
+     </table:table-cell>
+     <table:table-cell table:number-columns-repeated="2" table:style-name="ce24" office:value-type="string" calcext:value-type="string">
+      <text:p>---</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce15" table:number-columns-repeated="2"/>
+     <table:table-cell table:number-columns-repeated="1017"/>
+    </table:table-row>
+    <table:table-row table:style-name="ro1">
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>DAC2.1</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>TEST SIGNAL</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>PA6</text:p>
+     </table:table-cell>
+     <table:table-cell table:number-columns-repeated="2" table:style-name="ce24" office:value-type="string" calcext:value-type="string">
+      <text:p>---</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce15" table:number-columns-repeated="2"/>
+     <table:table-cell table:number-columns-repeated="1017"/>
+    </table:table-row>
+    <table:table-row table:style-name="ro1">
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>DAC3.1</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>VGND</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce24" office:value-type="string" calcext:value-type="string">
+      <text:p>int</text:p>
+     </table:table-cell>
+     <table:table-cell table:number-columns-repeated="2" table:style-name="ce24" office:value-type="string" calcext:value-type="string">
+      <text:p>---</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce15" table:number-columns-repeated="2"/>
+     <table:table-cell table:number-columns-repeated="1017"/>
+    </table:table-row>
+    <table:table-row table:style-name="ro1">
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>DAC3.2</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce20" office:value-type="string" calcext:value-type="string">
+      <text:p>STAGE2.2 VGND</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce24" office:value-type="string" calcext:value-type="string">
+      <text:p>int</text:p>
+     </table:table-cell>
+     <table:table-cell table:number-columns-repeated="2" table:style-name="ce24" office:value-type="string" calcext:value-type="string">
+      <text:p>---</text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="ce15" table:number-columns-repeated="2"/>
+     <table:table-cell table:number-columns-repeated="1017"/>
+    </table:table-row>
+    <table:table-row table:style-name="ro2" table:number-rows-repeated="1048557">
+     <table:table-cell table:number-columns-repeated="1024"/>
+    </table:table-row>
+    <table:table-row table:style-name="ro2">
+     <table:table-cell table:number-columns-repeated="1024"/>
+    </table:table-row>
+   </table:table>
+   <table:named-expressions/>
+   <table:database-ranges>
+    <table:database-range table:name="Table1" table:target-range-address="&apos;V2&apos;.A1:&apos;V2&apos;.G18"/>
+   </table:database-ranges>
+  </office:spreadsheet>
+ </office:body>
+</office:document>

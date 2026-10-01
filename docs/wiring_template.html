@@ -8,12 +8,19 @@
   2. PURE STATIC HTML + SVG ONLY.
   3. ALL WIRES MUST BE 50% TRANSPARENT:
      Use class="wire" or stroke-opacity="0.5" (with stroke-width="2.5").
-  4. MINIMIZE WIRE OVERLAPS:
+  4. MINIMIZE WIRE OVERLAPS & AVOID CONTACT PINS:
      - Use curved paths: <path class="wire" d="M x1 y1 Q cx cy, x2 y2" stroke="..." />
      - Route wire arcs outward or around pin headers.
+     - Wires MUST NOT overlap contact pins!
      - Use distinct colors for different nets.
-  5. CONTAINER SIZE IS EXACTLY 593px x 530px WITH nucleo-g474re-pinout.png AS BACKGROUND.
-  6. PIN COORDINATES REFERENCE (DO NOT GUESS OR ALTER):
+  5. DO NOT ADD BOARD PIN NAMES:
+     - Pin names are already printed on the background image. Do not add board pin name text overlays.
+     - Only add text labels for external connectors outside the board.
+  6. EXTERNAL CONNECTORS:
+     - Draw connector boxes outside the board for external nets.
+     - Connector background MUST be semi-transparent (e.g. class="connector-box" with fill-opacity="0.65" or fill="rgba(30, 30, 30, 0.65)").
+  7. CONTAINER SIZE IS EXACTLY 593px x 530px WITH nucleo-g474re-pinout.png AS BACKGROUND.
+  8. PIN COORDINATES REFERENCE (DO NOT GUESS OR ALTER):
     CN7 Pins:
       Pin 1: name=PC10, x=83, y=178.5, side=left
       Pin 2: name=PC11, x=173, y=178.5, side=right
@@ -86,6 +93,13 @@
       Pin 34: name=PC4, x=505, y=417, side=right
       Pin 35: name=PC4/PA2, x=414, y=432, side=left
       Pin 37: name=PC5/PA3, x=414, y=447, side=left
+
+  9. STM32CUBEMX PIN REPORT INTEGRATION:
+     - STM32CubeMX exports its pin report to a [project_name].txt file.
+     - Every pin listed may have a label in square brackets.
+     - By user request, analyze the report and make wiring connecting all the pins marked with the same name.
+     - If the name DOES NOT start with an underscore, add a named external connector.
+     - If the name starts with an underscore (e.g. _NETNAME), it is an internal connection only (no external connector).
 
   =============================================================================
 -->

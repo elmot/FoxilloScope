@@ -323,10 +323,10 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     /**ADC1 GPIO Configuration
     PA2     ------> ADC1_IN3
     */
-    GPIO_InitStruct.Pin = SIGNAL_AA2_Pin;
+    GPIO_InitStruct.Pin = ADC1_3__OPAMP1_OUT_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(SIGNAL_AA2_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(ADC1_3__OPAMP1_OUT_GPIO_Port, &GPIO_InitStruct);
 
     /* ADC1 DMA Init */
     /* ADC1 Init */
@@ -375,10 +375,10 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     /**ADC2 GPIO Configuration
     PA0     ------> ADC2_IN1
     */
-    GPIO_InitStruct.Pin = SIGNAL_A_Pin;
+    GPIO_InitStruct.Pin = ADC2_1_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(SIGNAL_A_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(ADC2_1_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN ADC2_MspInit 1 */
 
@@ -409,10 +409,10 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     /**ADC3 GPIO Configuration
     PB1     ------> ADC3_IN1
     */
-    GPIO_InitStruct.Pin = SIGNAL_B_Pin;
+    GPIO_InitStruct.Pin = OPAMP3_OUT_ADC3_1_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(SIGNAL_B_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(OPAMP3_OUT_ADC3_1_GPIO_Port, &GPIO_InitStruct);
 
     /* ADC3 DMA Init */
     /* ADC3 Init */
@@ -461,10 +461,10 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     /**ADC4 GPIO Configuration
     PB14     ------> ADC4_IN4
     */
-    GPIO_InitStruct.Pin = SIGNAL_BB14_Pin;
+    GPIO_InitStruct.Pin = ADC4_4_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(SIGNAL_BB14_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(ADC4_4_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN ADC4_MspInit 1 */
 
@@ -489,7 +489,7 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
     /**ADC1 GPIO Configuration
     PA2     ------> ADC1_IN3
     */
-    HAL_GPIO_DeInit(SIGNAL_AA2_GPIO_Port, SIGNAL_AA2_Pin);
+    HAL_GPIO_DeInit(ADC1_3__OPAMP1_OUT_GPIO_Port, ADC1_3__OPAMP1_OUT_Pin);
 
     /* ADC1 DMA DeInit */
     HAL_DMA_DeInit(adcHandle->DMA_Handle);
@@ -511,7 +511,7 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
     /**ADC2 GPIO Configuration
     PA0     ------> ADC2_IN1
     */
-    HAL_GPIO_DeInit(SIGNAL_A_GPIO_Port, SIGNAL_A_Pin);
+    HAL_GPIO_DeInit(ADC2_1_GPIO_Port, ADC2_1_Pin);
 
   /* USER CODE BEGIN ADC2_MspDeInit 1 */
 
@@ -531,7 +531,7 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
     /**ADC3 GPIO Configuration
     PB1     ------> ADC3_IN1
     */
-    HAL_GPIO_DeInit(SIGNAL_B_GPIO_Port, SIGNAL_B_Pin);
+    HAL_GPIO_DeInit(OPAMP3_OUT_ADC3_1_GPIO_Port, OPAMP3_OUT_ADC3_1_Pin);
 
     /* ADC3 DMA DeInit */
     HAL_DMA_DeInit(adcHandle->DMA_Handle);
@@ -553,7 +553,7 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
     /**ADC4 GPIO Configuration
     PB14     ------> ADC4_IN4
     */
-    HAL_GPIO_DeInit(SIGNAL_BB14_GPIO_Port, SIGNAL_BB14_Pin);
+    HAL_GPIO_DeInit(ADC4_4_GPIO_Port, ADC4_4_Pin);
 
   /* USER CODE BEGIN ADC4_MspDeInit 1 */
 
