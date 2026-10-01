@@ -21,22 +21,22 @@ constexpr std::array<std::pair<unsigned int, unsigned long>,4> GAINS2 = {
 
 static constexpr std::tuple<unsigned,uint32_t,uint32_t,uint32_t> get_gain_mode1_gain1bits_gain2_bits(const unsigned long requested_gain)
 {
-    using namespace std;
-    std::array<std::tuple<unsigned,uint32_t,uint32_t,uint32_t>, GAINS1.size() * GAINS2.size()> result{};
-
-    size_t k = 0;
-    for (const auto& [gain1, gain1bits] : GAINS1)
-        for (const auto& [gain2, gain2bits] : GAINS2)
+    static constexpr std::array<std::tuple<unsigned,uint32_t,uint32_t,uint32_t>, GAINS1.size() * GAINS2.size()> result  =
+    []() consteval {
+        auto r = std::array<std::tuple<unsigned,uint32_t,uint32_t,uint32_t>, GAINS1.size() * GAINS2.size()>{};
+        size_t k = 0;
+        for (const auto& [gain1, gain1bits] : GAINS1)
+            for (const auto& [gain2, gain2bits] : GAINS2)
+            {
+                const auto mode1 = gain1 == 1 ? OPAMP_FOLLOWER_MODE : OPAMP_PGA_MODE;
+                r[k++] = {gain1 * gain2, mode1,  gain1bits, gain2bits};
+            }
+        std::ranges::sort(r, [](const auto& a, const auto& b)
         {
-            const auto mode1 = gain1 == 1 ? OPAMP_FOLLOWER_MODE : OPAMP_PGA_MODE;
-            result[k++] = {gain1 * gain2, mode1,  gain1bits, gain2bits};
-        }
-
-
-    std::ranges::sort(result, [](const auto& a, const auto& b)
-    {
-        return std::get<0>(a) < std::get<0>(b);
-    });
+            return std::get<0>(a) < std::get<0>(b);
+        });
+        return r;
+    }();
 
     for (const auto& [gain, mode1, gain1bits, gain2bits] : result)
     {
