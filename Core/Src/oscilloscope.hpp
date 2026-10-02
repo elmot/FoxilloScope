@@ -162,4 +162,13 @@ enum class TriggerState
     TRIGGERED,
     PROCESSING
 };
+
+[[maybe_unused]] static void skipWhiteSpace(char* & ptr)
+{
+    while (isspace(static_cast<unsigned char>(*ptr)))
+    {
+        ptr++;
+    }
+}
+
 #endif //G4_OSCILLOSCOPE_B_OSCILLOSCOPE_H

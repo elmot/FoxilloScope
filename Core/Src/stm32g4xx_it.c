@@ -61,8 +61,6 @@ extern DAC_HandleTypeDef hdac2;
 extern DMA_HandleTypeDef hdma_memtomem_dma1_channel2;
 extern DMA_HandleTypeDef hdma_memtomem_dma1_channel6;
 extern TIM_HandleTypeDef htim1;
-extern DMA_HandleTypeDef hdma_usart1_tx;
-extern UART_HandleTypeDef huart1;
 extern TIM_HandleTypeDef htim7;
 
 /* USER CODE BEGIN EV */
@@ -204,7 +202,6 @@ void DMA1_Channel4_IRQHandler(void)
   extern void usart1TransferComplete();
   usart1TransferComplete();
   /* USER CODE END DMA1_Channel4_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_usart1_tx);
   /* USER CODE BEGIN DMA1_Channel4_IRQn 1 */
 
   /* USER CODE END DMA1_Channel4_IRQn 1 */
@@ -272,9 +269,19 @@ void TIM1_CC_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
+  // Check if RXNE flag is set AND if RXNE interrupt is enabled
+  if (LL_USART_IsActiveFlag_RXNE(USART1) && LL_USART_IsEnabledIT_RXNE(USART1))
+  {
+    uartReadByte(LL_USART_ReceiveData8(USART1));
+  }
+
+  // If an Overrun error (ORE) occurs, it can freeze the RXNE interrupt until cleared!
+  if (LL_USART_IsActiveFlag_ORE(USART1))
+  {
+    LL_USART_ClearFlag_ORE(USART1); // Clear overrun flag
+  }
 
   /* USER CODE END USART1_IRQn 0 */
-  HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
 
   /* USER CODE END USART1_IRQn 1 */
@@ -292,7 +299,6 @@ void UART4_IRQHandler(void)
     uartReadByte(LL_USART_ReceiveData8(UART4));
   }
 
-  // Optional but recommended: Handle Error Flags (Overrun, Noise, Framing)
   // If an Overrun error (ORE) occurs, it can freeze the RXNE interrupt until cleared!
   if (LL_USART_IsActiveFlag_ORE(UART4))
   {
