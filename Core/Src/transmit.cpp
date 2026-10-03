@@ -13,8 +13,8 @@ using namespace std;
 extern osSemaphoreId_t transmitBufferBusyHandle; // NOLINT(*-dynamic-static-initializers)
 extern osSemaphoreId_t transmitKeyBufferBusyHandle; // NOLINT(*-dynamic-static-initializers)
 
-TransmitBuffer_t transmitBuffer{transmitBufferBusyHandle};
-TransmitBuffer_t transmitKeyBuffer{transmitKeyBufferBusyHandle};
+TransmitBuffer_t transmitBuffer{transmitBufferBusyHandle}; // NOLINT(*-interfaces-global-init)
+TransmitBuffer_t transmitKeyBuffer{transmitKeyBufferBusyHandle}; // NOLINT(*-interfaces-global-init)
 
 static constexpr char BASE64_CHARS[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -27,14 +27,14 @@ static std::span<char> encode_bin_buffer(
     auto textPtr = asciiBuffer.begin();
     for (auto val : samples)
     {
-        val &= 0x0FFF;
+        val = (0xFFF - val) & 0x0FFF;
 
         // Split the 12 bits into two 6-bit chunks
         const uint8_t high6 = (val >> 6) & 0x3F;
         const uint8_t low6 = val & 0x3F;
 
-        *(textPtr++) = BASE64_CHARS[high6];
-        *(textPtr++) = BASE64_CHARS[low6];
+        *textPtr++ = BASE64_CHARS[high6];
+        *textPtr++ = BASE64_CHARS[low6];
     }
     *textPtr++ = '\n';
     *textPtr = 0;
@@ -43,7 +43,7 @@ static std::span<char> encode_bin_buffer(
 
 
 template <unsigned long N>
-constexpr auto to_constexpr_string_cr()
+static consteval auto to_constexpr_string_cr()
 {
     constexpr auto count_digits = []() constexpr -> size_t
     {
