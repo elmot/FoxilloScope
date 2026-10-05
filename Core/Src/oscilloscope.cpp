@@ -13,11 +13,13 @@
 #include "adc.h"
 #include "cmsis_os2.h"
 #include "opamp.h"
-
+//todo fix HW gains (wrong opamps?)
+//todo fix frontend gains
 alignas(uint32_t) static std::array<uint16_t, data_frame_size * 2> adcBufferA{};
 
 alignas(uint32_t) static std::array<uint16_t, data_frame_size * 2> adcBufferB{};
 
+// ReSharper disable once CppTemplateArgumentsCanBeDeduced
 static std::atomic<int> partialSamplesSent = -1;
 
 constexpr auto bufferHalves = std::array{
@@ -70,7 +72,7 @@ namespace
                 Error_Handler();
             }
             // twice slower if interleaved sampling
-            unsigned long long fullDivider = (isInterleaveSampling()) ? 2 : 1;
+            unsigned long long fullDivider = isInterleaveSampling() ? 2 : 1;
             fullDivider = fullDivider * (500'000'000ULL + HAL_RCC_GetPCLK1Freq() * static_cast<unsigned long long>(
                     value)) /
                 1'000'000'000ULL;
@@ -81,7 +83,9 @@ namespace
 
 namespace trigger
 {
+    // ReSharper disable once CppTemplateArgumentsCanBeDeduced
     static std::atomic<TriggerState> state = TriggerState::DISARMED;
+    // ReSharper disable once CppTemplateArgumentsCanBeDeduced
     static std::atomic<int> pre_arming = 0;
 
     namespace
@@ -94,12 +98,11 @@ namespace trigger
 
             void useNewValue() const override
             {
-                //todo migrate to awd?
                 constexpr long long dac_max_long_long = DAC_MAX_VALUE;
-                const uint16_t dac_bias = std::ranges::clamp((value - min) * dac_max_long_long / (max - min), 0LL,
+                const uint16_t dac_trg_bias = std::ranges::clamp((max - value) * dac_max_long_long / (max - min), 0LL,
                                                              dac_max_long_long);
-                HAL_DAC_SetValue(&hdac3, DAC_CHANNEL_2,DAC_ALIGN_12B_R, dac_bias);
-                HAL_DAC_SetValue(&hdac2, DAC_CHANNEL_1,DAC_ALIGN_12B_R, dac_bias);
+                HAL_DAC_SetValue(&VGND_TRG_A_DAC, TRG_A_DAC_CHANNEL,DAC_ALIGN_12B_R, dac_trg_bias);
+                HAL_DAC_SetValue(&TRG_B_DAC, TRG_B_DAC_CHANNEL,DAC_ALIGN_12B_R, dac_trg_bias);
             }
         } CommandTriggerLevel{};
 
@@ -139,16 +142,16 @@ namespace trigger
             }
             else
             {
-                trigger::state = TriggerState::DISARMED;
+                state = TriggerState::DISARMED;
                 HAL_NVIC_EnableIRQ(COMP1_2_3_IRQn);
                 HAL_NVIC_EnableIRQ(COMP7_IRQn);
             }
         }
     }
 
-    uint32_t comparatorValue()
+    static uint32_t comparatorValue()
     {
-        //todo migrate to awd?   return CommandTriggerType.getValue() == -1 ? COMP_OUTPUT_LEVEL_LOW : COMP_OUTPUT_LEVEL_HIGH;
+        return CommandTriggerType.getValue() == -1 ? COMP_OUTPUT_LEVEL_HIGH : COMP_OUTPUT_LEVEL_LOW;
     }
 }
 
@@ -219,7 +222,6 @@ constexpr std::array<const Command_t*, 11> commands{
 static void startSampling()
 {
     partialSamplesSent = -1;
-    /* //todo migrate to awd?
     if (trigger::CommandTriggerChannel.getValue() == 0)
     {
         __HAL_COMP_COMP2_EXTI_ENABLE_IT();
@@ -230,12 +232,18 @@ static void startSampling()
         __HAL_COMP_COMP7_EXTI_ENABLE_IT();
         __HAL_COMP_COMP2_EXTI_DISABLE_IT();
     }
-    */
     int arr = trigger::CommandTriggerOffset.timerShiftSamples() + static_cast<int>(data_frame_size);
     if (arr < 0) arr = 0;
     if (CommandTimeResolution.isInterleaveSampling()) arr /= 2;
     arr = std::ranges::clamp(arr, 1, 1000);
+#ifdef __CLION_IDE__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-volatile"
+#endif
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, arr);
+#ifdef __CLION_IDE__
+#pragma clang diagnostic pop
+#endif
     __HAL_TIM_SET_COUNTER(&htim1, 0);
     startMainAdcs(CommandTimeResolution.isInterleaveSampling(), adcBufferA.data(), adcBufferB.data(),
                   adcBufferA.size());
@@ -275,8 +283,8 @@ static void executeIncomingCommand()
         if (*ptr++ != '=') continue;
 
         long newValue;
-        const auto [cookie_ptr,errc] = std::from_chars(ptr, ptr + strlen(ptr), newValue);
-        if (errc != std::errc{}) continue;
+        const auto [cookie_ptr,err_code] = std::from_chars(ptr, ptr + strlen(ptr), newValue);
+        if (err_code != std::errc{}) continue;
         if (command->setValue(newValue))
         {
             requiresRestart |= command->requires_restart;
@@ -301,20 +309,21 @@ extern osThreadId_t transmitTaskHandle;
         HAL_OPAMP_SelfCalibrate(opamp);
     }
 
-    {
-        // Virtual ground
-        HAL_DAC_Start(&VGND_DAC, VGND_DAC_CHANNEL_1);
-        HAL_DAC_SetValue(&VGND_DAC, VGND_DAC_CHANNEL_1, DAC_ALIGN_12B_R, (DAC_MAX_VALUE + 1) / 2);
+    {  // Virtual ground
+        HAL_DAC_Start(&VGND_TRG_A_DAC, VGND_DAC_CHANNEL);
+        HAL_DAC_SetValue(&VGND_TRG_A_DAC, VGND_DAC_CHANNEL, DAC_ALIGN_12B_R, (DAC_MAX_VALUE + 1) / 2);
         HAL_OPAMP_Start(&VGND_OPAMP);
-        HAL_DAC_Start(&VGND_DAC, VGND_DAC_CHANNEL_2);
-        HAL_DAC_SetValue(&VGND_DAC, VGND_DAC_CHANNEL_2, DAC_ALIGN_12B_R, (DAC_MAX_VALUE + 1) / 2);
     }
+    HAL_DAC_Start(&VGND_TRG_A_DAC, TRG_A_DAC_CHANNEL);
+    HAL_DAC_Start(&TRG_B_DAC, TRG_B_DAC_CHANNEL);
     HAL_DAC_Start(&BIAS_DAC, BIAS_DAC_CHANNEL_A);
     HAL_DAC_Start(&BIAS_DAC, BIAS_DAC_CHANNEL_B);
     TIM_CCxChannelCmd(htim1.Instance, TIM_CHANNEL_1, TIM_CCx_ENABLE);
     HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
     HAL_TIM_Base_Start(&htim1);
     startSampling();
+    HAL_COMP_Start(&COMP_A);
+    HAL_COMP_Start(&COMP_B);
     for (const auto& command : commands)
     {
         command->useNewValue();
@@ -365,8 +374,6 @@ void dmaMemToMemCallback([[maybe_unused]] DMA_HandleTypeDef* dma_handle_type_def
 }
 
 // ReSharper disable once CppParameterMayBeConstPtrOrRef
-/*
-//todo migrate to awd?
 void HAL_COMP_TriggerCallback(COMP_HandleTypeDef* hcomp)
 {
     if (trigger::pre_arming > 0) return;
@@ -386,7 +393,6 @@ void HAL_COMP_TriggerCallback(COMP_HandleTypeDef* hcomp)
     }
 }
 
-*/
 extern "C" void HAL_TIM_PWM_PulseFinishedCallback([[maybe_unused]] TIM_HandleTypeDef* htim)
 {
     HAL_TIM_Base_Stop_IT(&htim1);
@@ -409,7 +415,7 @@ extern "C" [[noreturn]] void keyFramesProcessing([[maybe_unused]] void*)
         const auto dma_samples_left = adcSamplesLeft();
         if (dma_samples_left <= data_frame_size)
         {
-            const auto frame_start_position = (adcBufferA.size() - dma_samples_left) - data_frame_size;
+            const auto frame_start_position = adcBufferA.size() - dma_samples_left - data_frame_size;
             memcpy(&transmitKeyBuffer.samplesA[0], &adcBufferA[frame_start_position],
                    data_frame_size * sizeof (adcBufferA[0]));
             memcpy(&transmitKeyBuffer.samplesB[0], &adcBufferB[frame_start_position],
@@ -509,7 +515,7 @@ extern "C" void partialFrameSend([[maybe_unused]] void*)
     constexpr int lastSubFrameThresholdHigh = data_frame_size * 95 / 100;
     constexpr int garbageDmaTail = 1;
 
-    const int measuredSamples = static_cast<int>(data_frame_size) - dma_samples_left - garbageDmaTail;
+    const int measuredSamples = static_cast<int>(data_frame_size) - dma_samples_left - garbageDmaTail; // NOLINT(cppcoreguidelines-narrowing-conversions)
 
     if (measuredSamples > lastSubFrameThresholdLow
         && measuredSamples < lastSubFrameThresholdHigh

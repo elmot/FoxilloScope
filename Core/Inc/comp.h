@@ -1,9 +1,9 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file    dac.h
+  * @file    comp.h
   * @brief   This file contains all the function prototypes for
-  *          the dac.c file
+  *          the comp.c file
   ******************************************************************************
   * @attention
   *
@@ -18,8 +18,8 @@
   */
 /* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __DAC_H__
-#define __DAC_H__
+#ifndef __COMP_H__
+#define __COMP_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,22 +32,16 @@ extern "C" {
 
 /* USER CODE END Includes */
 
-extern DAC_HandleTypeDef hdac1;
+extern COMP_HandleTypeDef hcomp2;
 
-extern DAC_HandleTypeDef hdac2;
-
-extern DAC_HandleTypeDef hdac3;
-
-extern DAC_HandleTypeDef hdac4;
+extern COMP_HandleTypeDef hcomp7;
 
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
-void MX_DAC1_Init(void);
-void MX_DAC2_Init(void);
-void MX_DAC3_Init(void);
-void MX_DAC4_Init(void);
+void MX_COMP2_Init(void);
+void MX_COMP7_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
@@ -57,5 +51,5 @@ void MX_DAC4_Init(void);
 }
 #endif
 
-#endif /* __DAC_H__ */
+#endif /* __COMP_H__ */
 

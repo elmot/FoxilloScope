@@ -73,7 +73,7 @@ void MX_OPAMP3_Init(void)
   hopamp3.Instance = OPAMP3;
   hopamp3.Init.PowerMode = OPAMP_POWERMODE_HIGHSPEED;
   hopamp3.Init.Mode = OPAMP_PGA_MODE;
-  hopamp3.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_DAC;
+  hopamp3.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO2;
   hopamp3.Init.InternalOutput = DISABLE;
   hopamp3.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
   hopamp3.Init.PgaConnect = OPAMP_PGA_CONNECT_INVERTINGINPUT_IO0_BIAS;
@@ -129,7 +129,7 @@ void MX_OPAMP5_Init(void)
 
   /* USER CODE END OPAMP5_Init 1 */
   hopamp5.Instance = OPAMP5;
-  hopamp5.Init.PowerMode = OPAMP_POWERMODE_HIGHSPEED;
+  hopamp5.Init.PowerMode = OPAMP_POWERMODE_NORMALSPEED;
   hopamp5.Init.Mode = OPAMP_PGA_MODE;
   hopamp5.Init.NonInvertingInput = OPAMP_NONINVERTINGINPUT_IO2;
   hopamp5.Init.InternalOutput = DISABLE;
@@ -204,12 +204,19 @@ void HAL_OPAMP_MspInit(OPAMP_HandleTypeDef* opampHandle)
 
   /* USER CODE END OPAMP3_MspInit 0 */
 
+    __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
     /**OPAMP3 GPIO Configuration
+    PA1     ------> OPAMP3_VINP
     PB1     ------> OPAMP3_VOUT
     PB2     ------> OPAMP3_VINM0
     */
-    GPIO_InitStruct.Pin = OPAMP3_OUT_ADC3_1_Pin|OPAMP3_IN__Pin;
+    GPIO_InitStruct.Pin = OPAMP3_IN__Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(OPAMP3_IN__GPIO_Port, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = OPAMP3_OUT_ADC3_1_Pin|OPAMP3_IN_B2_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -319,10 +326,13 @@ void HAL_OPAMP_MspDeInit(OPAMP_HandleTypeDef* opampHandle)
   /* USER CODE END OPAMP3_MspDeInit 0 */
 
     /**OPAMP3 GPIO Configuration
+    PA1     ------> OPAMP3_VINP
     PB1     ------> OPAMP3_VOUT
     PB2     ------> OPAMP3_VINM0
     */
-    HAL_GPIO_DeInit(GPIOB, OPAMP3_OUT_ADC3_1_Pin|OPAMP3_IN__Pin);
+    HAL_GPIO_DeInit(OPAMP3_IN__GPIO_Port, OPAMP3_IN__Pin);
+
+    HAL_GPIO_DeInit(GPIOB, OPAMP3_OUT_ADC3_1_Pin|OPAMP3_IN_B2_Pin);
 
   /* USER CODE BEGIN OPAMP3_MspDeInit 1 */
 

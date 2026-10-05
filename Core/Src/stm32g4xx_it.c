@@ -57,7 +57,10 @@ extern void uartReadByte(uint8_t);
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_adc1;
 extern DMA_HandleTypeDef hdma_adc3;
+extern COMP_HandleTypeDef hcomp2;
+extern COMP_HandleTypeDef hcomp7;
 extern DAC_HandleTypeDef hdac2;
+extern DAC_HandleTypeDef hdac4;
 extern DMA_HandleTypeDef hdma_memtomem_dma1_channel2;
 extern DMA_HandleTypeDef hdma_memtomem_dma1_channel6;
 extern TIM_HandleTypeDef htim1;
@@ -321,9 +324,38 @@ void TIM7_DAC_IRQHandler(void)
   /* USER CODE END TIM7_DAC_IRQn 0 */
   HAL_TIM_IRQHandler(&htim7);
   HAL_DAC_IRQHandler(&hdac2);
+  HAL_DAC_IRQHandler(&hdac4);
   /* USER CODE BEGIN TIM7_DAC_IRQn 1 */
 
   /* USER CODE END TIM7_DAC_IRQn 1 */
+}
+
+/**
+  * @brief This function handles COMP1, COMP2 and COMP3 interrupts through EXTI lines 21, 22 and 29.
+  */
+void COMP1_2_3_IRQHandler(void)
+{
+  /* USER CODE BEGIN COMP1_2_3_IRQn 0 */
+
+  /* USER CODE END COMP1_2_3_IRQn 0 */
+  HAL_COMP_IRQHandler(&hcomp2);
+  /* USER CODE BEGIN COMP1_2_3_IRQn 1 */
+
+  /* USER CODE END COMP1_2_3_IRQn 1 */
+}
+
+/**
+  * @brief This function handles COMP7 interrupt through EXTI line 33.
+  */
+void COMP7_IRQHandler(void)
+{
+  /* USER CODE BEGIN COMP7_IRQn 0 */
+
+  /* USER CODE END COMP7_IRQn 0 */
+  HAL_COMP_IRQHandler(&hcomp7);
+  /* USER CODE BEGIN COMP7_IRQn 1 */
+
+  /* USER CODE END COMP7_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

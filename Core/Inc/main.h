@@ -53,6 +53,9 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
+extern COMP_HandleTypeDef hcomp2;
+
+extern COMP_HandleTypeDef hcomp7;
 
 /* USER CODE END EC */
 
@@ -69,23 +72,27 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define VGND_DAC hdac3
-#define VGND_OPAMP hopamp6
 #define TEST_SIGNAL_DAC hdac2
 #define TEST_SIGNAL_DAC_CHANNEL DAC_CHANNEL_1
-#define VGND_DAC_CHANNEL_1 DAC_CHANNEL_1
-#define VGND_DAC_CHANNEL_2 DAC_CHANNEL_2
-#define STAGE_A2_OPAMP hopamp1
-#define BIAS_DAC hdac1
 #define BIAS_DAC_CHANNEL_A DAC_CHANNEL_1
 #define BIAS_DAC_CHANNEL_B DAC_CHANNEL_2
-#define STAGE_A1_OPAMP hopamp4
+#define TRG_A_DAC_CHANNEL DAC_CHANNEL_2
+#define VGND_DAC_CHANNEL DAC_CHANNEL_1
+#define STAGE_A2_OPAMP hopamp1
 #define STAGE_B2_OPAMP hopamp3
+#define VGND_TRG_A_DAC hdac3
+#define STAGE_A1_OPAMP hopamp4
+#define VGND_OPAMP hopamp6
+#define BIAS_DAC hdac1
 #define STAGE_B1_OPAMP hopamp5
+#define COMP_A hcomp2
+#define COMP_B hcomp7
+#define TRG_B_DAC hdac4
+#define TRG_B_DAC_CHANNEL DAC_CHANNEL_1
 #define OPAMP5_IN__Pin GPIO_PIN_3
 #define OPAMP5_IN__GPIO_Port GPIOC
-#define ADC2_1_Pin GPIO_PIN_0
-#define ADC2_1_GPIO_Port GPIOA
+#define OPAMP3_IN__Pin GPIO_PIN_1
+#define OPAMP3_IN__GPIO_Port GPIOA
 #define ADC1_3__OPAMP1_OUT_Pin GPIO_PIN_2
 #define ADC1_3__OPAMP1_OUT_GPIO_Port GPIOA
 #define OPAMP1_IN__Pin GPIO_PIN_3
@@ -96,10 +103,12 @@ void Error_Handler(void);
 #define DAC1_2_GPIO_Port GPIOA
 #define DAC2_1_Pin GPIO_PIN_6
 #define DAC2_1_GPIO_Port GPIOA
+#define ADC2_4_COMP2__Pin GPIO_PIN_7
+#define ADC2_4_COMP2__GPIO_Port GPIOA
 #define OPAMP3_OUT_ADC3_1_Pin GPIO_PIN_1
 #define OPAMP3_OUT_ADC3_1_GPIO_Port GPIOB
-#define OPAMP3_IN__Pin GPIO_PIN_2
-#define OPAMP3_IN__GPIO_Port GPIOB
+#define OPAMP3_IN_B2_Pin GPIO_PIN_2
+#define OPAMP3_IN_B2_GPIO_Port GPIOB
 #define OPAMP4_IN__Pin GPIO_PIN_10
 #define OPAMP4_IN__GPIO_Port GPIOB
 #define OPAMP6_OUT_Pin GPIO_PIN_11
@@ -108,8 +117,8 @@ void Error_Handler(void);
 #define OPAMP4_OUT_GPIO_Port GPIOB
 #define OPAMP4_IN_B13_Pin GPIO_PIN_13
 #define OPAMP4_IN_B13_GPIO_Port GPIOB
-#define ADC4_4_Pin GPIO_PIN_14
-#define ADC4_4_GPIO_Port GPIOB
+#define ADC4_4__COMP7__Pin GPIO_PIN_14
+#define ADC4_4__COMP7__GPIO_Port GPIOB
 #define OPAMP5_IN_B15_Pin GPIO_PIN_15
 #define OPAMP5_IN_B15_GPIO_Port GPIOB
 #define OPAMP5_OUT_Pin GPIO_PIN_8

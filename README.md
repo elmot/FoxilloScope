@@ -49,7 +49,7 @@ The goal of this project is to turn inexpensive, readily available development c
       - **Schottky Diodes**: 6× Schottky diodes (BAS40-04 dual-diode sets were used, but almost any Schottky diodes with reverse voltage $V_R \ge 40\text{ V}$ and minimal junction capacitance fit).
       - **Resistors**: $2\times 1\text{ M}\Omega$ resistors and $3\times 3\dots 6\text{ k}\Omega$ resistors.
    2. Solder the input protection network and interconnections as shown in the wiring diagram below:
-      ![Wiring Diagram](docs/wiring_diagram.html)
+      ![Wiring Diagram](docs/wiring.png)
    3. Attach measurement probes to Channel A / Channel B inputs, and connect probe ground clips to the **Virtual Ground** output. 
 4. **Verify Operation**:
    1. *(Optional)* If the debug STM32 firmware is flashed, connect test signal outputs A/B to the Channel A/B inputs or probes:

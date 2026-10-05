@@ -148,10 +148,10 @@
     <div class="legend-item"><span class="legend-line" style="background: #38bdf8;"></span> CH1 Stage (PB12 &harr; PA3)</div>
     <div class="legend-item"><span class="legend-line" style="background: #22c55e;"></span> CH1 Bias (PB10 &harr; PA4)</div>
     <div class="legend-item"><span class="legend-line" style="background: #a855f7;"></span> CH2 Bias (PB15 &harr; PA5)</div>
-    <div class="legend-item"><span class="legend-line" style="background: #f59e0b;"></span> CH1 ADC (PA0 &harr; PA2)</div>
-    <div class="legend-item"><span class="legend-line" style="background: #f43f5e;"></span> CH2 ADC (PB1 &harr; PB14)</div>
+    <div class="legend-item"><span class="legend-line" style="background: #f59e0b;"></span> CH1 Signal (PA2 &harr; PA7)</div>
+    <div class="legend-item"><span class="legend-line" style="background: #f43f5e;"></span> CH2 Signal (PB1 &harr; PB14)</div>
     <div class="legend-item"><span class="legend-line" style="background: #fb923c;"></span> CH2 Stage (PB2 &harr; PA8)</div>
-    <div class="legend-item"><span class="legend-line" style="background: #06b6d4;"></span> VGND (PB11)</div>
+    <div class="legend-item"><span class="legend-line" style="background: #06b6d4;"></span> VGND (PB11 &harr; PA1)</div>
     <div class="legend-item"><span class="legend-line" style="background: #eab308;"></span> IN A (PB13)</div>
     <div class="legend-item"><span class="legend-line" style="background: #ec4899;"></span> IN B (PC3)</div>
     <div class="legend-item"><span class="legend-line" style="background: #10b981;"></span> TEST SIGNAL (PA6)</div>
@@ -175,68 +175,71 @@
         <!-- 3. CH2 Bias: PB15 (CN10-26: 505, 357) -> PA5 (CN10-11: 414, 246) -->
         <path class="wire" d="M 505 357 C 465 357, 465 246, 414 246" stroke="#a855f7"/>
 
-        <!-- 4. CH1 ADC: PA0 (CN7-28: 173, 372) -> PA2 (CN10-35: 414, 432) -->
-        <path class="wire" d="M 173 372 C 250 365, 330 435, 414 432" stroke="#f59e0b"/>
+        <!-- 4. CH1 Signal: PA7 (CN10-15: 414, 276) -> PA2 (CN10-35: 414, 432) -->
+        <path class="wire" d="M 414 276 C 330 300, 330 410, 414 432" stroke="#f59e0b"/>
 
-        <!-- 5. CH2 ADC: PB1 (CN10-24: 505, 342.5) -> PB14 (CN10-28: 505, 372) -->
+        <!-- 5. CH2 Signal: PB1 (CN10-24: 505, 342.5) -> PB14 (CN10-28: 505, 372) -->
         <path class="wire" d="M 505 342.5 C 535 342.5, 535 372, 505 372" stroke="#f43f5e"/>
 
         <!-- 6. CH2 Stage: PB2 (CN10-22: 505, 327.5) -> PA8 (CN10-23: 414, 342.5) -->
         <path class="wire" d="M 505 327.5 C 475 327.5, 445 342.5, 414 342.5" stroke="#fb923c"/>
+
+        <!-- 7. VGND Internal Link: PA1 (CN7-30: 173, 387) -> PB11 (CN10-18: 505, 298) -->
+        <path class="wire" d="M 173 387 C 260 387, 360 298, 505 298" stroke="#06b6d4"/>
       </g>
 
       <!-- EXTERNAL CONNECTIONS -->
       <g id="wires-external">
-        <!-- 7. VGND: PB11 (CN10-18: 505, 298) -> Out Right -->
+        <!-- 8. VGND: PB11 (CN10-18: 505, 298) -> Out Right -->
         <path class="wire-ext" d="M 505 298 L 520 298" stroke="#06b6d4"/>
         <g class="connector">
           <rect class="connector-box" x="520" y="289" width="68" height="18" stroke="#06b6d4"/>
           <text class="connector-text" x="554" y="298" fill="#06b6d4">VGND</text>
         </g>
 
-        <!-- 8. IN A: PB13 (CN10-30: 505, 387) -> Out Right -->
+        <!-- 9. IN A: PB13 (CN10-30: 505, 387) -> Out Right -->
         <path class="wire-ext" d="M 505 387 C 514 387, 514 375, 520 375" stroke="#eab308"/>
         <g class="connector">
           <rect class="connector-box" x="520" y="366" width="68" height="18" stroke="#eab308"/>
           <text class="connector-text" x="554" y="375" fill="#eab308">IN A</text>
         </g>
 
-        <!-- 9. IN B: PC3 (CN7-37: 83, 447) -> Out Left -->
+        <!-- 10. IN B: PC3 (CN7-37: 83, 447) -> Out Left -->
         <path class="wire-ext" d="M 83 447 L 58 447" stroke="#ec4899"/>
         <g class="connector">
           <rect class="connector-box" x="8" y="438" width="50" height="18" stroke="#ec4899"/>
           <text class="connector-text" x="33" y="447" fill="#ec4899">IN B</text>
         </g>
 
-        <!-- 10. TEST SIGNAL: PA6 (CN10-13: 414, 261) -> Into clear area below title -->
+        <!-- 11. TEST SIGNAL: PA6 (CN10-13: 414, 261) -> Into clear area below title -->
         <path class="wire-ext" d="M 414 261 C 360 261, 300 200, 300 152" stroke="#10b981"/>
         <g class="connector">
           <rect class="connector-box" x="255" y="134" width="90" height="18" stroke="#10b981"/>
           <text class="connector-text" x="300" y="143" fill="#10b981">TEST SIGNAL</text>
         </g>
 
-        <!-- 11. UART TX: PC10 (CN7-1: 83, 178.5) -> Out Left -->
+        <!-- 12. UART TX: PC10 (CN7-1: 83, 178.5) -> Out Left -->
         <path class="wire-ext" d="M 83 178.5 L 66 178.5" stroke="#60a5fa"/>
         <g class="connector">
           <rect class="connector-box" x="8" y="169.5" width="58" height="18" stroke="#60a5fa"/>
           <text class="connector-text" x="37" y="178.5" fill="#60a5fa">UART TX</text>
         </g>
 
-        <!-- 12. UART RX: PC11 (CN7-2: 173, 178.5) -> Loop Up & Left -->
+        <!-- 13. UART RX: PC11 (CN7-2: 173, 178.5) -> Loop Up & Left -->
         <path class="wire-ext" d="M 173 178.5 C 173 138, 80 138, 66 146" stroke="#c084fc"/>
         <g class="connector">
           <rect class="connector-box" x="8" y="137" width="58" height="18" stroke="#c084fc"/>
           <text class="connector-text" x="37" y="146" fill="#c084fc">UART RX</text>
         </g>
 
-        <!-- 13. PROTECT.VDD: AVDD (CN10-7: 414, 216) -> Top Area -->
+        <!-- 14. PROTECT.VDD: AVDD (CN10-7: 414, 216) -> Top Area -->
         <path class="wire-ext" d="M 414 216 C 380 216, 385 165, 405 152" stroke="#ef4444"/>
         <g class="connector">
           <rect class="connector-box" x="362" y="134" width="86" height="18" stroke="#ef4444"/>
           <text class="connector-text" x="405" y="143" fill="#ef4444">PROTECT.VDD</text>
         </g>
 
-        <!-- 14. PROTECT.GND: AGND (CN10-32: 505, 402) -> Out Right -->
+        <!-- 15. PROTECT.GND: AGND (CN10-32: 505, 402) -> Out Right -->
         <path class="wire-ext" d="M 505 402 C 514 402, 514 412, 520 412" stroke="#94a3b8"/>
         <g class="connector">
           <rect class="connector-box" x="520" y="403" width="68" height="18" stroke="#94a3b8"/>
@@ -259,11 +262,11 @@
         <circle cx="505" cy="357" r="3.5" fill="#a855f7"/>
         <circle cx="414" cy="246" r="3.5" fill="#a855f7"/>
 
-        <!-- CH1 ADC (#f59e0b) -->
-        <circle cx="173" cy="372" r="3.5" fill="#f59e0b"/>
+        <!-- CH1 Signal (#f59e0b) -->
+        <circle cx="414" cy="276" r="3.5" fill="#f59e0b"/>
         <circle cx="414" cy="432" r="3.5" fill="#f59e0b"/>
 
-        <!-- CH2 ADC (#f43f5e) -->
+        <!-- CH2 Signal (#f43f5e) -->
         <circle cx="505" cy="342.5" r="3.5" fill="#f43f5e"/>
         <circle cx="505" cy="372" r="3.5" fill="#f43f5e"/>
 
@@ -273,6 +276,7 @@
 
         <!-- External nets -->
         <!-- VGND (#06b6d4) -->
+        <circle cx="173" cy="387" r="3.5" fill="#06b6d4"/>
         <circle cx="505" cy="298" r="3.5" fill="#06b6d4"/>
         <circle cx="520" cy="298" r="2.5" fill="#06b6d4"/>
 
