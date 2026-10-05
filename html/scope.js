@@ -396,7 +396,7 @@ document.querySelectorAll(".button-switch-block").forEach(block => {
 }
 
 const Gain  = {
-    HW_GAINS: [64, 32, 16, 8, 4, 2, 1],
+    HW_GAINS: [...[2,4,8,16].flatMap(x => [1,3,7,15].map(y => x * y)).sort((a, b) => b - a),1],
     MAX: 504,
     LOG_MAX: Math.ceil(Math.log(504) * 100) / 100,
     BASE_VOLTAGE_uV: 3300000,//todo replace with calibrated value
