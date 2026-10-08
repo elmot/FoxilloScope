@@ -13,8 +13,7 @@
 #include "adc.h"
 #include "cmsis_os2.h"
 #include "opamp.h"
-//todo fix HW gains (wrong opamps?)
-//todo fix frontend gains
+
 alignas(uint32_t) static std::array<uint16_t, data_frame_size * 2> adcBufferA{};
 
 alignas(uint32_t) static std::array<uint16_t, data_frame_size * 2> adcBufferB{};
