@@ -29,12 +29,13 @@ The project is split into three main software components:
 
 ---
 
-## Power & Debug Hardware Configurations
+## Power & Hardware Debug Configurations
 
 ### Production Mode (Standalone Wireless)
-For standard standalone production deployment and power jumper setups, see the **[Production Jumper Settings in README.md](README.md#assemble-at-home-quick-start)**:
-- **Power**: Nucleo is powered directly via the M5Stamp 3.3V rail.
+For standard standalone production deployment, power jumper setups, and mandatory Nucleo board modifications, see **[Assemble at Home in README.md](README.md#assemble-at-home-quick-start)**:
+- **Mandatory Board Modding**: Solder bridges `SB18`/`SB22` **ON**, `SB17`/`SB23` **OFF**, `JP8` to [2-3]=VDD, and `JP6` bridged (see [README.md](README.md#assemble-at-home-quick-start) for complete steps).
 - **Jumper Settings**: `JP1` closed, `JP5` & `JP3` open (blocks onboard ST-LINK from interfering in off/reset state).
+- **Power**: Nucleo is powered directly via the M5Stamp 3.3V rail.
 
 ### Wi-Fi Debug Mode (Development)
 - **Power & Wiring**: M5Stamp and Nucleo share a common ground (GND), are powered independently (e.g., separate USB cables), and have RX & TX connected.

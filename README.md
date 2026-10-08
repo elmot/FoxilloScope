@@ -41,17 +41,27 @@ The goal of this project is to turn inexpensive, readily available development c
    4. **Configure Jumpers (blocks onboard ST-LINK in off/reset state)**:
       - **JP1**: Closed
       - **JP5 & JP3**: Open
-2. **Flash the M5Stamp C3U**:
+2. **Nucleo Board Hardware Modifications (Mandatory Board Modding)**:
+   All solder bridges (SB1–SB41) are located on the **bottom layer** of the ST Nucleo-G474RE board (MB1367). Perform the following mandatory modifications:
+   - **UART Solder Bridges Resoldering**:
+     - Desolder / open **SB17** & **SB23** (disconnects `LPUART1` `PA2`/`PA3` from ST-LINK VCP).
+     - Solder bridge / close **SB18** & **SB22** **ON** (routes `LPUART1` `PA2`/`PA3` to expansion headers D1 TX / D0 RX).
+     - *(Optional for ST-LINK VCP debug)*: Desolder **SB13** & **SB19** and bridge **SB12** & **SB20** **ON** if routing `USART1` (`PC4`/`PC5`) to ST-LINK VCP instead.
+   - **JP8 Solder Bridge ($V_{\text{REF+}}$ Reference)**:
+     - Solder bridge header **JP8** to pins **2–3** (`VDD`). This ties the MCU's $V_{\text{REF+}}$ analog reference voltage pin directly to 3.3V $V_{\text{DD}}$, ensuring accurate ADC/DAC scaling math without unpowered reference drops.
+   - **JP6 Solder Bridge (Power Rail Reliability)**:
+     - Solder bridge header **JP6** ($I_{\text{DD}}$ measurement pins) directly across pins [1-2] or bottom pads. This bypasses mechanical jumper contacts to eliminate power dropouts and contact resistance during high-speed sampling.
+3. **Flash the M5Stamp C3U**:
    1. Connect the _M5Stamp C3U_ or another ESP32-C3 board to your computer via USB.
    2. Use the [Foxilloscope ESP32 Web Flasher](https://elmot.xyz/f-scope/flahser.html) to upload ESP32 part of the oscilloscope 
-3. **Solder Protection & Connections**: 
+4. **Solder Protection & Connections**: 
    1. Prepare the signal conditioning components:
       - **Schottky Diodes**: 6× Schottky diodes (BAS40-04 dual-diode sets were used, but almost any Schottky diodes with reverse voltage $V_R \ge 40\text{ V}$ and minimal junction capacitance fit).
       - **Resistors**: $2\times 1\text{ M}\Omega$ resistors and $3\times 3\dots 6\text{ k}\Omega$ resistors.
    2. Solder the input protection network and interconnections as shown in the wiring diagram below:
       ![Wiring Diagram](docs/wiring.png)
    3. Attach measurement probes to Channel A / Channel B inputs, and connect probe ground clips to the **Virtual Ground** output. 
-4. **Verify Operation**:
+5. **Verify Operation**:
    1. *(Optional)* If the debug STM32 firmware is flashed, connect test signal outputs A/B to the Channel A/B inputs or probes:
       - **Test Signal A**: Small-amplitude decaying sine wave
       - **Test Signal B**: Triangle wave (−1.65 V to 0 V)
@@ -63,13 +73,13 @@ The goal of this project is to turn inexpensive, readily available development c
       1. Connect to the *FoxilloScope-xxxx* Wi-Fi network.
       2. Open `http://f-scope.local/` or `http://192.168.4.1/` in your browser.
       3. Test if oscilloscope is working correctly.
-5. **Wi-Fi Setup**:
+6. **Wi-Fi Setup**:
    1. Connect to the *FoxilloScope-xxxx* Wi-Fi network.
    2. Open `http://f-scope.local/wifi` or `http://192.168.4.1/wifi` in your browser.
    3. Set up Wi-Fi credentials (Until ESP32-C6 gateway is used, only 2.4 GHz Wi-Fi is supported).
    4. Reconnect back to your Wi-Fi.
    5. Open `http://f-scope.local/` in your browser.
-6. **Printable Device Label**_(optional)_:
+7. **Printable Device Label** *(optional)*:
    1. Open [Sticker Generator](https://elmot.xyz/f-scope/sticker/) in your web browser.
    2. Enter the 4-digit hex MAC ID (`xxxx`) of your device.
    3. Print the label to attach to your board or enclosure.
