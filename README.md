@@ -36,20 +36,20 @@ The goal of this project is to turn inexpensive, readily available development c
 
 ### Hardware Setup & Assembly
 
-All hardware documentation, board modification guides, jumper configurations, and soldering diagnostics have been consolidated into the **[Hardware Guide (docs/hardware.md)](docs/hardware.md)**:
+All hardware documentation, board modification guides, jumper configurations, and soldering diagnostics have been consolidated into the **[Hardware Guide (docs/HARDWARE.md)](docs/HARDWARE.md)**:
 
-1. **[Board Modding First](docs/hardware.md#1-nucleo-g474re-board-modifications-mandatory)** 
+1. **[Board Modding First](docs/HARDWARE.md#1-nucleo-g474re-board-modifications-mandatory)** 
    1. Solder bridges (`SB17`/`SB23`, `SB18`/`SB22`, `JP8`, `JP6`).
-   2. [Wiring Verification (`pin_check`)](docs/hardware.md#4-hardware-verification-with-pin_check) — Diagnostic test to check proper wiring.
+   2. [Wiring Verification (`pin_check`)](docs/HARDWARE.md#4-hardware-verification-with-pin_check) — Diagnostic test to check proper wiring.
    3. Soldering protection network
-2. **[Jumper Configuration](docs/hardware.md#2-jumper-configurations)** — Jumper settings for Production and Development modes.
-3. **[ESP32 Gateway Module](docs/hardware.md#3-esp32-wireless-gateway-module-m5stamp-c3u)** — Power, UART connections, and RGB status LED table.
+2. **[Jumper Configuration](docs/HARDWARE.md#2-jumper-configurations)** — Jumper settings for Production and Development modes.
+3. **[ESP32 Gateway Module](docs/HARDWARE.md#3-esp32-wireless-gateway-module-m5stamp-c3u)** — Power, UART connections, and RGB status LED table.
 
 
 4. **Flash the STM32 Firmware**:
    1. Connect the Nucleo board to your computer via USB (in development jumper mode). A virtual USB drive will appear.
    2. Copy `FoxilloScope-Production.bin` from the latest release assets onto the virtual drive.
-   3. Configure jumpers for [Production mode](docs/hardware.md#2-jumper-configurations) for standalone use.
+   3. Configure jumpers for [Production mode](docs/HARDWARE.md#2-jumper-configurations) for standalone use.
 5. **Flash the ESP32 Gateway (M5Stamp C3U)**:
    1. Connect the M5Stamp C3U to your computer via USB.
    2. Use the [Foxilloscope ESP32 Web Flasher](https://elmot.xyz/f-scope/flahser.html) to upload the gateway firmware.
@@ -82,7 +82,7 @@ The web app can also be hosted on any static HTTPS server (e.g. GitHub Pages). I
 
 ## Documentation & References
 
-- **[Hardware Setup & Assembly Guide](docs/hardware.md)** – Board solder bridge modifications, jumpers, external circuit, and `pin_check` verification.
+- **[Hardware Setup & Assembly Guide](docs/HARDWARE.md)** – Board solder bridge modifications, jumpers, external circuit, and `pin_check` verification.
 - **[Developer & Contributor Guide](DEVELOPMENT.md)** – Firmware compilation, debug hardware jumper configurations, Python debug server, and tools used.
 - **Physical Wiring Diagram**: [docs/wiring_diagram.html](docs/wiring_diagram.html)
 - **Subsystem Architecture References**:

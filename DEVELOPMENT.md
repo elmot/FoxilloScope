@@ -31,11 +31,11 @@ The project is split into three main software components:
 
 ## Hardware Configuration & Jumper Settings
 
-All hardware modifications, jumper settings (Production vs. Development modes), and pin diagnostics are documented in the **[Hardware Guide (docs/hardware.md)](docs/hardware.md)**:
-- **Production Mode**: See [docs/hardware.md#2-jumper-configurations](docs/hardware.md#2-jumper-configurations)
-- **Development & ST-LINK Debug Mode**: See [docs/hardware.md#2-jumper-configurations](docs/hardware.md#2-jumper-configurations)
-- **Nucleo Board Solder Bridges**: See [docs/hardware.md#1-nucleo-g474re-board-modifications-mandatory](docs/hardware.md#1-nucleo-g474re-board-modifications-mandatory)
-- **Hardware Verification (`pin_check`)**: See [docs/hardware.md#4-hardware-verification-with-pin_check](docs/hardware.md#4-hardware-verification-with-pin_check)
+All hardware modifications, jumper settings (Production vs. Development modes), and pin diagnostics are documented in the **[Hardware Guide (docs/HARDWARE.md)](docs/HARDWARE.md)**:
+- **Production Mode**: See [docs/HARDWARE.md#2-jumper-configurations](docs/HARDWARE.md#2-jumper-configurations)
+- **Development & ST-LINK Debug Mode**: See [docs/HARDWARE.md#2-jumper-configurations](docs/HARDWARE.md#2-jumper-configurations)
+- **Nucleo Board Solder Bridges**: See [docs/HARDWARE.md#1-nucleo-g474re-board-modifications-mandatory](docs/HARDWARE.md#1-nucleo-g474re-board-modifications-mandatory)
+- **Hardware Verification (`pin_check`)**: See [docs/HARDWARE.md#4-hardware-verification-with-pin_check](docs/HARDWARE.md#4-hardware-verification-with-pin_check)
 
 ---
 
