@@ -510,19 +510,14 @@ static void run_pin_check(uint32_t cycle_count)
 }
 
 /**
-  * @brief  Configure all external pins as outputs and continuously blink them
-  *         with distinct duty cycles so each external net can be identified on an LED.
-  *         Pins sharing the same external net receive the identical duty cycle
-  *         to avoid electrical contention / short circuits between them.
-  *         Internal pins (label starting with '_') are kept in high-Z analog mode.
+  * @brief  Configure all external pins as outputs and set internal pins to analog.
   */
-static void run_external_pins_signal_generator(void)
+static size_t setup_external_pins(uint8_t *ext_net_ids, uint32_t *on_time_ms)
 {
     /* Keep internal pins safe in high-impedance analog mode */
     set_all_pins_analog();
 
     /* Find all unique external nets */
-    uint8_t ext_net_ids[PIN_COUNT];
     size_t ext_net_count = 0;
 
     for (size_t i = 0; i < PIN_COUNT; i++)
@@ -547,13 +542,11 @@ static void run_external_pins_signal_generator(void)
 
     if (ext_net_count == 0)
     {
-        printf("\nNo external pins defined. Halting.\n");
-        while (1) {}
+        return 0;
     }
 
     /* Assign on-time (ms) out of 1000 ms period for each unique external net */
     #define CYCLE_PERIOD_MS 1000U
-    uint32_t on_time_ms[PIN_COUNT] = {0};
     for (size_t j = 0; j < ext_net_count; j++)
     {
         /* Linearly distribute duty cycle: (j + 1) / (ext_net_count + 1) */
@@ -569,32 +562,20 @@ static void run_external_pins_signal_generator(void)
         }
     }
 
-    printf("\n");
-    printf("============================================================\n");
-    printf(" External Pins LED Signal Generator Active\n");
-    printf(" Period: %u ms. Internal pins remain in Analog High-Z mode.\n", (unsigned int)CYCLE_PERIOD_MS);
-    printf("------------------------------------------------------------\n");
+    return ext_net_count;
+}
 
-    for (size_t j = 0; j < ext_net_count; j++)
+/**
+  * @brief  Infinite loop blinking external pins with distinct duty cycles.
+  *         Does NOT perform any semihosting or console I/O, safe to call from anywhere.
+  */
+static void run_blinking_loop(const uint8_t *ext_net_ids, const uint32_t *on_time_ms, size_t ext_net_count)
+{
+    if (ext_net_count == 0)
     {
-        uint32_t duty_pct = (on_time_ms[j] * 100U) / CYCLE_PERIOD_MS;
-        printf(" Net %u (Duty: %lu%%, %lums ON / %lums OFF):\n",
-               (unsigned int)ext_net_ids[j],
-               (unsigned long)duty_pct,
-               (unsigned long)on_time_ms[j],
-               (unsigned long)(CYCLE_PERIOD_MS - on_time_ms[j]));
-
-        for (size_t i = 0; i < PIN_COUNT; i++)
-        {
-            if (PINS[i].net_id == ext_net_ids[j] && PINS[i].net_name[0] != '_')
-            {
-                printf("   - %s (%s, %s)\n", PINS[i].name, PINS[i].header_pin, PINS[i].net_name);
-            }
-        }
+        while (1) {}
     }
-    printf("============================================================\n");
 
-    /* Infinite generation loop */
     while (1)
     {
         /* Turn all external pins ON */
@@ -634,17 +615,90 @@ static void run_external_pins_signal_generator(void)
 }
 
 /**
+  * @brief  Debug Monitor Exception Handler.
+  *         Catches BKPT / semihosting calls when no host debugger is attached or when
+  *         DebugMonitor is active. Starts blinking external pins without any semihosting I/O.
+  */
+void DebugMon_Handler(void)
+{
+    uint8_t ext_net_ids[PIN_COUNT];
+    uint32_t on_time_ms[PIN_COUNT] = {0};
+
+    size_t ext_net_count = setup_external_pins(ext_net_ids, on_time_ms);
+    run_blinking_loop(ext_net_ids, on_time_ms, ext_net_count);
+}
+
+/**
+  * @brief  Hard Fault Exception Handler fallback.
+  *         If BKPT escalates to HardFault (e.g. if MON_EN is not active or priority blocked),
+  *         also start blinking external pins instead of hanging in an infinite loop.
+  */
+void HardFault_Handler(void)
+{
+    uint8_t ext_net_ids[PIN_COUNT];
+    uint32_t on_time_ms[PIN_COUNT] = {0};
+
+    size_t ext_net_count = setup_external_pins(ext_net_ids, on_time_ms);
+    run_blinking_loop(ext_net_ids, on_time_ms, ext_net_count);
+}
+
+/**
+  * @brief  Configure all external pins as outputs and continuously blink them
+  *         with distinct duty cycles so each external net can be identified on an LED.
+  *         Pins sharing the same external net receive the identical duty cycle
+  *         to avoid electrical contention / short circuits between them.
+  *         Internal pins (label starting with '_') are kept in high-Z analog mode.
+  */
+static void run_external_pins_signal_generator(void)
+{
+    uint8_t ext_net_ids[PIN_COUNT];
+    uint32_t on_time_ms[PIN_COUNT] = {0};
+
+    size_t ext_net_count = setup_external_pins(ext_net_ids, on_time_ms);
+
+    if (ext_net_count == 0)
+    {
+        printf("\nNo external pins defined. Halting.\n");
+        while (1) {}
+    }
+
+    printf("\n");
+    printf("============================================================\n");
+    printf(" External Pins LED Signal Generator Active\n");
+    printf(" Period: %u ms. Internal pins remain in Analog High-Z mode.\n", (unsigned int)CYCLE_PERIOD_MS);
+    printf("------------------------------------------------------------\n");
+
+    for (size_t j = 0; j < ext_net_count; j++)
+    {
+        uint32_t duty_pct = (on_time_ms[j] * 100U) / CYCLE_PERIOD_MS;
+        printf(" Net %u (Duty: %lu%%, %lums ON / %lums OFF):\n",
+               (unsigned int)ext_net_ids[j],
+               (unsigned long)duty_pct,
+               (unsigned long)on_time_ms[j],
+               (unsigned long)(CYCLE_PERIOD_MS - on_time_ms[j]));
+
+        for (size_t i = 0; i < PIN_COUNT; i++)
+        {
+            if (PINS[i].net_id == ext_net_ids[j] && PINS[i].net_name[0] != '_')
+            {
+                printf("   - %s (%s, %s)\n", PINS[i].name, PINS[i].header_pin, PINS[i].net_name);
+            }
+        }
+    }
+    printf("============================================================\n");
+
+    run_blinking_loop(ext_net_ids, on_time_ms, ext_net_count);
+}
+
+/**
   * @brief  The application entry point for pin_check.
   *         No generated init code is used: the MCU runs from the reset-default
-  *         clock, interrupts are disabled, console output goes via semihosting.
+  *         clock, console output goes via semihosting.
   * @retval int
   */
 int main(void)
 {
-    /* No interrupts at all: SysTick is polled, nothing else is enabled */
-    __disable_irq();
-
-    initialise_monitor_handles();
+    /* Enable GPIO peripheral clocks early */
 #ifdef __HAL_RCC_GPIOA_CLK_ENABLE
     __HAL_RCC_GPIOA_CLK_ENABLE();
 #endif
@@ -669,6 +723,18 @@ int main(void)
 #ifdef __HAL_RCC_GPIOI_CLK_ENABLE
     __HAL_RCC_GPIOI_CLK_ENABLE();
 #endif
+
+    /* Configure DebugMonitor exception with lowest priority (0xFF) */
+    NVIC_SetPriority(DebugMonitor_IRQn, 0xFF);
+
+    /* Enable Debug Monitor (DEMCR.MON_EN) so BKPT / semihosting triggers
+     * DebugMon_Handler if no debugger halts the core */
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_MON_EN_Msk;
+
+    /* Ensure interrupts are enabled so DebugMonitor exception can be taken */
+    __enable_irq();
+
+    initialise_monitor_handles();
 
     printf("\n");
     printf("############################################################\n");
