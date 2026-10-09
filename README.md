@@ -32,82 +32,35 @@ The goal of this project is to turn inexpensive, readily available development c
 
 ---
 
-## Assemble at Home (Quick Start)
+## Hardware Setup & Assembly
 
-1. **Flash the Nucleo Board & Set Production Jumpers**: 
-   1. Connect the Nucleo board to your computer via USB. A virtual USB drive will appear.
-   2. Copy the `FoxilloScope-Production.bin` firmware file from the latest release assets directly onto the Nucleo's USB drive.
-   3. Wait a couple of seconds and then disconnect the board.
-   4. **Configure Jumpers (blocks onboard ST-LINK in off/reset state)**:
-      - **JP1**: Closed
-      - **JP5 & JP3**: Open
-2. **Nucleo Board Hardware Modifications (Mandatory Board Modding)**:
-   All solder bridges (SB1–SB41) are located on the **bottom layer** of the ST Nucleo-G474RE board (MB1367). Perform the following mandatory modifications:
-   - **UART Solder Bridges Resoldering**:
-     - Desolder / open **SB17** & **SB23** (disconnects `LPUART1` `PA2`/`PA3` from ST-LINK VCP).
-     - Solder bridge / close **SB18** & **SB22** **ON** (routes `LPUART1` `PA2`/`PA3` to expansion headers D1 TX / D0 RX).
-     - *(Optional for ST-LINK VCP debug)*: Desolder **SB13** & **SB19** and bridge **SB12** & **SB20** **ON** if routing `USART1` (`PC4`/`PC5`) to ST-LINK VCP instead.
-   - **JP8 Solder Bridge ($V_{\text{REF+}}$ Reference)**:
-     - Solder bridge header **JP8** to pins **2–3** (`VDD`). This ties the MCU's $V_{\text{REF+}}$ analog reference voltage pin directly to 3.3V $V_{\text{DD}}$, ensuring accurate ADC/DAC scaling math without unpowered reference drops.
-   - **JP6 Solder Bridge (Power Rail Reliability)**:
-     - Solder bridge header **JP6** ($I_{\text{DD}}$ measurement pins) directly across pins [1-2] or bottom pads. This bypasses mechanical jumper contacts to eliminate power dropouts and contact resistance during high-speed sampling.
-3. **Flash the M5Stamp C3U**:
-   1. Connect the _M5Stamp C3U_ or another ESP32-C3 board to your computer via USB.
-   2. Use the [Foxilloscope ESP32 Web Flasher](https://elmot.xyz/f-scope/flahser.html) to upload ESP32 part of the oscilloscope 
-4. **Solder Protection & Connections**: 
-   1. Prepare the signal conditioning components:
-      - **Schottky Diodes**: 6× Schottky diodes (BAS40-04 dual-diode sets were used, but almost any Schottky diodes with reverse voltage $V_R \ge 40\text{ V}$ and minimal junction capacitance fit).
-      - **Resistors**: $2\times 1\text{ M}\Omega$ resistors and $3\times 3\dots 6\text{ k}\Omega$ resistors.
-   2. Solder the input protection network and interconnections as shown in the wiring diagram below:
-      ![Wiring Diagram](docs/wiring.png)
-   3. Attach measurement probes to Channel A / Channel B inputs, and connect probe ground clips to the **Virtual Ground** output. 
-5. **Verify Operation**:
-   1. *(Optional)* If the debug STM32 firmware is flashed, connect test signal outputs A/B to the Channel A/B inputs or probes:
-      - **Test Signal A**: Small-amplitude decaying sine wave
-      - **Test Signal B**: Triangle wave (−1.65 V to 0 V)
-   2. **Bluetooth LE (BLE) Connection**:
-      1. Power up the system and navigate to `http://f-scope.local/` in your Chrome browser.
-      2. Click the Bluetooth button at the bottom-left to connect, then select the *F-SCOPE-xxxx* device.
-      3. Test if oscilloscope is working correctly.
-   3. **Wi-Fi Connection**:
-      1. Connect to the *FoxilloScope-xxxx* Wi-Fi network.
-      2. Open `http://f-scope.local/` or `http://192.168.4.1/` in your browser.
-      3. Test if oscilloscope is working correctly.
-6. **Wi-Fi Setup**:
-   1. Connect to the *FoxilloScope-xxxx* Wi-Fi network.
-   2. Open `http://f-scope.local/wifi` or `http://192.168.4.1/wifi` in your browser.
-   3. Set up Wi-Fi credentials (Until ESP32-C6 gateway is used, only 2.4 GHz Wi-Fi is supported).
-   4. Reconnect back to your Wi-Fi.
-   5. Open `http://f-scope.local/` in your browser.
-7. **Printable Device Label** *(optional)*:
-   1. Open [Sticker Generator](https://elmot.xyz/f-scope/sticker/) in your web browser.
-   2. Enter the 4-digit hex MAC ID (`xxxx`) of your device.
-   3. Print the label to attach to your board or enclosure.
+All hardware documentation, board modification guides, jumper configurations, and soldering diagnostics have been consolidated into the **[Hardware Guide (docs/hardware.md)](docs/hardware.md)**:
 
-*(where xxxx represents the device ID – the last four hex digits of the ESP32 MAC address)*
-
+1. **[Board Modding First](docs/hardware.md#1-nucleo-g474re-board-modifications-mandatory)** — Solder bridges (`SB17`/`SB23`, `SB18`/`SB22`, `JP8`, `JP6`).
+2. **[Jumper Configuration](docs/hardware.md#2-jumper-configurations)** — Jumper settings for Production (PROD) and Development (DEV) modes.
+3. **[ESP32 Gateway Module](docs/hardware.md#3-esp32-wireless-gateway-module-m5stamp-c3u)** — Power, UART connections, and RGB status LED table.
+4. **[Pin Verification (`pin_check`)](docs/hardware.md#4-hardware-verification-with-pin_check)** — Diagnostic test to run **before soldering resistors and diodes**.
+5. **[External Circuit (AFE & Protection)](docs/hardware.md#5-external-circuit-analog-front-end--protection)** — Input protection network, stripboard layout, and dedicated **Virtual Ground (VGND)** terminal.
 
 ---
 
-## M5Stamp C3U Setup & Status Indications
+## Quick Start (Flashing & Operation)
 
-The M5Stamp C3U acts as the wireless bridge connecting the STM32 to your browser.
-
-### Pin Connections
-- **GPIO 6**: UART TX (connects to STM32 UART RX)
-- **GPIO 7**: UART RX (connects to STM32 UART TX)
-- **GPIO 2**: Data line for onboard SK6812 RGB LED (WS2812 protocol)
-
-### Onboard RGB LED Statuses
-
-| LED Color         | Status / Meaning                                                      |
-|:------------------|:----------------------------------------------------------------------|
-| **Green**         | Client actively connected over **WebSocket**                          |
-| **Blue**          | Client actively connected over **Bluetooth LE (BLE)**                 |
-| **Orange**        | Wi-Fi station connection failed (fallback Access Point is active)     |
-| **White**         | Connected to Wi-Fi network, waiting for web client                    |
-| **Purple**        | Idle in Access Point mode (`FoxilloScope` AP), waiting for connection |
-| **Blinking Pink** | STM32 firmware update complete (power cycle required)                 |
+1. **Flash the STM32 Firmware**:
+   1. Connect the Nucleo board to your computer via USB (in DEV jumper mode). A virtual USB drive will appear.
+   2. Copy `FoxilloScope-Production.bin` from the latest release assets onto the virtual drive.
+   3. Configure jumpers for [PROD mode](docs/hardware.md#2-jumper-configurations) for standalone use.
+2. **Flash the ESP32 Gateway (M5Stamp C3U)**:
+   1. Connect the M5Stamp C3U to your computer via USB.
+   2. Use the [Foxilloscope ESP32 Web Flasher](https://elmot.xyz/f-scope/flahser.html) to upload the gateway firmware.
+3. **Connect Probes**:
+   1. Attach oscilloscope probes to Channel A / Channel B inputs.
+   2. Connect probe ground clips to **Virtual Ground (VGND)** (never to board GND!).
+4. **Connect & Measure**:
+   1. **Wi-Fi**: Connect to *FoxilloScope-xxxx* Wi-Fi network and open `http://f-scope.local/` (or `http://192.168.4.1/`).
+   2. **Bluetooth LE**: Open `http://f-scope.local/` in Chrome, click the Bluetooth icon, and pair with *F-SCOPE-xxxx*.
+   3. **Wi-Fi Credentials Setup**: Open `http://f-scope.local/wifi` to configure your home Wi-Fi network.
+   4. **Device Label** *(optional)*: Open [Sticker Generator](https://elmot.xyz/f-scope/sticker/) and enter the device ID (`xxxx`, last four hex digits of the ESP32 MAC).
 
 ---
 
@@ -129,8 +82,9 @@ The web app can also be hosted on any static HTTPS server (e.g. GitHub Pages). I
 
 ## Documentation & References
 
+- **[Hardware Setup & Assembly Guide](docs/hardware.md)** – Board solder bridge modifications, jumpers, external circuit, and `pin_check` verification.
 - **[Developer & Contributor Guide](DEVELOPMENT.md)** – Firmware compilation, debug hardware jumper configurations, Python debug server, and tools used.
-- **Hardware Wiring & Pinout**: [docs/pinout-peripherals.md](docs/pinout-peripherals.md) & [Wiring](docs/wiring_diagram.html)
+- **Physical Wiring Diagram**: [docs/wiring_diagram.html](docs/wiring_diagram.html)
 - **Subsystem Architecture References**:
   - STM32 Firmware Architecture: [AGENTS.md](AGENTS.md)
   - ESP32 Gateway Architecture: [esp32-gateway/AGENTS.md](esp32-gateway/AGENTS.md)
