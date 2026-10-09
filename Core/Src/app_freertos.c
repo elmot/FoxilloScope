@@ -88,7 +88,7 @@ const osThreadAttr_t keyFrameTask_attributes = {
 };
 /* Definitions for cmdRxQueue */
 osMessageQueueId_t cmdRxQueueHandle;
-uint8_t cmdRxQueueBuffer[ 128 * sizeof( uint8_t ) ];
+uint8_t cmdRxQueueBuffer[ 512 * sizeof( uint8_t ) ];
 osStaticMessageQDef_t cmdRxQueueControlBlock;
 const osMessageQueueAttr_t cmdRxQueue_attributes = {
   .name = "cmdRxQueue",
@@ -182,7 +182,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the queue(s) */
   /* creation of cmdRxQueue */
-  cmdRxQueueHandle = osMessageQueueNew (128, sizeof(uint8_t), &cmdRxQueue_attributes);
+  cmdRxQueueHandle = osMessageQueueNew (512, sizeof(uint8_t), &cmdRxQueue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */

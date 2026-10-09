@@ -275,7 +275,7 @@ const Hardware = {
         const range = vslParameters.channels[channel]["range.uv"]
         const {hw} = Gain.splitGain(Gain.BASE_VOLTAGE_uV / range)
         const baseLevelUv = vslParameters.channels[channel]["base.lvl.uv"]
-        comm.send(`gain.${channel}=${hw}\nbase.lvl.${channel}.uv=${baseLevelUv.toFixed(0)}`)
+        comm.send(`gain.${channel}=${hw}\nbase.lvl.${channel}.uv=${baseLevelUv.toFixed(0)}\n`)
     },
     _sendParameters(...names) {
         let cmd = ""
