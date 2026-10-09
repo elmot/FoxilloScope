@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+<!--
+  =============================================================================
+  WIRING DIAGRAM TEMPLATE (DRY & KISS ARCHITECTURE)
+  =============================================================================
+  HOW TO USE THIS TEMPLATE:
+  1. Pin coordinates table (PINS) in the <script> block is the SINGLE SOURCE OF TRUTH.
+     Do not manually hardcode circle coordinates or SVG paths in HTML.
+  2. Declare your connections in the NETS array:
+     - id: net name from CubeMX report (e.g. "_STAGE.A", "VGND")
+     - title: legend description (e.g. "CH1 Stage (PB12 ↔ PA3)")
+     - color: distinct hex color code
+     - pins: array of pin names (e.g. ["PB12", "PA3"])
+     - d: SVG path string for internal wire (e.g. "M 505 283 C ...")
+     - ext: optional external connector definition { d, box: [x,y,w,h], text }
+  3. The buildDiagram() function automatically:
+     - Generates the legend items
+     - Generates all wire paths
+     - Generates all external connector boxes & labels
+     - Places endpoint dots at exact pin coordinates
+  4. Automatically reads pin_report.json (if present) and highlights faulty pins.
+  =============================================================================
+-->
+<head>
+  <meta charset="utf-8">
+  <title>Wiring Diagram Template</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #1e1e1e;
+      color: #ddd;
+      margin: 20px;
+    }
+    h2 {
+      margin-bottom: 8px;
+    }
+    .report-banner {
+      max-width: 593px;
+      background: #252528;
+      border: 1px solid #3e3e42;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .report-status-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .status-badge {
+      font-size: 11px;
+      font-weight: bold;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .status-badge.pass {
+      background: #166534;
+      color: #4ade80;
+      border: 1px solid #22c55e;
+    }
+    .status-badge.fail {
+      background: #7f1d1d;
+      color: #fca5a5;
+      border: 1px solid #ef4444;
+      animation: badge-pulse 1.5s infinite alternate;
+    }
+    @keyframes badge-pulse {
+      0% { box-shadow: 0 0 6px rgba(239, 68, 68, 0.4); }
+      100% { box-shadow: 0 0 14px rgba(239, 68, 68, 0.9); }
+    }
+    .report-summary-text {
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+    .btn-action {
+      background: #374151;
+      color: #f3f4f6;
+      border: 1px solid #4b5563;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .report-details-list {
+      font-size: 11px;
+      background: #1a1a1c;
+      border: 1px solid #333336;
+      border-radius: 4px;
+      padding: 6px 10px;
+      max-height: 120px;
+      overflow-y: auto;
+      display: none;
+    }
+    .report-details-list ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .err-fail-text {
+      color: #f87171;
+      font-weight: bold;
+    }
+    .legend {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 11px;
+      font-weight: bold;
+      flex-wrap: wrap;
+      max-width: 700px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-line {
+      width: 16px;
+      height: 3px;
+      opacity: 0.7;
+      border-radius: 2px;
+    }
+    .diagram-container {
+      position: relative;
+      width: 593px;
+      height: 530px;
+      border: 1px solid #444;
+      background: url('nucleo-g474re-pinout.png') no-repeat top left;
+      background-size: 593px 530px;
+      margin-bottom: 24px;
+    }
+    .diagram-container svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 593px;
+      height: 530px;
+    }
+    .wire {
+      fill: none;
+      stroke-opacity: 0.55;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .wire.wire-error {
+      stroke: #ff0055 !important;
+      stroke-width: 3.5 !important;
+      stroke-opacity: 0.95 !important;
+      stroke-dasharray: 6 3 !important;
+      filter: drop-shadow(0 0 5px #ff0055);
+    }
+    .connector-box {
+      fill: #1e1e1e;
+      fill-opacity: 0.75;
+      stroke-width: 1.5;
+      rx: 3px;
+      ry: 3px;
+    }
+    .connector-text {
+      font-size: 8px;
+      font-family: sans-serif;
+      font-weight: bold;
+      dominant-baseline: central;
+      text-anchor: middle;
+    }
+    @keyframes pin-error-pulse {
+      0%   { r: 6px; stroke-width: 2px; stroke-opacity: 1; fill-opacity: 0.8; }
+      50%  { r: 12px; stroke-width: 3.5px; stroke-opacity: 0.3; fill-opacity: 0.2; }
+      100% { r: 6px; stroke-width: 2px; stroke-opacity: 1; fill-opacity: 0.8; }
+    }
+    .pin-error-halo {
+      fill: #ff0055;
+      stroke: #ff0055;
+      animation: pin-error-pulse 1.3s infinite ease-in-out;
+    }
+    .pin-error-core {
+      fill: #ff0055 !important;
+      stroke: #ffffff;
+      stroke-width: 1.5px;
+      filter: drop-shadow(0 0 6px #ff0055) drop-shadow(0 0 12px #ff0033);
+    }
+    .unexpected-short-wire {
+      fill: none;
+      stroke: #ff3b00;
+      stroke-width: 3;
+      stroke-dasharray: 4 3;
+      filter: drop-shadow(0 0 6px #ff3b00);
+      stroke-opacity: 0.95;
+    }
+  </style>
+</head>
+<body>
+  <h2>Wiring Diagram Template</h2>
+
+  <!-- Diagnostic Status Banner (Auto-shown when pin_report.json exists) -->
+  <div class="report-banner" id="reportBanner" style="display: none;">
+    <div class="report-header">
+      <div class="report-status-wrap">
+        <span class="status-badge" id="statusBadge"></span>
+        <span class="report-summary-text" id="reportSummary"></span>
+      </div>
+      <div>
+        <button class="btn-action" id="btnToggleDetails" style="display:none;">View Errors</button>
+      </div>
+    </div>
+    <div class="report-details-list" id="reportDetails">
+      <ul id="reportDetailsUl"></ul>
+    </div>
+  </div>
+
+  <!-- Dynamic Legend -->
+  <div class="legend" id="legendContainer"></div>
+
+  <!-- Diagram Canvas -->
+  <div class="diagram-container">
+    <svg viewBox="0 0 593 530" id="wiringSvg">
+      <g id="wires-layer"></g>
+      <g id="pins-layer"></g>
+      <g id="error-overlay"></g>
+    </svg>
+  </div>
+
+  <script>
+    // 1. PIN COORDINATES REFERENCE (DO NOT GUESS OR ALTER)
+    const PINS = {
+      // CN7 Pins
+      "PC10": { x: 83,  y: 178.5, header: "CN7-1"  },
+      "PC11": { x: 173, y: 178.5, header: "CN7-2"  },
+      "PC12": { x: 83,  y: 193.5, header: "CN7-3"  },
+      "PD2":  { x: 173, y: 193.5, header: "CN7-4"  },
+      "PA13": { x: 83,  y: 268,   header: "CN7-13" },
+      "PA14": { x: 83,  y: 283,   header: "CN7-15" },
+      "PA15": { x: 83,  y: 298,   header: "CN7-17" },
+      "PB7":  { x: 83,  y: 327.5, header: "CN7-21" },
+      "PC13": { x: 83,  y: 342.5, header: "CN7-23" },
+      "PC14": { x: 83,  y: 357,   header: "CN7-25" },
+      "PC15": { x: 83,  y: 372,   header: "CN7-27" },
+      "PA0":  { x: 173, y: 372,   header: "CN7-28" },
+      "PF0":  { x: 83,  y: 387,   header: "CN7-29" },
+      "PA1":  { x: 173, y: 387,   header: "CN7-30" },
+      "PF1":  { x: 83,  y: 402,   header: "CN7-31" },
+      "PA4":  { x: 173, y: 402,   header: "CN7-32" },
+      "PB0":  { x: 173, y: 417,   header: "CN7-34" },
+      "PC2":  { x: 83,  y: 432,   header: "CN7-35" },
+      "PC3":  { x: 83,  y: 447,   header: "CN7-37" },
+
+      // CN10 Pins
+      "PC9":  { x: 414, y: 172,   header: "CN10-1"  },
+      "PC8":  { x: 505, y: 178.5, header: "CN10-2"  },
+      "PB8":  { x: 414, y: 186,   header: "CN10-3"  },
+      "PC6":  { x: 505, y: 193.5, header: "CN10-4"  },
+      "PB9":  { x: 414, y: 201,   header: "CN10-5"  },
+      "PC5":  { x: 505, y: 208.5, header: "CN10-6"  },
+      "AVDD": { x: 414, y: 216,   header: "CN10-7"  },
+      "PA5":  { x: 414, y: 246,   header: "CN10-11" },
+      "PA12": { x: 505, y: 253,   header: "CN10-12" },
+      "PA6":  { x: 414, y: 261,   header: "CN10-13" },
+      "PA11": { x: 505, y: 268,   header: "CN10-14" },
+      "PA7":  { x: 414, y: 276,   header: "CN10-15" },
+      "PB12": { x: 505, y: 283,   header: "CN10-16" },
+      "PB6":  { x: 414, y: 291,   header: "CN10-17" },
+      "PB11": { x: 505, y: 298,   header: "CN10-18" },
+      "PC7":  { x: 414, y: 305,   header: "CN10-19" },
+      "PA9":  { x: 414, y: 320,   header: "CN10-21" },
+      "PB2":  { x: 505, y: 327.5, header: "CN10-22" },
+      "PA8":  { x: 414, y: 342.5, header: "CN10-23" },
+      "PB1":  { x: 505, y: 342.5, header: "CN10-24" },
+      "PB10": { x: 414, y: 357,   header: "CN10-25" },
+      "PB15": { x: 505, y: 357,   header: "CN10-26" },
+      "PB4":  { x: 414, y: 372,   header: "CN10-27" },
+      "PB14": { x: 505, y: 372,   header: "CN10-28" },
+      "PB5":  { x: 414, y: 387,   header: "CN10-29" },
+      "PB13": { x: 505, y: 387,   header: "CN10-30" },
+      "PB3":  { x: 414, y: 402,   header: "CN10-31" },
+      "AGND": { x: 505, y: 402,   header: "CN10-32" },
+      "PA10": { x: 414, y: 417,   header: "CN10-33" },
+      "PC4":  { x: 505, y: 417,   header: "CN10-34" },
+      "PA2":  { x: 414, y: 432,   header: "CN10-35" },
+      "PA3":  { x: 414, y: 447,   header: "CN10-37" }
+    };
+
+    // 2. DECLARE YOUR NETS HERE
+    const NETS = [
+      // Example internal net:
+      // { id: "_STAGE.A", title: "CH1 Stage (PB12 ↔ PA3)", color: "#38bdf8", pins: ["PB12", "PA3"], d: "M 505 283 C 455 283, 460 410, 414 447" },
+      // Example external net with connector:
+      // { id: "IN.A", title: "IN A (PB13)", color: "#eab308", pins: ["PB13"], ext: { d: "M 505 387 L 520 375", box: [520, 366, 68, 18], text: "IN A" } }
+    ];
+
+    function buildDiagram() {
+      const legend = document.getElementById('legendContainer');
+      const wires = document.getElementById('wires-layer');
+      const pins = document.getElementById('pins-layer');
+
+      NETS.forEach(net => {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.innerHTML = `<span class="legend-line" style="background:${net.color}"></span> ${net.title}`;
+        legend.appendChild(item);
+
+        if (net.d) {
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('class', 'wire');
+          path.setAttribute('data-net', net.id);
+          path.setAttribute('d', net.d);
+          path.setAttribute('stroke', net.color);
+          wires.appendChild(path);
+        }
+
+        if (net.ext) {
+          const extPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          extPath.setAttribute('class', 'wire');
+          extPath.setAttribute('data-net', net.id);
+          extPath.setAttribute('d', net.ext.d);
+          extPath.setAttribute('stroke', net.color);
+          wires.appendChild(extPath);
+
+          const [bx, by, bw, bh] = net.ext.box;
+          const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          rect.setAttribute('class', 'connector-box');
+          rect.setAttribute('x', bx); rect.setAttribute('y', by);
+          rect.setAttribute('width', bw); rect.setAttribute('height', bh);
+          rect.setAttribute('stroke', net.color);
+          wires.appendChild(rect);
+
+          const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          text.setAttribute('class', 'connector-text');
+          text.setAttribute('x', bx + bw / 2); text.setAttribute('y', by + bh / 2);
+          text.setAttribute('fill', net.color);
+          text.textContent = net.ext.text;
+          wires.appendChild(text);
+        }
+
+        net.pins.forEach(pinName => {
+          const pt = PINS[pinName];
+          if (pt) {
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', pt.x); circle.setAttribute('cy', pt.y);
+            circle.setAttribute('r', '3.5');
+            circle.setAttribute('fill', net.color);
+            pins.appendChild(circle);
+          }
+        });
+      });
+    }
+
+    // Auto-diagnostics loader
+    async function loadPinReport() {
+      const candidates = ['../pin_report.json', 'pin_report.json', '../build/Debug/pin_report.json'];
+      for (const url of candidates) {
+        try {
+          const resp = await fetch(url + '?_t=' + Date.now());
+          if (resp.ok) {
+            const data = await resp.json();
+            const banner = document.getElementById('reportBanner');
+            banner.style.display = 'flex';
+            const badge = document.getElementById('statusBadge');
+            badge.className = 'status-badge ' + (data.status === 'PASS' ? 'pass' : 'fail');
+            badge.textContent = data.status;
+            document.getElementById('reportSummary').textContent = data.status === 'PASS' ? 'All checks passed' : 'Faults detected';
+            return;
+          }
+        } catch (e) {}
+      }
+    }
+
+    buildDiagram();
+    loadPinReport();
+  </script>
+</body>
+</html>
