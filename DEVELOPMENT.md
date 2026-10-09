@@ -34,8 +34,8 @@ The project is split into three main software components:
 All hardware modifications, jumper settings (Production vs. Development modes), and pin diagnostics are documented in the **[Hardware Guide (docs/HARDWARE.md)](docs/HARDWARE.md)**:
 - **Production Mode**: See [docs/HARDWARE.md#2-jumper-configurations](docs/HARDWARE.md#2-jumper-configurations)
 - **Development & ST-LINK Debug Mode**: See [docs/HARDWARE.md#2-jumper-configurations](docs/HARDWARE.md#2-jumper-configurations)
-- **Nucleo Board Solder Bridges**: See [docs/HARDWARE.md#1-nucleo-g474re-board-modifications-mandatory](docs/HARDWARE.md#1-nucleo-g474re-board-modifications-mandatory)
-- **Hardware Verification (`pin_check`)**: See [docs/HARDWARE.md#4-hardware-verification-with-pin_check](docs/HARDWARE.md#4-hardware-verification-with-pin_check)
+- **Nucleo Board Solder Bridges**: See [docs/HARDWARE.md](docs/HARDWARE.md#1-nucleo-g474re-board-modifications-mandatory)
+- **Hardware Verification (`pin_check`)**: See [docs/HARDWARE.md](docs/HARDWARE.md#4-hardware-verification-with-pin_check)
 
 ---
 
@@ -71,8 +71,9 @@ This bridges the STM32's USB Virtual COM port (LPUART1) directly to a local WebS
 
 ## Documentation References
 
-- **User Guide & Assembly**: [README.md](README.md)
-- **STM32 Architecture Reference**: [AGENTS.md](AGENTS.md)
-- **ESP32 Gateway Architecture Reference**: [esp32-gateway/AGENTS.md](esp32-gateway/AGENTS.md)
-- **Frontend Architecture Reference**: [html/AGENTS.md](html/AGENTS.md)
-- **Pinout & Wiring Mapping**: [docs/pinout-peripherals.md](docs/pinout-peripherals.md) & [docs/wiring_diagram.html](docs/wiring_diagram.html)
+- User Guide & Assembly: [README.md](README.md)
+- STM32 Architecture Reference: [AGENTS.md](AGENTS.md)
+- ESP32 Gateway Architecture Reference: [esp32-gateway/AGENTS.md](esp32-gateway/AGENTS.md)
+- Frontend Architecture Reference: [html/AGENTS.md](html/AGENTS.md)
+- Pinout & Wiring Mapping: [docs/wiring_diagram.html](docs/wiring_diagram.html)
+- Peripheral functions and pins spreadsheet [docs/foxilloscope_peripherals.fods](docs/foxilloscope_peripherals.fods)
