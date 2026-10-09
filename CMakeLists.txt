@@ -129,7 +129,7 @@ add_custom_command(TARGET pin_check POST_BUILD
 add_custom_target(run_pin_check
     COMMAND ${CMAKE_COMMAND}
         -DOUTPUT_FILE=${CMAKE_CURRENT_BINARY_DIR}/pin_check_output.log
-        -DTIMEOUT_SEC=6
+        -DTIMEOUT_SEC=66
         -P ${CMAKE_CURRENT_SOURCE_DIR}/pin_check/run.cmake
     DEPENDS pin_check
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}

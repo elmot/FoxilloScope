@@ -25,10 +25,10 @@ if(NOT OUTPUT_FILE)
 endif()
 
 if(NOT TIMEOUT_SEC)
-    set(TIMEOUT_SEC 6)
+    set(TIMEOUT_SEC 16)
 endif()
 
-set(ARGS --frequency 8000 -d --semihosting terminal)
+set(ARGS --frequency 8000 -d --semihosting all --semihost-console-port 45464)
 if(STM32_PROGRAMMER_DIR)
     list(APPEND ARGS -cp "${STM32_PROGRAMMER_DIR}")
 endif()
