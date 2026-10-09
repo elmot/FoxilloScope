@@ -29,22 +29,13 @@ The project is split into three main software components:
 
 ---
 
-## Power & Debug Hardware Configurations
+## Hardware Configuration & Jumper Settings
 
-### Production Mode (Standalone Wireless)
-For standard standalone production deployment and power jumper setups, see the **[Production Jumper Settings in README.md](README.md#assemble-at-home-quick-start)**:
-- **Power**: Nucleo is powered directly via the M5Stamp 3.3V rail.
-- **Jumper Settings**: `JP1` closed, `JP5` & `JP3` open (blocks onboard ST-LINK from interfering in off/reset state).
-
-### Wi-Fi Debug Mode (Development)
-- **Power & Wiring**: M5Stamp and Nucleo share a common ground (GND), are powered independently (e.g., separate USB cables), and have RX & TX connected.
-- **Jumper Settings**:
-  - **JP1**: Open
-  - **JP5**: Set to **5V_STLINK**
-  - **JP3**: Closed
-- **Hardware Debug Interfaces**:
-  - **M5Stamp C3U**: Debugged via on-chip USB-JTAG interface.
-  - **Nucleo-G474RE**: Debugged via onboard ST-LINK debugger.
+All hardware modifications, jumper settings (Production vs. Development modes), and pin diagnostics are documented in the **[Hardware Guide (docs/HARDWARE.md)](docs/HARDWARE.md)**:
+- **Production Mode**: See [docs/HARDWARE.md#2-jumper-configurations](docs/HARDWARE.md#2-jumper-configurations)
+- **Development & ST-LINK Debug Mode**: See [docs/HARDWARE.md#2-jumper-configurations](docs/HARDWARE.md#2-jumper-configurations)
+- **Nucleo Board Solder Bridges**: See [docs/HARDWARE.md](docs/HARDWARE.md#1-nucleo-g474re-board-modifications-mandatory)
+- **Hardware Verification (`pin_check`)**: See [docs/HARDWARE.md](docs/HARDWARE.md#4-hardware-verification-with-pin_check)
 
 ---
 
@@ -80,8 +71,9 @@ This bridges the STM32's USB Virtual COM port (LPUART1) directly to a local WebS
 
 ## Documentation References
 
-- **User Guide & Assembly**: [README.md](README.md)
-- **STM32 Architecture Reference**: [AGENTS.md](AGENTS.md)
-- **ESP32 Gateway Architecture Reference**: [esp32-gateway/AGENTS.md](esp32-gateway/AGENTS.md)
-- **Frontend Architecture Reference**: [html/AGENTS.md](html/AGENTS.md)
-- **Pinout & Wiring Mapping**: [docs/pinout-peripherals.md](docs/pinout-peripherals.md) & [docs/wiring.png](docs/wiring.png)
+- User Guide & Assembly: [README.md](README.md)
+- STM32 Architecture Reference: [AGENTS.md](AGENTS.md)
+- ESP32 Gateway Architecture Reference: [esp32-gateway/AGENTS.md](esp32-gateway/AGENTS.md)
+- Frontend Architecture Reference: [html/AGENTS.md](html/AGENTS.md)
+- Pinout & Wiring Mapping: [docs/wiring_diagram.html](docs/wiring_diagram.html)
+- _(requires LibreOffice or OpenOffice)__ Peripheral functions and pins spreadsheet [docs/foxilloscope_peripherals.fods](docs/foxilloscope_peripherals.fods)
