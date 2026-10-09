@@ -11,8 +11,98 @@
       margin: 20px;
     }
     h2 {
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
+
+    /* --- Pin Report Diagnostic Banner --- */
+    .report-banner {
+      max-width: 593px;
+      background: #252528;
+      border: 1px solid #3e3e42;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .report-status-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .status-badge {
+      font-size: 11px;
+      font-weight: bold;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .status-badge.pass {
+      background: #166534;
+      color: #4ade80;
+      border: 1px solid #22c55e;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+    }
+    .status-badge.fail {
+      background: #7f1d1d;
+      color: #fca5a5;
+      border: 1px solid #ef4444;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+      animation: badge-pulse 1.5s infinite alternate;
+    }
+    @keyframes badge-pulse {
+      0% { box-shadow: 0 0 6px rgba(239, 68, 68, 0.4); }
+      100% { box-shadow: 0 0 14px rgba(239, 68, 68, 0.9); }
+    }
+    .report-summary-text {
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+    .btn-action {
+      background: #374151;
+      color: #f3f4f6;
+      border: 1px solid #4b5563;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .btn-action:hover {
+      background: #4b5563;
+    }
+    .report-details-list {
+      font-size: 11px;
+      background: #1a1a1c;
+      border: 1px solid #333336;
+      border-radius: 4px;
+      padding: 6px 10px;
+      max-height: 120px;
+      overflow-y: auto;
+      display: none;
+    }
+    .report-details-list ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .report-details-list li {
+      margin-bottom: 2px;
+    }
+    .err-fail-text {
+      color: #f87171;
+      font-weight: bold;
+    }
+
+    /* --- Legend (Dynamic) --- */
     .legend {
       display: flex;
       gap: 12px;
@@ -33,6 +123,8 @@
       opacity: 0.7;
       border-radius: 2px;
     }
+
+    /* --- Diagram Container & SVG --- */
     .diagram-container {
       position: relative;
       width: 593px;
@@ -55,13 +147,14 @@
       stroke-width: 2.5;
       stroke-linecap: round;
       stroke-linejoin: round;
+      transition: stroke 0.3s;
     }
-    .wire-ext {
-      fill: none;
-      stroke-opacity: 0.65;
-      stroke-width: 2.5;
-      stroke-linecap: round;
-      stroke-linejoin: round;
+    .wire.wire-error {
+      stroke: #ff0055 !important;
+      stroke-width: 3.5 !important;
+      stroke-opacity: 0.95 !important;
+      stroke-dasharray: 6 3 !important;
+      filter: drop-shadow(0 0 5px #ff0055);
     }
     .connector-box {
       fill: #1e1e1e;
@@ -77,6 +170,34 @@
       dominant-baseline: central;
       text-anchor: middle;
     }
+
+    /* --- Error Highlighting on Pins --- */
+    @keyframes pin-error-pulse {
+      0%   { r: 6px; stroke-width: 2px; stroke-opacity: 1; fill-opacity: 0.8; }
+      50%  { r: 12px; stroke-width: 3.5px; stroke-opacity: 0.3; fill-opacity: 0.2; }
+      100% { r: 6px; stroke-width: 2px; stroke-opacity: 1; fill-opacity: 0.8; }
+    }
+    .pin-error-halo {
+      fill: #ff0055;
+      stroke: #ff0055;
+      animation: pin-error-pulse 1.3s infinite ease-in-out;
+    }
+    .pin-error-core {
+      fill: #ff0055 !important;
+      stroke: #ffffff;
+      stroke-width: 1.5px;
+      filter: drop-shadow(0 0 6px #ff0055) drop-shadow(0 0 12px #ff0033);
+    }
+    .unexpected-short-wire {
+      fill: none;
+      stroke: #ff3b00;
+      stroke-width: 3;
+      stroke-dasharray: 4 3;
+      filter: drop-shadow(0 0 6px #ff3b00);
+      stroke-opacity: 0.95;
+    }
+
+    /* --- Solder Bridge section --- */
     .sb-section {
       max-width: 593px;
       background: #282828;
@@ -144,170 +265,32 @@
 </head>
 <body>
   <h2>Nucleo-G474RE Wiring Diagram</h2>
-  <div class="legend">
-    <div class="legend-item"><span class="legend-line" style="background: #38bdf8;"></span> CH1 Stage (PB12 &harr; PA3)</div>
-    <div class="legend-item"><span class="legend-line" style="background: #22c55e;"></span> CH1 Bias (PB10 &harr; PA4)</div>
-    <div class="legend-item"><span class="legend-line" style="background: #a855f7;"></span> CH2 Bias (PB15 &harr; PA5)</div>
-    <div class="legend-item"><span class="legend-line" style="background: #f59e0b;"></span> CH1 Signal (PA2 &harr; PA7)</div>
-    <div class="legend-item"><span class="legend-line" style="background: #f43f5e;"></span> CH2 Signal (PB1 &harr; PB14)</div>
-    <div class="legend-item"><span class="legend-line" style="background: #fb923c;"></span> CH2 Stage (PB2 &harr; PA8)</div>
-    <div class="legend-item"><span class="legend-line" style="background: #06b6d4;"></span> VGND (PB11 &harr; PA1)</div>
-    <div class="legend-item"><span class="legend-line" style="background: #eab308;"></span> IN A (PB13)</div>
-    <div class="legend-item"><span class="legend-line" style="background: #ec4899;"></span> IN B (PC3)</div>
-    <div class="legend-item"><span class="legend-line" style="background: #10b981;"></span> TEST SIGNAL (PA6)</div>
-    <div class="legend-item"><span class="legend-line" style="background: #60a5fa;"></span> UART TX (PC10)</div>
-    <div class="legend-item"><span class="legend-line" style="background: #c084fc;"></span> UART RX (PC11)</div>
-    <div class="legend-item"><span class="legend-line" style="background: #ef4444;"></span> PROTECT.VDD (AVDD)</div>
-    <div class="legend-item"><span class="legend-line" style="background: #94a3b8;"></span> PROTECT.GND (AGND)</div>
+
+  <!-- PIN CHECK DIAGNOSTIC STATUS BANNER (shown only when pin_report.json exists) -->
+  <div class="report-banner" id="reportBanner" style="display: none;">
+    <div class="report-header">
+      <div class="report-status-wrap">
+        <span class="status-badge" id="statusBadge"></span>
+        <span class="report-summary-text" id="reportSummary"></span>
+      </div>
+      <div>
+        <button class="btn-action" id="btnToggleDetails" style="display:none;">View Errors</button>
+      </div>
+    </div>
+    <div class="report-details-list" id="reportDetails">
+      <ul id="reportDetailsUl"></ul>
+    </div>
   </div>
 
-  <!-- TOP VIEW PINOUT & WIRING -->
+  <!-- DYNAMIC LEGEND -->
+  <div class="legend" id="legendContainer"></div>
+
+  <!-- TOP VIEW PINOUT & WIRING (Rendered via JS from PINS and NETS) -->
   <div class="diagram-container">
-    <svg viewBox="0 0 593 530">
-      <!-- INTERNAL WIRES -->
-      <g id="wires-internal">
-        <!-- 1. CH1 Stage: PB12 (CN10-16: 505, 283) -> PA3 (CN10-37: 414, 447) -->
-        <path class="wire" d="M 505 283 C 455 283, 460 410, 414 447" stroke="#38bdf8"/>
-
-        <!-- 2. CH1 Bias: PB10 (CN10-25: 414, 357) -> PA4 (CN7-32: 173, 402) -->
-        <path class="wire" d="M 414 357 C 300 350, 260 395, 173 402" stroke="#22c55e"/>
-
-        <!-- 3. CH2 Bias: PB15 (CN10-26: 505, 357) -> PA5 (CN10-11: 414, 246) -->
-        <path class="wire" d="M 505 357 C 465 357, 465 246, 414 246" stroke="#a855f7"/>
-
-        <!-- 4. CH1 Signal: PA7 (CN10-15: 414, 276) -> PA2 (CN10-35: 414, 432) -->
-        <path class="wire" d="M 414 276 C 330 300, 330 410, 414 432" stroke="#f59e0b"/>
-
-        <!-- 5. CH2 Signal: PB1 (CN10-24: 505, 342.5) -> PB14 (CN10-28: 505, 372) -->
-        <path class="wire" d="M 505 342.5 C 535 342.5, 535 372, 505 372" stroke="#f43f5e"/>
-
-        <!-- 6. CH2 Stage: PB2 (CN10-22: 505, 327.5) -> PA8 (CN10-23: 414, 342.5) -->
-        <path class="wire" d="M 505 327.5 C 475 327.5, 445 342.5, 414 342.5" stroke="#fb923c"/>
-
-        <!-- 7. VGND Internal Link: PA1 (CN7-30: 173, 387) -> PB11 (CN10-18: 505, 298) -->
-        <path class="wire" d="M 173 387 C 260 387, 360 298, 505 298" stroke="#06b6d4"/>
-      </g>
-
-      <!-- EXTERNAL CONNECTIONS -->
-      <g id="wires-external">
-        <!-- 8. VGND: PB11 (CN10-18: 505, 298) -> Out Right -->
-        <path class="wire-ext" d="M 505 298 L 520 298" stroke="#06b6d4"/>
-        <g class="connector">
-          <rect class="connector-box" x="520" y="289" width="68" height="18" stroke="#06b6d4"/>
-          <text class="connector-text" x="554" y="298" fill="#06b6d4">VGND</text>
-        </g>
-
-        <!-- 9. IN A: PB13 (CN10-30: 505, 387) -> Out Right -->
-        <path class="wire-ext" d="M 505 387 C 514 387, 514 375, 520 375" stroke="#eab308"/>
-        <g class="connector">
-          <rect class="connector-box" x="520" y="366" width="68" height="18" stroke="#eab308"/>
-          <text class="connector-text" x="554" y="375" fill="#eab308">IN A</text>
-        </g>
-
-        <!-- 10. IN B: PC3 (CN7-37: 83, 447) -> Out Left -->
-        <path class="wire-ext" d="M 83 447 L 58 447" stroke="#ec4899"/>
-        <g class="connector">
-          <rect class="connector-box" x="8" y="438" width="50" height="18" stroke="#ec4899"/>
-          <text class="connector-text" x="33" y="447" fill="#ec4899">IN B</text>
-        </g>
-
-        <!-- 11. TEST SIGNAL: PA6 (CN10-13: 414, 261) -> Into clear area below title -->
-        <path class="wire-ext" d="M 414 261 C 360 261, 300 200, 300 152" stroke="#10b981"/>
-        <g class="connector">
-          <rect class="connector-box" x="255" y="134" width="90" height="18" stroke="#10b981"/>
-          <text class="connector-text" x="300" y="143" fill="#10b981">TEST SIGNAL</text>
-        </g>
-
-        <!-- 12. UART TX: PC10 (CN7-1: 83, 178.5) -> Out Left -->
-        <path class="wire-ext" d="M 83 178.5 L 66 178.5" stroke="#60a5fa"/>
-        <g class="connector">
-          <rect class="connector-box" x="8" y="169.5" width="58" height="18" stroke="#60a5fa"/>
-          <text class="connector-text" x="37" y="178.5" fill="#60a5fa">UART TX</text>
-        </g>
-
-        <!-- 13. UART RX: PC11 (CN7-2: 173, 178.5) -> Loop Up & Left -->
-        <path class="wire-ext" d="M 173 178.5 C 173 138, 80 138, 66 146" stroke="#c084fc"/>
-        <g class="connector">
-          <rect class="connector-box" x="8" y="137" width="58" height="18" stroke="#c084fc"/>
-          <text class="connector-text" x="37" y="146" fill="#c084fc">UART RX</text>
-        </g>
-
-        <!-- 14. PROTECT.VDD: AVDD (CN10-7: 414, 216) -> Top Area -->
-        <path class="wire-ext" d="M 414 216 C 380 216, 385 165, 405 152" stroke="#ef4444"/>
-        <g class="connector">
-          <rect class="connector-box" x="362" y="134" width="86" height="18" stroke="#ef4444"/>
-          <text class="connector-text" x="405" y="143" fill="#ef4444">PROTECT.VDD</text>
-        </g>
-
-        <!-- 15. PROTECT.GND: AGND (CN10-32: 505, 402) -> Out Right -->
-        <path class="wire-ext" d="M 505 402 C 514 402, 514 412, 520 412" stroke="#94a3b8"/>
-        <g class="connector">
-          <rect class="connector-box" x="520" y="403" width="68" height="18" stroke="#94a3b8"/>
-          <text class="connector-text" x="554" y="412" fill="#94a3b8">PROTECT.GND</text>
-        </g>
-      </g>
-
-      <!-- ENDPOINT DOTS (Color-matched to each net) -->
-      <g id="endpoints">
-        <!-- Internal nets -->
-        <!-- CH1 Stage (#38bdf8) -->
-        <circle cx="505" cy="283" r="3.5" fill="#38bdf8"/>
-        <circle cx="414" cy="447" r="3.5" fill="#38bdf8"/>
-
-        <!-- CH1 Bias (#22c55e) -->
-        <circle cx="414" cy="357" r="3.5" fill="#22c55e"/>
-        <circle cx="173" cy="402" r="3.5" fill="#22c55e"/>
-
-        <!-- CH2 Bias (#a855f7) -->
-        <circle cx="505" cy="357" r="3.5" fill="#a855f7"/>
-        <circle cx="414" cy="246" r="3.5" fill="#a855f7"/>
-
-        <!-- CH1 Signal (#f59e0b) -->
-        <circle cx="414" cy="276" r="3.5" fill="#f59e0b"/>
-        <circle cx="414" cy="432" r="3.5" fill="#f59e0b"/>
-
-        <!-- CH2 Signal (#f43f5e) -->
-        <circle cx="505" cy="342.5" r="3.5" fill="#f43f5e"/>
-        <circle cx="505" cy="372" r="3.5" fill="#f43f5e"/>
-
-        <!-- CH2 Stage (#fb923c) -->
-        <circle cx="505" cy="327.5" r="3.5" fill="#fb923c"/>
-        <circle cx="414" cy="342.5" r="3.5" fill="#fb923c"/>
-
-        <!-- External nets -->
-        <!-- VGND (#06b6d4) -->
-        <circle cx="173" cy="387" r="3.5" fill="#06b6d4"/>
-        <circle cx="505" cy="298" r="3.5" fill="#06b6d4"/>
-        <circle cx="520" cy="298" r="2.5" fill="#06b6d4"/>
-
-        <!-- IN A (#eab308) -->
-        <circle cx="505" cy="387" r="3.5" fill="#eab308"/>
-        <circle cx="520" cy="375" r="2.5" fill="#eab308"/>
-
-        <!-- IN B (#ec4899) -->
-        <circle cx="83" cy="447" r="3.5" fill="#ec4899"/>
-        <circle cx="58" cy="447" r="2.5" fill="#ec4899"/>
-
-        <!-- TEST SIGNAL (#10b981) -->
-        <circle cx="414" cy="261" r="3.5" fill="#10b981"/>
-        <circle cx="300" cy="152" r="2.5" fill="#10b981"/>
-
-        <!-- UART TX (#60a5fa) -->
-        <circle cx="83" cy="178.5" r="3.5" fill="#60a5fa"/>
-        <circle cx="66" cy="178.5" r="2.5" fill="#60a5fa"/>
-
-        <!-- UART RX (#c084fc) -->
-        <circle cx="173" cy="178.5" r="3.5" fill="#c084fc"/>
-        <circle cx="66" cy="146" r="2.5" fill="#c084fc"/>
-
-        <!-- PROTECT.VDD (#ef4444) -->
-        <circle cx="414" cy="216" r="3.5" fill="#ef4444"/>
-        <circle cx="405" cy="152" r="2.5" fill="#ef4444"/>
-
-        <!-- PROTECT.GND (#94a3b8) -->
-        <circle cx="505" cy="402" r="3.5" fill="#94a3b8"/>
-        <circle cx="520" cy="412" r="2.5" fill="#94a3b8"/>
-      </g>
+    <svg viewBox="0 0 593 530" id="wiringSvg">
+      <g id="wires-layer"></g>
+      <g id="pins-layer"></g>
+      <g id="error-overlay"></g>
     </svg>
   </div>
 
@@ -359,34 +342,264 @@
       Bottom View Solder Bridge States (<span style="color: #22c55e;">GREEN = ON</span>, <span style="color: #f43f5e;">RED = OFF</span>):
     </div>
 
-    <!-- BOTTOM PCB PHOTO WITH SVG OVERLAY -->
     <div class="bottom-photo-container">
       <svg viewBox="0 0 1280 1181">
-        <!-- SB22: ON (Green) -->
-        <rect class="sb-box-on" x="336" y="501" width="24" height="14" rx="2"/>
-
-        <!-- SB23: OFF (Red) -->
+        <rect class="sb-box-on"  x="336" y="501" width="24" height="14" rx="2"/>
         <rect class="sb-box-off" x="336" y="528" width="24" height="14" rx="2"/>
-
-        <!-- SB19: OFF (Red) -->
         <rect class="sb-box-off" x="384" y="501" width="24" height="14" rx="2"/>
-
-        <!-- SB20: ON (Green) -->
-        <rect class="sb-box-on" x="384" y="528" width="24" height="14" rx="2"/>
-
-        <!-- SB17: OFF (Red) -->
+        <rect class="sb-box-on"  x="384" y="528" width="24" height="14" rx="2"/>
         <rect class="sb-box-off" x="392" y="561" width="24" height="14" rx="2"/>
-
-        <!-- SB18: ON (Green) -->
-        <rect class="sb-box-on" x="392" y="583" width="24" height="14" rx="2"/>
-
-        <!-- SB12: ON (Green) -->
-        <rect class="sb-box-on" x="440" y="561" width="24" height="14" rx="2"/>
-
-        <!-- SB13: OFF (Red) -->
+        <rect class="sb-box-on"  x="392" y="583" width="24" height="14" rx="2"/>
+        <rect class="sb-box-on"  x="440" y="561" width="24" height="14" rx="2"/>
         <rect class="sb-box-off" x="440" y="583" width="24" height="14" rx="2"/>
       </svg>
     </div>
   </div>
+
+  <!-- JAVASCRIPT: PIN COORDINATES, DYNAMIC RENDERING & REPORT VIEWER -->
+  <script>
+    // Single Source of Truth for Pin Coordinates (DRY & KISS)
+    const PINS = {
+      // CN7 Pins
+      "PC10": { x: 83,  y: 178.5, header: "CN7-1"  },
+      "PC11": { x: 173, y: 178.5, header: "CN7-2"  },
+      "PA1":  { x: 173, y: 387,   header: "CN7-30" },
+      "PA4":  { x: 173, y: 402,   header: "CN7-32" },
+      "PC3":  { x: 83,  y: 447,   header: "CN7-37" },
+
+      // CN10 Pins
+      "AVDD": { x: 414, y: 216,   header: "CN10-7"  },
+      "PA5":  { x: 414, y: 246,   header: "CN10-11" },
+      "PA6":  { x: 414, y: 261,   header: "CN10-13" },
+      "PA7":  { x: 414, y: 276,   header: "CN10-15" },
+      "PB12": { x: 505, y: 283,   header: "CN10-16" },
+      "PB11": { x: 505, y: 298,   header: "CN10-18" },
+      "PB2":  { x: 505, y: 327.5, header: "CN10-22" },
+      "PA8":  { x: 414, y: 342.5, header: "CN10-23" },
+      "PB1":  { x: 505, y: 342.5, header: "CN10-24" },
+      "PB10": { x: 414, y: 357,   header: "CN10-25" },
+      "PB15": { x: 505, y: 357,   header: "CN10-26" },
+      "PB14": { x: 505, y: 372,   header: "CN10-28" },
+      "PB13": { x: 505, y: 387,   header: "CN10-30" },
+      "AGND": { x: 505, y: 402,   header: "CN10-32" },
+      "PA2":  { x: 414, y: 432,   header: "CN10-35" },
+      "PA3":  { x: 414, y: 447,   header: "CN10-37" }
+    };
+
+    // Declarative Net Definitions
+    const NETS = [
+      // Internal nets
+      { id: "_STAGE.A",  title: "CH1 Stage (PB12 ↔ PA3)", color: "#38bdf8", pins: ["PB12", "PA3"], d: "M 505 283 C 455 283, 460 410, 414 447" },
+      { id: "_BIAS.A",   title: "CH1 Bias (PB10 ↔ PA4)",  color: "#22c55e", pins: ["PB10", "PA4"],  d: "M 414 357 C 300 350, 260 395, 173 402" },
+      { id: "_BIAS.B",   title: "CH2 Bias (PB15 ↔ PA5)",  color: "#a855f7", pins: ["PB15", "PA5"],  d: "M 505 357 C 465 357, 465 246, 414 246" },
+      { id: "_SIGNAL.A", title: "CH1 Signal (PA2 ↔ PA7)", color: "#f59e0b", pins: ["PA7", "PA2"],   d: "M 414 276 C 330 300, 330 410, 414 432" },
+      { id: "_SIGNAL.B", title: "CH2 Signal (PB1 ↔ PB14)",color: "#f43f5e", pins: ["PB1", "PB14"],  d: "M 505 342.5 C 535 342.5, 535 372, 505 372" },
+      { id: "_STAGE.B",  title: "CH2 Stage (PB2 ↔ PA8)",  color: "#fb923c", pins: ["PB2", "PA8"],   d: "M 505 327.5 C 475 327.5, 445 342.5, 414 342.5" },
+
+      // External nets
+      { id: "VGND",        title: "VGND (PB11 ↔ PA1)", color: "#06b6d4", pins: ["PA1", "PB11"], d: "M 173 387 C 260 387, 360 298, 505 298",
+        ext: { d: "M 505 298 L 520 298", box: [520, 289, 68, 18], text: "VGND" } },
+      { id: "IN.A",        title: "IN A (PB13)",       color: "#eab308", pins: ["PB13"],
+        ext: { d: "M 505 387 C 514 387, 514 375, 520 375", box: [520, 366, 68, 18], text: "IN A" } },
+      { id: "IN.B",        title: "IN B (PC3)",        color: "#ec4899", pins: ["PC3"],
+        ext: { d: "M 83 447 L 58 447", box: [8, 438, 50, 18], text: "IN B" } },
+      { id: "TEST.SIGNAL", title: "TEST SIGNAL (PA6)", color: "#10b981", pins: ["PA6"],
+        ext: { d: "M 414 261 C 360 261, 300 200, 300 152", box: [255, 134, 90, 18], text: "TEST SIGNAL" } },
+      { id: "UART_TX",     title: "UART TX (PC10)",    color: "#60a5fa", pins: ["PC10"],
+        ext: { d: "M 83 178.5 L 66 178.5", box: [8, 169.5, 58, 18], text: "UART TX" } },
+      { id: "UART_RX",     title: "UART RX (PC11)",    color: "#c084fc", pins: ["PC11"],
+        ext: { d: "M 173 178.5 C 173 138, 80 138, 66 146", box: [8, 137, 58, 18], text: "UART RX" } },
+      { id: "PROTECT.VDD", title: "PROTECT.VDD (AVDD)",color: "#ef4444", pins: ["AVDD"],
+        ext: { d: "M 414 216 C 380 216, 385 165, 405 152", box: [362, 134, 86, 18], text: "PROTECT.VDD" } },
+      { id: "PROTECT.GND", title: "PROTECT.GND (AGND)",color: "#94a3b8", pins: ["AGND"],
+        ext: { d: "M 505 402 C 514 402, 514 412, 520 412", box: [520, 403, 68, 18], text: "PROTECT.GND" } }
+    ];
+
+    // Build SVG elements & Legend programmatically (KISS)
+    function buildDiagram() {
+      const legendContainer = document.getElementById('legendContainer');
+      const wiresLayer = document.getElementById('wires-layer');
+      const pinsLayer = document.getElementById('pins-layer');
+
+      NETS.forEach(net => {
+        // 1. Legend item
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.innerHTML = `<span class="legend-line" style="background:${net.color}"></span> ${net.title}`;
+        legendContainer.appendChild(item);
+
+        // 2. Wire path
+        if (net.d) {
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('class', 'wire');
+          path.setAttribute('data-net', net.id);
+          path.setAttribute('d', net.d);
+          path.setAttribute('stroke', net.color);
+          wiresLayer.appendChild(path);
+        }
+
+        // 3. External connector
+        if (net.ext) {
+          const extPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          extPath.setAttribute('class', 'wire');
+          extPath.setAttribute('data-net', net.id);
+          extPath.setAttribute('d', net.ext.d);
+          extPath.setAttribute('stroke', net.color);
+          wiresLayer.appendChild(extPath);
+
+          const [bx, by, bw, bh] = net.ext.box;
+          const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          rect.setAttribute('class', 'connector-box');
+          rect.setAttribute('x', bx);
+          rect.setAttribute('y', by);
+          rect.setAttribute('width', bw);
+          rect.setAttribute('height', bh);
+          rect.setAttribute('stroke', net.color);
+          wiresLayer.appendChild(rect);
+
+          const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          text.setAttribute('class', 'connector-text');
+          text.setAttribute('x', bx + bw / 2);
+          text.setAttribute('y', by + bh / 2);
+          text.setAttribute('fill', net.color);
+          text.textContent = net.ext.text;
+          wiresLayer.appendChild(text);
+        }
+
+        // 4. Endpoint dots
+        net.pins.forEach(pinName => {
+          const pt = PINS[pinName];
+          if (pt) {
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', pt.x);
+            circle.setAttribute('cy', pt.y);
+            circle.setAttribute('r', '3.5');
+            circle.setAttribute('fill', net.color);
+            pinsLayer.appendChild(circle);
+          }
+        });
+      });
+    }
+
+    // Diagnostics report handler
+    const reportBanner = document.getElementById('reportBanner');
+    const statusBadge = document.getElementById('statusBadge');
+    const reportSummary = document.getElementById('reportSummary');
+    const btnToggleDetails = document.getElementById('btnToggleDetails');
+    const reportDetails = document.getElementById('reportDetails');
+    const reportDetailsUl = document.getElementById('reportDetailsUl');
+    const errorOverlay = document.getElementById('error-overlay');
+
+    btnToggleDetails.addEventListener('click', () => {
+      const isVisible = reportDetails.style.display === 'block';
+      reportDetails.style.display = isVisible ? 'none' : 'block';
+      btnToggleDetails.textContent = isVisible ? 'View Errors' : 'Hide Errors';
+    });
+
+    function renderPinReport(data) {
+      errorOverlay.innerHTML = '';
+      document.querySelectorAll('.wire').forEach(w => w.classList.remove('wire-error'));
+      reportDetailsUl.innerHTML = '';
+
+      const isPass = data.status === 'PASS';
+      const summary = data.summary || {};
+      const totalErrors = summary.total_errors ?? (isPass ? 0 : 1);
+      const cycle = data.cycle ? `Cycle #${data.cycle}` : '';
+
+      statusBadge.className = 'status-badge ' + (isPass ? 'pass' : 'fail');
+      statusBadge.textContent = isPass ? 'PASS' : `FAIL (${totalErrors} ${totalErrors === 1 ? 'Error' : 'Errors'})`;
+      reportSummary.textContent = isPass
+        ? `Hardware check verified successfully (${cycle || '0 errors'}).`
+        : `${totalErrors} hardware faults detected (${cycle}).`;
+
+      if (isPass) {
+        btnToggleDetails.style.display = 'none';
+        return;
+      }
+
+      btnToggleDetails.style.display = 'inline-block';
+      btnToggleDetails.textContent = 'View Errors';
+
+      const errorPins = new Set();
+
+      // 1. Rail errors
+      (data.rail_errors || []).forEach(err => {
+        errorPins.add(err.pin);
+        const li = document.createElement('li');
+        li.innerHTML = `<span class="err-fail-text">[RAIL SHORT]</span> Pin <strong>${err.pin}</strong> (${err.header || ''}): Short to ${err.error}`;
+        reportDetailsUl.appendChild(li);
+      });
+
+      // 2. Expected net open circuits
+      (data.expected_nets || []).forEach(net => {
+        if (net.status === 'FAIL') {
+          errorPins.add(net.pin_a);
+          errorPins.add(net.pin_b);
+          document.querySelectorAll(`.wire[data-net="${net.net}"]`).forEach(w => w.classList.add('wire-error'));
+          const li = document.createElement('li');
+          li.innerHTML = `<span class="err-fail-text">[OPEN NET]</span> Net <strong>${net.net}</strong>: <strong>${net.pin_a}</strong> &harr; <strong>${net.pin_b}</strong> is <em>DISCONNECTED</em>`;
+          reportDetailsUl.appendChild(li);
+        }
+      });
+
+      // 3. Unexpected shorts
+      (data.unexpected_shorts || []).forEach(sh => {
+        errorPins.add(sh.pin_a);
+        errorPins.add(sh.pin_b);
+        if (PINS[sh.pin_a] && PINS[sh.pin_b]) {
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', PINS[sh.pin_a].x);
+          line.setAttribute('y1', PINS[sh.pin_a].y);
+          line.setAttribute('x2', PINS[sh.pin_b].x);
+          line.setAttribute('y2', PINS[sh.pin_b].y);
+          line.setAttribute('class', 'unexpected-short-wire');
+          errorOverlay.appendChild(line);
+        }
+        const li = document.createElement('li');
+        li.innerHTML = `<span class="err-fail-text">[SHORT CIRCUIT]</span> <strong>${sh.pin_a}</strong> &harr; <strong>${sh.pin_b}</strong> are <em>SHORTED</em>`;
+        reportDetailsUl.appendChild(li);
+      });
+
+      // Render bright pulsing indicators on every error pin
+      errorPins.forEach(pinName => {
+        const pt = PINS[pinName];
+        if (!pt) return;
+
+        const halo = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        halo.setAttribute('cx', pt.x);
+        halo.setAttribute('cy', pt.y);
+        halo.setAttribute('r', '9');
+        halo.setAttribute('class', 'pin-error-halo');
+        errorOverlay.appendChild(halo);
+
+        const core = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        core.setAttribute('cx', pt.x);
+        core.setAttribute('cy', pt.y);
+        core.setAttribute('r', '5.5');
+        core.setAttribute('class', 'pin-error-core');
+        errorOverlay.appendChild(core);
+      });
+    }
+
+    async function loadPinReport() {
+      const candidates = ['../pin_report.json', 'pin_report.json', '../build/Debug/pin_report.json'];
+      for (const url of candidates) {
+        try {
+          const resp = await fetch(url + '?_t=' + Date.now());
+          if (resp.ok) {
+            const data = await resp.json();
+            reportBanner.style.display = 'flex';
+            renderPinReport(data);
+            return;
+          }
+        } catch (e) {}
+      }
+      reportBanner.style.display = 'none';
+    }
+
+    // Init
+    buildDiagram();
+    loadPinReport();
+  </script>
 </body>
 </html>

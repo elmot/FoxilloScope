@@ -3,3 +3,4 @@ build/
 .claude/settings.json
 html/version.txt
 version/version.h
+pin_report.json
