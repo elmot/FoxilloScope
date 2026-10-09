@@ -22,8 +22,8 @@ The Nucleo-G474RE board power and boot jumpers must be configured according to y
 
 | Mode | JP5 (Power Source) | JP1 (ST-LINK Reset) | JP3 (ST-LINK 5V) | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| **Development (DEV)** | **5V_STLK** | **Open** | **Closed** | Normal debugging and firmware flashing via onboard ST-LINK. Both Nucleo ST-LINK USB and ESP32 USB can be connected simultaneously. |
-| **Production (PROD)** | **E5V** | **Closed** | **Open** | Standalone wireless operation. JP1 held closed holds the unpowered ST-LINK MCU in reset, preventing phantom power draw and bus loading. Board is powered from ESP32 / external 5V regulator. |
+| **Development ** | **5V_STLK** | **Open** | **Closed** | Normal debugging and firmware flashing via onboard ST-LINK. Both Nucleo ST-LINK USB and ESP32 USB can be connected simultaneously. |
+| **Production ** | **E5V** | **Closed** | **Open** | Standalone wireless operation. JP1 held closed holds the unpowered ST-LINK MCU in reset, preventing phantom power draw and bus loading. Board is powered from ESP32 / external 5V regulator. |
 
 ---
 
