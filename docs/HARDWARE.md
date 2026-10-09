@@ -13,7 +13,7 @@ All solder bridges (`SB1`–`SB41`) are located on the **bottom layer** of the S
 - **Solder Bridge JP8 to pins 2–3 (VDD)**: Ties MCU $V_{\text{REF+}}$ analog reference directly to 3.3 V $V_{\text{DD}}$ rail for accurate ADC/DAC scaling math.
 - **Solder Bridge JP6 across pins 1–2**: Bypasses $I_{\text{DD}}$ measurement header contacts for reliability.
 - *(Optional for ST-LINK debug console)*: Desolder **SB13** & **SB19**, close **SB12** & **SB20** to route `USART1` (`PC4`/`PC5`) to ST-LINK VCP instead.
-
+**TBD Back side picture here**
 ---
 
 ## 2. Jumper Configurations
@@ -22,12 +22,55 @@ The Nucleo-G474RE board power and boot jumpers must be configured according to y
 
 | Mode | JP5 (Power Source) | JP1 (ST-LINK Reset) | JP3 (ST-LINK 5V) | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| **Development ** | **5V_STLK** | **Open** | **Closed** | Normal debugging and firmware flashing via onboard ST-LINK. Both Nucleo ST-LINK USB and ESP32 USB can be connected simultaneously. |
-| **Production ** | **E5V** | **Closed** | **Open** | Standalone wireless operation. JP1 held closed holds the unpowered ST-LINK MCU in reset, preventing phantom power draw and bus loading. Board is powered from ESP32 / external 5V regulator. |
+| **Development** | **5V_STLK** | **Open** | **Closed** | Normal debugging and firmware flashing via onboard ST-LINK. Both Nucleo ST-LINK USB and ESP32 USB can be connected simultaneously. |
+| **Production** | **E5V** | **Closed** | **Open** | Standalone wireless operation. JP1 held closed holds the unpowered ST-LINK MCU in reset, preventing phantom power draw and bus loading. Board is powered from ESP32 / external 5V regulator. |
 
 ---
 
-## 3. ESP32 Wireless Gateway Module (M5Stamp C3U)
+## 3. Nucleo in connections
+
+Refer to [docs/wiring_diagram.html](wiring_diagram.html) for exact pin and connector mappings on the ST Morpho headers (`CN7` and `CN10`).
+
+---
+
+## 4. _(optional)_ Hardware Verification with `pin_check`
+
+> ⚠️ **IMPORTANT: Perform the pin check BEFORE soldering resistors, diodes, or other external components onto the board!**
+> Diodes and pull resistors will distort high-impedance pull-up/pull-down tests and can trigger false positive shorts or leaks. The test must be run on bare interconnections and solder bridges first.
+
+Before soldering the analog front-end components or powering up the full oscilloscope firmware, flash the diagnostic tool **`pin_check`** to verify all solder bridges, jumper wires, and header connections without risking damage to the analog peripherals.
+
+### What `pin_check` Does
+1. **Power Rail Fault Detection**: Tests every pin for accidental shorts to **GND** or **VDD** (3.3 V).
+2. **Net Continuity Verification**: Verifies bidirectional continuity across all multi-pin nets (both internal MCU-to-MCU links like `_STAGE.A`, `_BIAS.A` and external shared nets like `VGND`).
+3. **Net Isolation (Short-Circuit) Check**: Tests all pin-to-pin combinations to guarantee no unintended bridges exist between independent circuits.
+4. **Machine-Readable Report**: Automatically outputs `pin_report.json` via Arm semihosting and prints diagnostic summaries to the console.
+5. **Interactive LED Signal Generator (Visual Verification)**:
+    - After the report finishes, `pin_check` switches all external pins (`VGND`, `IN.A`, `IN.B`, `TEST.SIGNAL`) to push-pull output mode.
+    - It outputs distinct duty cycle pulses (e.g. 20%, 40%, 60%, 80% on a 1-second cycle) grouped by net.
+    - Pins sharing the same net blink in unison (no contention).
+    - You can connect an LED (with a current-limiting series resistor, e.g. $1\text{ k}\Omega$) between any external pin and GND to visually verify pin identity and continuity.
+    - Internal pins remain safely parked in analog high-impedance mode (`GPIO_MODE_ANALOG`).
+
+### How to Run `pin_check`
+
+1. Set jumpers to **Development mode** (`JP5 -> 5V_STLK`, `JP1 -> Open`, `JP3 -> Closed`).
+2. Connect the Nucleo board via its ST-LINK USB connector.
+3. Build the diagnostic binary:
+   ```bash
+   cmake --build --preset Debug --target pin_check
+   ```
+4. Run the automated test with semihosting capture:
+   ```bash
+   cmake --build --preset Debug --target run_pin_check
+   ```
+5. Inspect the generated report:
+    - Check the console output or open `pin_report.json`.
+    - Open [docs/wiring_diagram.html](wiring_diagram.html) in your browser: it automatically loads `pin_report.json` and highlights any faulty pins, open circuits, or shorted nets directly on the physical board diagram.
+
+---
+
+## 5. ESP32 Wireless Gateway Module (M5Stamp C3U)
 
 The M5Stamp C3U acts as the wireless bridge connecting the STM32 to your browser over Wi-Fi (WebSockets) or Bluetooth Low Energy (BLE).
 
@@ -50,56 +93,22 @@ The M5Stamp C3U acts as the wireless bridge connecting the STM32 to your browser
 
 ---
 
-## 4. Hardware Verification with `pin_check`
-
-> ⚠️ **IMPORTANT: Perform the pin check BEFORE soldering resistors, diodes, or other external components onto the board!**
-> Diodes and pull resistors will distort high-impedance pull-up/pull-down tests and can trigger false positive shorts or leaks. The test must be run on bare interconnections and solder bridges first.
-
-Before soldering the analog front-end components or powering up the full oscilloscope firmware, flash the diagnostic tool **`pin_check`** to verify all solder bridges, jumper wires, and header connections without risking damage to the analog peripherals.
-
-### What `pin_check` Does
-1. **Power Rail Fault Detection**: Tests every pin for accidental shorts to **GND** or **VDD** (3.3 V).
-2. **Net Continuity Verification**: Verifies bidirectional continuity across all multi-pin nets (both internal MCU-to-MCU links like `_STAGE.A`, `_BIAS.A` and external shared nets like `VGND`).
-3. **Net Isolation (Short-Circuit) Check**: Tests all pin-to-pin combinations to guarantee no unintended bridges exist between independent circuits.
-4. **Machine-Readable Report**: Automatically outputs `pin_report.json` via Arm semihosting and prints diagnostic summaries to the console.
-5. **Interactive LED Signal Generator (Visual Verification)**:
-   - After the report finishes, `pin_check` switches all external pins (`VGND`, `IN.A`, `IN.B`, `TEST.SIGNAL`) to push-pull output mode.
-   - It outputs distinct duty cycle pulses (e.g. 20%, 40%, 60%, 80% on a 1-second cycle) grouped by net.
-   - Pins sharing the same net blink in unison (no contention).
-   - You can connect an LED (with a current-limiting series resistor, e.g. $1\text{ k}\Omega$) between any external pin and GND to visually verify pin identity and continuity.
-   - Internal pins remain safely parked in analog high-impedance mode (`GPIO_MODE_ANALOG`).
-
-### How to Run `pin_check`
-
-1. Set jumpers to **Development mode** (`JP5 -> 5V_STLK`, `JP1 -> Open`, `JP3 -> Closed`).
-2. Connect the Nucleo board via its ST-LINK USB connector.
-3. Build the diagnostic binary:
-   ```bash
-   cmake --build --preset Debug --target pin_check
-   ```
-4. Run the automated test with semihosting capture:
-   ```bash
-   cmake --build --preset Debug --target run_pin_check
-   ```
-5. Inspect the generated report:
-   - Check the console output or open `pin_report.json`.
-   - Open [docs/wiring_diagram.html](wiring_diagram.html) in your browser: it automatically loads `pin_report.json` and highlights any faulty pins, open circuits, or shorted nets directly on the physical board diagram.
-
----
-
-## 5. External Circuit (Analog Front-End & Protection)
-
-Once the bare interconnections are verified with `pin_check`, assemble the analog front-end (AFE) circuit. It provides input protection, impedance matching, and probe connectors. It can be constructed on a stripboard / protoboard (custom PCB files and stripboard layout will be provided in this section).
-
+## 6. External Circuit (Analog Front-End & Protection)
 ### Bill of Materials (BOM)
-- **Schottky Diodes**: 6× Schottky diodes with $V_R \ge 40\text{ V}$ and low junction capacitance (BAS40-04 dual-diodes or equivalent discretes).
-- **Resistors**:
-  - 2× $1\text{ M}\Omega$ (channel input impedance / pull-down)
-  - 3× $3\dots 6\text{ k}\Omega$ (series protection & current limiting)
-- **Connectors**:
-  - BNC or header pins for Channel A and Channel B probe inputs.
-  - Dedicated connector/terminal for **Virtual Ground (VGND)**.
-  - Pin headers mating with the Nucleo-64 Morpho headers (`CN7` / `CN10`).
+
+**_TODO provide links_**
+- 6× Schottky diodes with $V_R \ge 40\text{ V}$ and low junction capacitance (BAS70-04 dual-diodes or equivalent discretes).
+- 2× $1\text{ M}\Omega$ resistors (channel input impedance / pull-down)
+- 3× $5.6\text{ k}\Omega$ resistors rated 0.5W or more
+- 2× $560\text{ }\Omega$ resistors
+- 2× BNC solderable connectors .
+- 2x Simple oscilloscope probes
+
+### Schematics
+
+![Schematics](wiring.png)
+Once the bare interconnections are verified with `pin_check`, assemble the analog front-end (AFE) circuit. It provides input protection, impedance matching, and probe connectors. It can be constructed on a prototype breadboard, a stripboard, or a custom PCB. **TODO provide photos and PCB design**
+
 
 ### Schematic & Protection Overview
 - **True Bipolar Range**: Measurable range is −1.65 V to +1.65 V around the internally generated **Virtual Ground** (1:10 attenuating probes recommended). Safe continuous input range: −30 V to +30 V.
@@ -107,7 +116,3 @@ Once the bare interconnections are verified with `pin_check`, assemble the analo
   > ⚠️ **Never connect oscilloscope probe ground clips to board GND!**
   > Always connect probe ground clips to the dedicated **Virtual Ground (VGND)** terminal. Connecting to board GND will short the internal mid-rail bias and distort measurements.
 
-### Interactive Wiring Diagram
-Refer to [docs/wiring_diagram.html](wiring_diagram.html) for exact pin and connector mappings on the ST Morpho headers (`CN7` and `CN10`).
-
-*(Note: Stripe board / protoboard wiring diagram and layout drawings will be added here).*
