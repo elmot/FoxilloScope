@@ -76,4 +76,4 @@ This bridges the STM32's USB Virtual COM port (LPUART1) directly to a local WebS
 - ESP32 Gateway Architecture Reference: [esp32-gateway/AGENTS.md](esp32-gateway/AGENTS.md)
 - Frontend Architecture Reference: [html/AGENTS.md](html/AGENTS.md)
 - Pinout & Wiring Mapping: [docs/wiring_diagram.html](docs/wiring_diagram.html)
-- Peripheral functions and pins spreadsheet [docs/foxilloscope_peripherals.fods](docs/foxilloscope_peripherals.fods)
+- _(requires LibreOffice or OpenOffice)__ Peripheral functions and pins spreadsheet [docs/foxilloscope_peripherals.fods](docs/foxilloscope_peripherals.fods)
