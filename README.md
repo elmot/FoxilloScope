@@ -32,31 +32,31 @@ The goal of this project is to turn inexpensive, readily available development c
 
 ---
 
-## Hardware Setup & Assembly
+## Quick Start (Flashing & Operation)
+
+### Hardware Setup & Assembly
 
 All hardware documentation, board modification guides, jumper configurations, and soldering diagnostics have been consolidated into the **[Hardware Guide (docs/hardware.md)](docs/hardware.md)**:
 
-1. **[Board Modding First](docs/hardware.md#1-nucleo-g474re-board-modifications-mandatory)** — Solder bridges (`SB17`/`SB23`, `SB18`/`SB22`, `JP8`, `JP6`).
+1. **[Board Modding First](docs/hardware.md#1-nucleo-g474re-board-modifications-mandatory)** 
+   1. Solder bridges (`SB17`/`SB23`, `SB18`/`SB22`, `JP8`, `JP6`).
+   2. [Wiring Verification (`pin_check`)](docs/hardware.md#4-hardware-verification-with-pin_check) — Diagnostic test to check proper wiring.
+   3. Soldering protection network
 2. **[Jumper Configuration](docs/hardware.md#2-jumper-configurations)** — Jumper settings for Production and Development modes.
 3. **[ESP32 Gateway Module](docs/hardware.md#3-esp32-wireless-gateway-module-m5stamp-c3u)** — Power, UART connections, and RGB status LED table.
-4. **[Pin Verification (`pin_check`)](docs/hardware.md#4-hardware-verification-with-pin_check)** — Diagnostic test to run **before soldering resistors and diodes**.
-5. **[External Circuit (AFE & Protection)](docs/hardware.md#5-external-circuit-analog-front-end--protection)** — Input protection network, stripboard layout, and dedicated **Virtual Ground (VGND)** terminal.
 
----
 
-## Quick Start (Flashing & Operation)
-
-1. **Flash the STM32 Firmware**:
+4. **Flash the STM32 Firmware**:
    1. Connect the Nucleo board to your computer via USB (in development jumper mode). A virtual USB drive will appear.
    2. Copy `FoxilloScope-Production.bin` from the latest release assets onto the virtual drive.
    3. Configure jumpers for [Production mode](docs/hardware.md#2-jumper-configurations) for standalone use.
-2. **Flash the ESP32 Gateway (M5Stamp C3U)**:
+5. **Flash the ESP32 Gateway (M5Stamp C3U)**:
    1. Connect the M5Stamp C3U to your computer via USB.
    2. Use the [Foxilloscope ESP32 Web Flasher](https://elmot.xyz/f-scope/flahser.html) to upload the gateway firmware.
-3. **Connect Probes**:
+6. **Connect Probes**:
    1. Attach oscilloscope probes to Channel A / Channel B inputs.
    2. Connect probe ground clips to **Virtual Ground (VGND)** (never to board GND!).
-4. **Connect & Measure**:
+7. **Connect & Measure**:
    1. **Wi-Fi**: Connect to *FoxilloScope-xxxx* Wi-Fi network and open `http://f-scope.local/` (or `http://192.168.4.1/`).
    2. **Bluetooth LE**: Open `http://f-scope.local/` in Chrome, click the Bluetooth icon, and pair with *F-SCOPE-xxxx*.
    3. **Wi-Fi Credentials Setup**: Open `http://f-scope.local/wifi` to configure your home Wi-Fi network.
