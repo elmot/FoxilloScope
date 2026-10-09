@@ -91,3 +91,51 @@ add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
     COMMENT "Generating ${CMAKE_PROJECT_NAME}.bin"
 )
 
+# ==============================================================================
+# Pin Check Firmware Target
+# ==============================================================================
+add_executable(pin_check
+    pin_check/main.c
+    pin_check/pin_defs.c
+    Core/Src/sysmem.c
+    startup_stm32g474xx.s
+)
+
+target_include_directories(pin_check PRIVATE
+    Core/Inc
+)
+
+# stm32cubemx is an INTERFACE library (include paths and defines only):
+# no HAL driver objects, FreeRTOS or generated init code are linked.
+target_link_libraries(pin_check
+    stm32cubemx
+    STM32_Drivers
+    m
+)
+
+# Console output goes through semihosting (needs a debugger attached)
+target_link_options(pin_check PRIVATE --specs=rdimon.specs)
+
+set_target_properties(pin_check PROPERTIES ADDITIONAL_CLEAN_FILES pin_check.map)
+
+add_custom_command(TARGET pin_check POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:pin_check> $<TARGET_FILE_DIR:pin_check>/pin_check.bin
+    COMMENT "Generating pin_check.bin"
+)
+
+# ==============================================================================
+# Run Pin Check via ST-LINK GDB Server Target
+# ==============================================================================
+add_custom_target(run_pin_check
+    COMMAND ${CMAKE_COMMAND}
+        -DOUTPUT_FILE=${CMAKE_CURRENT_BINARY_DIR}/pin_check_output.log
+        -DTIMEOUT_SEC=66
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/pin_check/run.cmake
+    DEPENDS pin_check
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Running ST-LINK GDB Server and capturing output to pin_check_output.log..."
+    USES_TERMINAL
+)
+
+
+
