@@ -49,7 +49,9 @@ class MockOscilloscopeTest(unittest.TestCase):
         values = dict(line.split("=", 1) for line in device.build_frame().splitlines())
 
         self.assertEqual(values["keyframe"], "1")
-        self.assertEqual(device.last_trigger_sample - device.last_capture_start, FRAME_SIZE // 4)
+        sampling_ns = device.parameters["sampling.ns"]
+        trigger_index = (device.last_trigger_time_ns - device.last_capture_start_ns) / sampling_ns
+        self.assertEqual(trigger_index, FRAME_SIZE // 4)
 
     def test_trigger_uses_selected_channel_and_slope(self) -> None:
         rising = MockOscilloscope()
@@ -60,8 +62,8 @@ class MockOscilloscopeTest(unittest.TestCase):
         falling.handle_commands("trg.chan=1\ntrg.type=-1")
         falling.build_frame()
 
-        self.assertEqual(rising.last_trigger_sample, 200)
-        self.assertEqual(falling.last_trigger_sample, 100)
+        self.assertEqual(rising.last_trigger_time_ns, 50_000_000)
+        self.assertEqual(falling.last_trigger_time_ns, 25_000_000)
 
     def test_unreachable_threshold_does_not_create_keyframe(self) -> None:
         device = MockOscilloscope()
@@ -78,6 +80,18 @@ class MockOscilloscopeTest(unittest.TestCase):
         values = dict(line.split("=", 1) for line in device.build_frame().splitlines())
 
         self.assertNotIn("keyframe", values)
+
+    def test_timescale_changes_visible_signal_span(self) -> None:
+        device = MockOscilloscope()
+        slow_samples = device._samples("a", 0, 500_000)
+        fast_samples = device._samples("a", 0, 5_000)
+
+        def midpoint_crossings(samples: list[int]) -> int:
+            pairs = zip(samples, samples[1:])
+            return sum((left < ADC_STEPS / 2) != (right < ADC_STEPS / 2) for left, right in pairs)
+
+        self.assertGreater(midpoint_crossings(slow_samples), 10)
+        self.assertEqual(midpoint_crossings(fast_samples), 0)
 
 
 if __name__ == "__main__":

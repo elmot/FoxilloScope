@@ -18,8 +18,11 @@ FRAME_SIZE = 400
 ADC_STEPS = 4096
 BASE_VOLTAGE_UV = 3_300_000
 HTML_DIR = Path(__file__).resolve().parent.parent / "html"
-SINE_PERIOD_SAMPLES = 83
-SQUARE_PERIOD_SAMPLES = 200
+SINE_FREQUENCY_HZ = 50
+SQUARE_FREQUENCY_HZ = 20
+SINE_AMPLITUDE_UV = 750_000
+SQUARE_AMPLITUDE_UV = 450_000
+NANOSECONDS_PER_SECOND = 1_000_000_000
 
 
 def encode_samples(samples: list[int]) -> str:
@@ -44,11 +47,10 @@ class MockOscilloscope:
             "trg.time.offset": 0.0,
             "trigger.lvl.ppm": 0.0,
         }
-        self.sample_cursor = 0
-        self.trigger_armed = False
-        self.trigger_holdoff_until = 0
-        self.last_trigger_sample: int | None = None
-        self.last_capture_start: int | None = None
+        self.time_cursor_ns = 0.0
+        self.trigger_holdoff_until_ns = 0.0
+        self.last_trigger_time_ns: float | None = None
+        self.last_capture_start_ns: float | None = None
         self.version_requested = False
 
     def handle_commands(self, text: str) -> None:
@@ -69,8 +71,7 @@ class MockOscilloscope:
             except ValueError:
                 continue
         if reset_trigger:
-            self.trigger_armed = False
-            self.trigger_holdoff_until = self.sample_cursor
+            self.trigger_holdoff_until_ns = self.time_cursor_ns
 
     def _voltage_range(self, channel: str) -> tuple[float, float]:
         gain = max(1.0, self.parameters[f"gain.{channel}"])
@@ -84,17 +85,21 @@ class MockOscilloscope:
         return round(max(0.0, min(1.0, normalized)) * (ADC_STEPS - 1))
 
     @staticmethod
-    def _signal_voltage(channel: str, sample_index: int) -> float:
+    def _signal_voltage(channel: str, time_ns: float) -> float:
         if channel == "a":
-            phase = 2 * math.pi * sample_index / SINE_PERIOD_SAMPLES
-            return 750_000 * math.sin(phase)
-        phase = sample_index % SQUARE_PERIOD_SAMPLES
-        return 450_000 if phase < SQUARE_PERIOD_SAMPLES / 2 else -450_000
+            phase = 2 * math.pi * SINE_FREQUENCY_HZ * time_ns / NANOSECONDS_PER_SECOND
+            return SINE_AMPLITUDE_UV * math.sin(phase)
+        phase = SQUARE_FREQUENCY_HZ * time_ns / NANOSECONDS_PER_SECOND % 1
+        return SQUARE_AMPLITUDE_UV if phase < 0.5 else -SQUARE_AMPLITUDE_UV
 
-    def _samples(self, channel: str, start_sample: int) -> list[int]:
+    def _samples(self, channel: str, start_time_ns: float, sampling_ns: float) -> list[int]:
         minimum_uv, maximum_uv = self._voltage_range(channel)
         return [
-            self._to_adc(self._signal_voltage(channel, start_sample + index), minimum_uv, maximum_uv)
+            self._to_adc(
+                self._signal_voltage(channel, start_time_ns + index * sampling_ns),
+                minimum_uv,
+                maximum_uv,
+            )
             for index in range(FRAME_SIZE)
         ]
 
@@ -105,47 +110,49 @@ class MockOscilloscope:
         ppm = self.parameters["trigger.lvl.ppm"]
         return center + ppm / 1_000_000 * (BASE_VOLTAGE_UV / 2) / gain
 
-    def _find_trigger(self, start_sample: int) -> int | None:
+    def _next_trigger_time_ns(self, start_time_ns: float, sampling_ns: float) -> float | None:
         trigger_type = self.parameters["trg.type"]
         if trigger_type == 0:
-            self.trigger_armed = False
             return None
 
         channel = "a" if self.parameters["trg.chan"] == 0 else "b"
         threshold_uv = self._trigger_threshold_uv()
         minimum_uv, maximum_uv = self._voltage_range(channel)
         hysteresis_uv = (maximum_uv - minimum_uv) / ADC_STEPS * 2
+        amplitude_uv = SINE_AMPLITUDE_UV if channel == "a" else SQUARE_AMPLITUDE_UV
+        if threshold_uv - hysteresis_uv < -amplitude_uv or threshold_uv + hysteresis_uv > amplitude_uv:
+            return None
 
-        for sample_index in range(start_sample, start_sample + FRAME_SIZE):
-            voltage_uv = self._signal_voltage(channel, sample_index)
+        frequency_hz = SINE_FREQUENCY_HZ if channel == "a" else SQUARE_FREQUENCY_HZ
+        period_ns = NANOSECONDS_PER_SECOND / frequency_hz
+        if channel == "a":
+            target_uv = threshold_uv + hysteresis_uv if trigger_type > 0 else threshold_uv - hysteresis_uv
+            phase = math.asin(target_uv / amplitude_uv)
             if trigger_type > 0:
-                if not self.trigger_armed and voltage_uv <= threshold_uv - hysteresis_uv:
-                    self.trigger_armed = True
-                elif self.trigger_armed and voltage_uv >= threshold_uv + hysteresis_uv:
-                    self.trigger_armed = False
-                    if sample_index >= self.trigger_holdoff_until:
-                        return sample_index
+                crossing_offset_ns = (phase % (2 * math.pi)) / (2 * math.pi) * period_ns
             else:
-                if not self.trigger_armed and voltage_uv >= threshold_uv + hysteresis_uv:
-                    self.trigger_armed = True
-                elif self.trigger_armed and voltage_uv <= threshold_uv - hysteresis_uv:
-                    self.trigger_armed = False
-                    if sample_index >= self.trigger_holdoff_until:
-                        return sample_index
-        return None
+                crossing_offset_ns = (math.pi - phase) / (2 * math.pi) * period_ns
+        else:
+            crossing_offset_ns = 0 if trigger_type > 0 else period_ns / 2
+
+        earliest_ns = max(start_time_ns, self.trigger_holdoff_until_ns) + sampling_ns
+        cycle = math.ceil((earliest_ns - crossing_offset_ns) / period_ns)
+        return cycle * period_ns + crossing_offset_ns
 
     def build_frame(self) -> str:
-        self.last_trigger_sample = None
-        self.last_capture_start = None
-        trigger_sample = self._find_trigger(self.sample_cursor)
-        keyframe = trigger_sample is not None
-        capture_start = self.sample_cursor
-        if trigger_sample is not None:
-            offset_samples = round(self.parameters["trg.time.offset"] * FRAME_SIZE / 1_000_000)
-            capture_start = trigger_sample + offset_samples
-            self.trigger_holdoff_until = trigger_sample + FRAME_SIZE
-            self.last_trigger_sample = trigger_sample
-            self.last_capture_start = capture_start
+        sampling_ns = max(1.0, self.parameters["sampling.ns"])
+        frame_duration_ns = FRAME_SIZE * sampling_ns
+        self.last_trigger_time_ns = None
+        self.last_capture_start_ns = None
+        trigger_time_ns = self._next_trigger_time_ns(self.time_cursor_ns, sampling_ns)
+        keyframe = trigger_time_ns is not None
+        capture_start_ns = self.time_cursor_ns
+        if trigger_time_ns is not None:
+            offset_ns = self.parameters["trg.time.offset"] * frame_duration_ns / 1_000_000
+            capture_start_ns = trigger_time_ns + offset_ns
+            self.trigger_holdoff_until_ns = trigger_time_ns + frame_duration_ns
+            self.last_trigger_time_ns = trigger_time_ns
+            self.last_capture_start_ns = capture_start_ns
         lines = [
             f"frame.size={FRAME_SIZE}",
             "head=1",
@@ -163,10 +170,13 @@ class MockOscilloscope:
                 (
                     f"vltg.min.uv.{channel}={minimum_uv:g}",
                     f"vltg.max.uv.{channel}={maximum_uv:g}",
-                    f"data.{channel}={encode_samples(self._samples(channel, capture_start))}",
+                    f"data.{channel}={encode_samples(self._samples(channel, capture_start_ns, sampling_ns))}",
                 )
             )
-        self.sample_cursor += FRAME_SIZE
+        next_time_ns = self.time_cursor_ns + frame_duration_ns
+        if trigger_time_ns is not None:
+            next_time_ns = max(next_time_ns, trigger_time_ns + sampling_ns)
+        self.time_cursor_ns = next_time_ns
         return "\n".join(lines)
 
 
