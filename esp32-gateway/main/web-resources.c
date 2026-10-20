@@ -15,6 +15,9 @@ extern const uint8_t _binary_scope_html_end[]; // NOLINT(*-reserved-identifier)
 extern const uint8_t _binary_scope_js_start[]; // NOLINT(*-reserved-identifier)
 extern const uint8_t _binary_scope_js_end[]; // NOLINT(*-reserved-identifier)
 
+extern const uint8_t _binary_voice_js_start[]; // NOLINT(*-reserved-identifier)
+extern const uint8_t _binary_voice_js_end[]; // NOLINT(*-reserved-identifier)
+
 extern const uint8_t _binary_wifi_html_start[]; // NOLINT(*-reserved-identifier)
 extern const uint8_t _binary_wifi_html_end[]; // NOLINT(*-reserved-identifier)
 
@@ -68,6 +71,10 @@ const static_resource_t static_resources[] = { // NOLINT(*-interfaces-global-ini
     {
         "/scope.js", .data_start = (const char*)_binary_scope_js_start,
         .data_end = (const char*)_binary_scope_js_end, .type = "text/javascript"
+    },
+    {
+        "/voice.js", .data_start = (const char*)_binary_voice_js_start,
+        .data_end = (const char*)_binary_voice_js_end, .type = "text/javascript"
     },
     {
         "/uPlot.iife.min.js", .data_start = (const char*)_binary_uPlot_iife_min_js_start,

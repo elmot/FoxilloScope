@@ -5,6 +5,7 @@ idf_component_register(SRCS "main.c" "serial.c" "led.c" "web-resources.c" "dns_s
                     ../../html/wifi.html
                     ../../html/uPlot.iife.min.js
                     ../../html/scope.js
+                    ../../html/voice.js
                     ../../html/uPlot.min.css
                     ../../html/favicon.png
                     ../../html/version.txt
