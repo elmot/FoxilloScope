@@ -41,14 +41,42 @@ All hardware modifications, jumper settings (Production vs. Development modes), 
 
 ## Python Debug Server (Desktop Development)
 
+From the repository root, create a local virtual environment and install the Python dependencies:
+
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r py/requirements.txt
+cd py
+```
+
+The `.venv` directory is ignored by Git.
+
 For local web UI development without needing the ESP32 gateway hardware, run the Python debug server ([py/chart_server.py](py/chart_server.py)) on a desktop PC:
 
 ```sh
-cd py
 python chart_server.py
 ```
 
 This bridges the STM32's USB Virtual COM port (LPUART1) directly to a local WebSocket server at `http://localhost:8000/`.
+
+### Mock Oscilloscope Server (No Hardware)
+
+To run the complete browser UI without an STM32 or ESP32, start the synthetic signal server:
+
+```sh
+python mock_server.py
+```
+
+Open `http://localhost:8000/`, select **Oscilloscope UI**, and click the Wi-Fi button. The mock server streams a sine wave on channel A and a square wave on channel B, allowing the sampling, gain, offset, and trigger controls to be exercised without hardware.
+
+If port 8000 is already in use, stop the existing server or select another port with `python mock_server.py --port 8001`. Run `python mock_server.py --help` for all options.
+
+Run the mock server tests with:
+
+```sh
+python -m unittest -v test_mock_server.py
+```
 
 ---
 
