@@ -140,6 +140,13 @@
         .ch-a { color: #FFD600; font-weight: 600; }
         .ch-b { color: #00E5FF; font-weight: 600; }
         .trg { color: #0f0; font-weight: 600; }
+
+        .voice { max-width: 1400px; width: 100%; margin-top: 30px; }
+        .voice h2 { font-weight: 400; color: #0f0; margin: 0 0 8px; }
+        .voice p { color: #aaa; margin: 0 0 12px; font-size: 14px; }
+        .voice table { border-collapse: collapse; font-size: 14px; }
+        .voice td { padding: 4px 16px 4px 0; border-bottom: 1px solid #2a2a2a; vertical-align: top; }
+        .voice td:first-child { font-family: monospace; color: #fff; }
         
     </style>
 </head>
@@ -194,6 +201,25 @@
         </div>
     </div>
     
+    <section class="voice">
+        <h2>Voice control</h2>
+        <p>Click the microphone button (Chrome, Edge or Safari, over HTTPS) and speak English commands.
+            Chain them with "and", e.g. <em>"trigger rising and pause"</em>. The recognised phrase appears in the status line; "?" means it was not understood.</p>
+        <table>
+            <tr><td>pause / stop / freeze</td><td>Pause the live trace</td></tr>
+            <tr><td>resume / run / go</td><td>Resume the live trace</td></tr>
+            <tr><td>trigger rising / falling / off</td><td>Trigger edge type</td></tr>
+            <tr><td>trigger A / trigger B</td><td>Trigger source channel</td></tr>
+            <tr><td>trigger up / down [a bit / a lot]</td><td>Move the <span class="trg">trigger level</span></td></tr>
+            <tr><td>trigger reset / center</td><td>Reset trigger time offset</td></tr>
+            <tr><td>faster / zoom in, slower / zoom out</td><td>Change the timebase one step</td></tr>
+            <tr><td>gain up / down</td><td>Double or halve the gain of the trigger source channel</td></tr>
+            <tr><td>gain times 8</td><td>Set the trigger source channel's gain directly (1&ndash;504)</td></tr>
+            <tr><td>gain A up, gain B times 4, &hellip;</td><td>Same, for a named channel (<span class="ch-a">A</span> / <span class="ch-b">B</span>)</td></tr>
+            <tr><td>stop listening</td><td>Turn voice control off</td></tr>
+        </table>
+    </section>
+
     <script>
         // Fallback for cached images that might have already loaded
         const img = document.querySelector('.container img');

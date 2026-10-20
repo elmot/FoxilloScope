@@ -74,13 +74,24 @@ Chart uses [uPlot](https://github.com/leeoniya/uPlot) version **v1.6.x**
 
 ---
 
-## 5. Development & Modification Rules
+## 5. Voice Control (`voice.js`)
+
+Optional, off by default. Loaded after `scope.js`; does nothing if `SpeechRecognition` is missing (e.g. Firefox), so `#btn-voice` stays hidden.
+- **No parallel logic**: each command "presses" an existing control (`el.click()`, or set a slider's `value` and dispatch `input`). Hardware sends, `ParametersStorage.save()` and UI state stay in `scope.js`; new controls need a new row in the `COMMANDS` table, not new parameter code.
+- **Secure context only**: on `http://f-scope.local` the mic button gets `.insecure` and redirects to HTTPS, like BLE/Serial.
+- **Recognizer**: continuous, English (`navigator.language` if English, else `en-US`), restarted on `onend` while enabled. Uses on-device recognition (`SpeechRecognition.available()/install()`, `processLocally`) when Chrome offers it, else the cloud service, which needs internet (not available on the ESP32 AP alone).
+- **State**: `localStorage.vslVoice` remembers "on"; the mic resumes on the first pointer interaction because browsers need a user gesture.
+- **Feedback**: recognised phrase via `setStatus()` (`?` appended when unmatched); button flashes `.heard` / `.missed`.
+- "gain up/down/times N" without a channel acts on the trigger source channel (`#trg.chan`).
+- Phrases are listed in `cheatsheet.html`. Several commands can be chained with "and"/"then".
+
+## 6. Development & Modification Rules
 
 1. **Do not modify** `uPlot.iife.min.js` / `uPlot.min.css`
 2. **Single‑page**: keep UI minimal, fast, vanilla JS.
 3. **PPM vs μV**: UI offsets use PPM; hardware offsets use μV.
 4. **Logarithmic scaling**: maintain log‑space gain sliders.
-## 6. Deployment & Transport Security
+## 7. Deployment & Transport Security
 
 - Serve locally via the ESP32 gateway (`../esp32-gateway/AGENTS.md`) over HTTP.
 - GitHub Pages uses HTTPS; BLE and WebSerial work only in secure contexts.
@@ -88,6 +99,7 @@ Chart uses [uPlot](https://github.com/leeoniya/uPlot) version **v1.6.x**
 
 ## Resources
 - [scope.js](file:///d:/projects/foxilloscope/html/scope.js) – Transport abstraction, frame parsing, parameter handling, UI logic, and hardware commands.
+- [voice.js](voice.js) – Optional voice commands mapped onto the existing UI controls.
 
 ## Documentation Sources
 - The UI relies on **uPlot** for charting; its official documentation and example gallery are the primary knowledge source for any future UI changes.
