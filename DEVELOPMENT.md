@@ -68,7 +68,7 @@ To run the complete browser UI without an STM32 or ESP32, start the synthetic si
 python mock_server.py
 ```
 
-Open `http://localhost:8000/`, select **Oscilloscope UI**, and click the Wi-Fi button. The mock server streams a sine wave on channel A and a square wave on channel B, allowing the sampling, gain, offset, and trigger controls to be exercised without hardware.
+Open `http://localhost:8000/`, select **Oscilloscope UI**, and click the Wi-Fi button. The mock server streams a sine wave on channel A and a square wave on channel B, allowing the sampling, gain, offset, and trigger controls to be exercised without hardware. Trigger keyframes follow the selected channel, threshold, slope, and time offset.
 
 If port 8000 is already in use, stop the existing server or select another port with `python mock_server.py --port 8001`. Run `python mock_server.py --help` for all options.
 
